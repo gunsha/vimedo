@@ -1,0 +1,11 @@
+<ion-view title="Recuperar Contraseña" id="page9">
+<ion-content padding="true" class="has-header">
+    <h5 id="olvideContrasenia-heading1" style="color:#000000;text-align:center;">INGRESE SU CORREO ELECTRONICO</h5>
+    <form id="olvideContrasenia-form3" name="olvideContraseniaForm" class="list">
+      <label class="item item-input" id="olvideContrasenia-input12">
+	      <input type="email" ng-model="olvide.email" placeholder="Email" name="email" required>
+      </label>
+      <button class="button button-block button-positive" ng-disabled="olvideContraseniaForm.email.$invalid" ng-click="olvideContrasenia()">Recuperar Contraseña</button>
+    </form>
+  </ion-content>
+</ion-view>

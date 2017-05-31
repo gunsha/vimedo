@@ -1,0 +1,39 @@
+<ion-view title="Alta Paciente" id="page7">
+  <ion-content padding="true" class="has-header">
+    <h5 id="registrarseDos-heading1" style="color:#000000;text-align:center;">INGRESE A CONTINUACIÓN LOS DATOS SOLICITADOS</h5>
+    <form id="registrarseDos-form3" class="list">
+      <ion-list id="registrarseDos-list5">
+        <label class="item item-input" id="registrarseDos-input7">
+          <input type="text" ng-model="registrando.nomape" placeholder="Nombre y Apellido">
+        </label>
+        <label class="item item-input" id="registrarseDos-input8">
+          <input type="text" ng-model="registrando.fenac" placeholder="Fecha de Nacimiento">
+        </label>
+        <label class="item item-input" id="registrarseDos-input9">
+          <input type="text" ng-model="registrando.dnilcle" placeholder="DNI / LC / LE N°">
+        </label>
+        <label class="item item-input" id="registrarseDos-input10">
+          <input type="text" ng-model="registrando.dopart" placeholder="Domicilio">
+        </label>
+        <label class="item item-input" id="registrarseDos-input15">
+          <input type="text" ng-model="registrando.pro" placeholder="Provincia">
+        </label>
+        <label class="item item-select" id="registrarseDos-select2" name="prepa" style="align-items: center">
+          <select ng-model="registrando.prepa" ng-options="o._id as o.nombre for o in retrievedPrepas">
+              <option value="">Seleccionar Prepaga</option>
+          </select>
+        </label>
+        <label class="item item-input" id="registrarseDos-input15">
+          <input type="text" ng-model="registrando.credencial" placeholder="Credencial">
+        </label>
+        <label class="item item-input" id="registrarseDos-input15">
+          <input type="text" ng-model="registrando.antecedentes" placeholder="Antecedentes">
+        </label>
+        <label class="item item-input" id="registrarseDos-input15">
+          <input type="text" ng-model="registrando.enfdebase" placeholder="Enfermedades de base">
+        </label>
+      </ion-list>
+      <a id="registrarseUno-button3" class="button button-assertive  button-block" ng-click="registrarUsuario()">COMENZAR</a>
+    </form>
+  </ion-content>
+</ion-view>

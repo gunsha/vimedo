@@ -1,0 +1,46 @@
+body{
+	background-color: #B8B8B8;
+}
+#formulario{
+	display: none;
+}
+.formulario{
+	padding-top: 80px;
+}
+#form{
+	display: none;
+}
+#alertasTabla{
+	padding-top: 80px;
+}
+#jm{
+	display: none;
+}
+#jmb{
+	display: none;
+}
+.error{
+	color: red;
+}
+.info{
+	/*color: green;*/
+}
+.row{
+	margin-left: 0px;
+	margin-right: 0px;
+}
+.cleditorMain{
+	margin-left: 50px!important;
+	margin-right: 50px!important;
+}
+.control-group-error-target {
+	margin-left: 60px;
+}
+.panel-danger > .panel-heading {
+    color: #fff;
+    background-color: #C91A25;
+    border-color: #C91A25;
+}
+.form-horizontal{
+	width: 99%!important;/*bootstrap esta buggeado?*/
+}

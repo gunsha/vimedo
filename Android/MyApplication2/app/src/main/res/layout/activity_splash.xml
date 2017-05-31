@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background"
+    android:layout_centerVertical="true"
+    android:weightSum="1" >
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="159dp"
+        app:srcCompat="@drawable/vimedo_logo"
+        android:id="@+id/splash_logo"
+        android:layout_gravity="center"
+        android:layout_marginTop="100dp"
+        android:layout_weight="0.35" />
+
+    <ProgressBar
+        android:layout_width="354dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/splash_pb"
+        android:layout_weight="0.08"
+        android:layout_gravity="center"
+        android:layout_marginLeft="0dp"
+        android:layout_marginBottom="15dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginRight="0dp"
+        android:indeterminate="true"
+        android:indeterminateTintMode="src_atop"
+        android:indeterminateTint="@color/vimedo_orange"
+         />
+
+
+    <TextView
+        android:text="CARGANDO..."
+        android:textSize="10sp"
+        android:layout_width="86dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/splash_cargando"
+
+        android:layout_marginLeft="150dp" />
+
+</LinearLayout>

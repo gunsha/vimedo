@@ -1,0 +1,114 @@
+<section class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box">
+        <div class="box-header with-border">
+          <h3 class="box-title">Listado de Afiliados</h3>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+          <div class="row">
+          <div class="col-lg-12 box-tools">
+            <div class="pull-left">
+              <a href="#" class="btn btn-md btn-primary" data-toggle="modal" data-target="#newModal"><span class="glyphicon glyphicon-plus"></span> Nuevo</a>
+            </div>
+            <div class="pull-right has-feedback">
+              <input type="text" class="form-control input-sm" ng-model="ctrl.query" ng-change="ctrl.filterList();" placeholder="Filtrar">
+              <span class="glyphicon glyphicon-search form-control-feedback"></span>
+            </div>
+          </div>
+          </div>
+          <div class="table-responsive">
+          <table class="table table-bordered" at-table at-list="ctrl.afiliados" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
+            <thead>
+            </thead>
+            <tbody>
+              <tr>
+                <td at-implicit at-sortable at-attribute="personaFisica.nombre" at-title="Nombre"></td>
+                <td at-implicit at-sortable at-attribute="personaFisica.apellido" at-title="Apellido"></td>
+                <td at-implicit at-sortable at-attribute="personaFisica.nroDocumento" at-title="DNI / LC / LE N°"></td>
+                <td at-implicit at-attribute="credencial" at-title="Credencial"></td>
+                <td at-title="Ver / Editar">
+                  <a href="#" class="btn btn-success"><span class="glyphicon glyphicon-zoom-in"></span> </a>
+                  <a href="#" class="btn btn-warning"><span class="glyphicon glyphicon-edit"></span> </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+        <!-- /.box-body -->
+        <div class="box-footer clearfix">
+          <at-pagination class="pagination pagination-sm no-margin pull-right" at-config="ctrl.tableConfig" at-list="ctrl.afiliados"></at-pagination>
+        </div>
+      </div>
+      <!-- /.box -->
+    </div>
+  </div>
+</section>
+<div id="newModal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Nuevo Afiliado</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" ng-submit="ctrl.savePro();">
+          <fieldset>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newName">Nombre</label>
+              <div class="col-md-5">
+                <input id="modalPro.name" ng-model="ctrl.modalPro.name" name="newName" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newApellido">Apellido</label>
+              <div class="col-md-5">
+                <input id="modalPro.apellido" ng-model="ctrl.modalPro.apellido" name="newApellido" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newDoc">DNI / LC / LE N°</label>
+              <div class="col-md-5">
+                <input id="modalPro.doc" ng-model="ctrl.modalPro.doc" name="newDoc" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newMatricula">Matricula</label>
+              <div class="col-md-5">
+                <input id="modalPro.matricula" ng-model="ctrl.modalPro.matricula" name="newMatricula" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newEmail">Email</label>
+              <div class="col-md-5">
+                <input id="modalPro.email" ng-model="ctrl.modalPro.email" name="newEmail" type="email" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newTelefono">Telefono</label>
+              <div class="col-md-5">
+                <input id="modalPro.telefono" ng-model="ctrl.modalPro.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newDireccion">Direccion</label>
+              <div class="col-md-5">
+                <input id="modalPro.direccion" ng-model="ctrl.modalPro.direccion" name="newDireccion" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <!-- Button (Double) -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="guardarNew"></label>
+              <div class="col-md-8">
+                <button id="guardarNew" type="submit" name="guardarNew" class="btn btn-success">Aceptar</button>
+                <button id="cancelarNew" name="cancelarNew" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

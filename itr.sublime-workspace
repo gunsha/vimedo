@@ -1,0 +1,1058 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"call",
+				"callBack"
+			],
+			[
+				"i",
+				"italic"
+			],
+			[
+				"font",
+				"font-style"
+			],
+			[
+				"fon",
+				"font-variant"
+			],
+			[
+				"margin",
+				"margin-left"
+			],
+			[
+				"ali",
+				"align-content"
+			],
+			[
+				"fun",
+				"function"
+			],
+			[
+				"domi",
+				"domicilios"
+			],
+			[
+				"ret",
+				"retObj"
+			],
+			[
+				"lo",
+				"log"
+			],
+			[
+				"logge",
+				"loggedUser"
+			],
+			[
+				"fo",
+				"font-size"
+			],
+			[
+				"re",
+				"required\tAttr"
+			],
+			[
+				"ionic",
+				"ionicPopup"
+			],
+			[
+				"u",
+				"Username"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "Ionic/www/templates/solicitudNew.html",
+			"settings":
+			{
+				"buffer_size": 814,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Ionic/www/js/controllers/solicitudesController.js",
+			"settings":
+			{
+				"buffer_size": 3223,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Ionic/www/templates/registrarseDos.html",
+			"settings":
+			{
+				"buffer_size": 2218,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "Ionic/www/js/controllers/registrarseController.js",
+			"settings":
+			{
+				"buffer_size": 4296,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Ionic/www/js/directives.js",
+			"settings":
+			{
+				"buffer_size": 1553,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "Frontend/public/views/solicitudesMenu.html",
+			"settings":
+			{
+				"buffer_size": 2874,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"contents": "Searching 322 files for \"initSolicitudes()\"\n\nC:\\itr\\NodeJs\\Frontend\\public\\views\\solicitudesMenu.html:\n    1  <h3 >{{titulo}}</h3>\n    2: <div class=\"container-fluid\" ng-init=\"initSolicitudes()\">\n    3  \t<!-- <div class=\"row\" >\n    4  \t\t<div class=\"col-md-4\"></div>\n\n1 match in 1 file\n\n\nSearching 3217 files for \"Validation failed\"\n\nC:\\itr\\NodeJs\\Backend\\node_modules\\mongoose-beautiful-unique-validation\\README.md:\n   42  {\n   43      \"name\": \"ValidationError\",\n   44:     \"message\": \"Model validation failed\",\n   45      \"errors\": {\n   46          \"name\": {\n   ..\n  120  // will print:\n  121  // Success saving admin1!\n  122: // admin2 could not be saved: [ValidationError: User validation failed]\n  123  ```\n  124  \n  ...\n  165  \n  166  // will print:\n  167: // admin2 could not be updated: [ValidationError: User validation failed]\n  168  ```\n  169  \n\nC:\\itr\\NodeJs\\Backend\\node_modules\\mongoose\\lib\\document.js:\n 1512   *       console.log(err)\n 1513   *       // prints\n 1514:  *       { message: 'Validation failed',\n 1515   *         name: 'ValidationError',\n 1516   *         errors:\n\nC:\\itr\\NodeJs\\Backend\\node_modules\\mongoose\\lib\\error\\validation.js:\n   16    this.errors = {};\n   17    if (instance && instance.constructor.name === 'model') {\n   18:     MongooseError.call(this, instance.constructor.modelName + ' validation failed');\n   19    } else {\n   20:     MongooseError.call(this, 'Validation failed');\n   21    }\n   22    if (Error.captureStackTrace) {\n\nC:\\itr\\NodeJs\\Backend\\node_modules\\mongoose\\lib\\schematype.js:\n  368   * Adds validator(s) for this document path.\n  369   *\n  370:  * Validators always receive the value to validate as their first argument and must return `Boolean`. Returning `false` means validation failed.\n  371   *\n  372   * The error message argument is optional. If not passed, the [default generic error message template](#error_messages_MongooseError-messages) will be used.\n  ...\n  409   *       doStuff(value, function () {\n  410   *         ...\n  411:  *         respond(false); // validation failed\n  412   *       })\n  413   *     }, '{PATH} failed validation.');\n\n8 matches across 4 files\n",
+			"settings":
+			{
+				"buffer_size": 2147,
+				"line_ending": "Windows",
+				"name": "Find Results",
+				"scratch": true
+			}
+		},
+		{
+			"file": "Socios/app.js",
+			"settings":
+			{
+				"buffer_size": 449,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Frontend/public/app/controllers/solicitudController.js",
+			"settings":
+			{
+				"buffer_size": 10458,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Ionic/www/js/constants.js",
+			"settings":
+			{
+				"buffer_size": 150,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Backend/controllers/UsuarioController.js",
+			"settings":
+			{
+				"buffer_size": 30005,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "Frontend/public/index.html",
+			"settings":
+			{
+				"buffer_size": 2037,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "Frontend/public/map.html",
+			"settings":
+			{
+				"buffer_size": 693,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 311.0,
+		"last_filter": "Package Control: i",
+		"selected_items":
+		[
+			[
+				"Package Control: i",
+				"Package Control: Install Package"
+			],
+			[
+				"packa",
+				"Package Control: Install Package"
+			],
+			[
+				"install pa",
+				"Package Control: Install Package"
+			],
+			[
+				"Enable p",
+				"Package Control: Enable Package"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"Package",
+				"Package Control: Remove Package"
+			]
+		],
+		"width": 416.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"Package",
+			"Package Control:Package",
+			":Remove Package",
+			"Package Control:",
+			"package control",
+			"open control"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/C/itr/NodeJs",
+		"/C/itr/NodeJs/Backend",
+		"/C/itr/NodeJs/Backend/controllers",
+		"/C/itr/NodeJs/Backend/routes",
+		"/C/itr/NodeJs/Frontend",
+		"/C/itr/NodeJs/Frontend/public",
+		"/C/itr/NodeJs/Frontend/public/app",
+		"/C/itr/NodeJs/Frontend/public/app/controllers",
+		"/C/itr/NodeJs/Frontend/public/views",
+		"/C/itr/NodeJs/Ionic",
+		"/C/itr/NodeJs/Ionic/www",
+		"/C/itr/NodeJs/Ionic/www/css",
+		"/C/itr/NodeJs/Ionic/www/js",
+		"/C/itr/NodeJs/Ionic/www/js/controllers",
+		"/C/itr/NodeJs/Ionic/www/templates",
+		"/C/itr/NodeJs/Socios"
+	],
+	"file_history":
+	[
+		"/C/itr/NodeJs/Ionic/www/templates/registrarseUno.html",
+		"/C/itr/NodeJs/Ionic/www/js/controllers/registrarseController.js",
+		"/C/itr/NodeJs/Ionic/www/templates/registrarseProDos.html",
+		"/C/itr/NodeJs/Ionic/www/templates/mensajes.html",
+		"/C/itr/NodeJs/Ionic/www/templates/registrarseDos.html",
+		"/C/itr/NodeJs/Ionic/www/templates/registrarseProUno.html",
+		"/C/itr/NodeJs/Ionic/www/templates/registrarsePre.html",
+		"/C/itr/NodeJs/Ionic/www/js/services.js",
+		"/C/itr/NodeJs/Ionic/www/css/ionic.app.css",
+		"/C/itr/NodeJs/Ionic/www/templates/menuPro.html",
+		"/C/itr/NodeJs/Ionic/www/js/controllers/escritorioController.js",
+		"/C/itr/NodeJs/Ionic/www/templates/solicitudNew.html",
+		"/C/itr/NodeJs/Ionic/www/js/controllers/solicitudesController.js",
+		"/C/itr/NodeJs/Ionic/www/templates/escritorioPro.html",
+		"/C/itr/NodeJs/Ionic/www/js/controllers/loginController.js",
+		"/C/itr/NodeJs/Ionic/www/templates/login.html",
+		"/C/itr/NodeJs/Ionic/www/js/routes.js",
+		"/C/itr/NodeJs/Ionic/www/templates/escritorio.html",
+		"/C/itr/NodeJs/Ionic/www/templates/perfil.html",
+		"/C/itr/NodeJs/Ionic/www/js/app.js",
+		"/C/itr/NodeJs/Ionic/www/js/directives.js",
+		"/C/itr/NodeJs/Ionic/www/js/controllers/menuController.js",
+		"/C/itr/NodeJs/Ionic/www/templates/menuNotLogged.html",
+		"/C/itr/NodeJs/Ionic/www/js/controllers.js",
+		"/C/itr/NodeJs/Ionic/www/js/constants.js",
+		"/C/itr/NodeJs/Ionic/www/index.html",
+		"/C/itr/NodeJs/Ionic/www/lib/ionic/js/ion-place-autocomplete/ion-place-autocomplete.js",
+		"/C/itr/NodeJs/Ionic/www/templates/menu.html",
+		"/C/itr/NodeJs/Ionic/scss/ionic.app.scss",
+		"/C/itr/NodeJs/Ionic/www/lib/ionic/scss/ionic.sass.scss",
+		"/C/itr/NodeJs/Ionic/www/templates/olvideContrasenia.html",
+		"/C/itr/NodeJs/Backend/controllers/SolicitudMedicaController.js",
+		"/C/itr/NodeJs/Ionic/www/templates/pacientes.html",
+		"/C/itr/NodeJs/Backend/controllers/UsuarioController.js",
+		"/C/itr/NodeJs/Ionic/www/templates/solicitudes.html",
+		"/C/itr/NodeJs/Ionic/www/templates/solicitud.html",
+		"/C/itr/NodeJs/Ionic/package.json",
+		"/C/itr/NodeJs/Backend/routes/Usuarios.js",
+		"/C/itr/NodeJs/Ionic/platforms/android/assets/www/css/ionic.app.css",
+		"/C/itr/NodeJs/Frontend/public/app/controllers/solicitudController.js",
+		"/C/itr/NodeJs/Backend/controllers/EspecialidadController.js",
+		"/C/itr/NodeJs/Ionic/platforms/android/build/intermediates/assets/debug/www/js/controllers/registrarseController.js",
+		"/C/Users/sebas/AppData/Roaming/Sublime Text 3/Packages/Pretty JSON/Pretty JSON.sublime-settings",
+		"/C/Users/sebas/AppData/Roaming/Sublime Text 3/Packages/HTML-CSS-JS Prettify/.jsbeautifyrc",
+		"/C/itr/NodeJs/Ionic.v2/src/pages/home/home.html",
+		"/C/itr/NodeJs/Vimedo.v2/src/pages/Escritorio/Escritorio.html",
+		"/C/itr/NodeJs/Vimedo.v2/src/pages/Menu/Menu.html",
+		"/C/itr/NodeJs/Ionic.v2/src/pages/tabs/tabs.html",
+		"/C/itr/NodeJs/Socios/app.js",
+		"/C/Users/sebas/Downloads/Adobe Master Collection CC 2017 for WIN 7 8 10 vol. 1/Crack/Keygen/Check_Disable.cmd",
+		"/C/itr/NodeJs/Vimedo.v2/src/app/app.component.ts",
+		"/C/itr/NodeJs/Vimedo.v2/src/app/app.module.ts",
+		"/C/itr/NodeJs/Backend/routes/SolicitudesMedicas.js",
+		"/C/itr/NodeJs/Ionic/www/manifest.json",
+		"/C/itr/NodeJs/Frontend/public/views/solicitudDetalle.html",
+		"/C/itr/NodeJs/Backend/bin/www",
+		"/C/itr/NodeJs/Backend/app.js",
+		"/C/itr/NodeJs/Ionic/www/lib/ionic/js/ionic.bundle.js",
+		"/C/itr/NodeJs/Ionic/www/service-worker.js",
+		"/C/itr/NodeJs/Frontend/public/app/app.js",
+		"/C/itr/NodeJs/Ionic/vimedo.v2/src/js/controllers.js",
+		"/C/itr/NodeJs/Frontend/public/app/metodosGenerales.js",
+		"/C/itr/NodeJs/Frontend/public/angular/ng-map.min.js",
+		"/C/itr/NodeJs/Cordova/vimedo/www/js/routes.js",
+		"/C/itr/NodeJs/Cordova/vimedo/www/templates/menu.html",
+		"/C/itr/Android/MyApplication2/app/src/main/res/drawable/vimedo_logo.xml",
+		"/C/Users/sebas/AppData/Roaming/Sublime Text 3/Packages/User/SideBarEnhancements/Open With/Side Bar.sublime-menu",
+		"/C/itr/NodeJs/Cordova/vimedo/src/js/routes.js",
+		"/C/itr/NodeJs/Cordova/vimedo/src/js/app.js",
+		"/C/itr/NodeJs/Cordova/vimedo.dos/src/app/main.ts",
+		"/C/itr/NodeJs/Cordova/vimedo.dos/src/js/app.js",
+		"/C/itr/NodeJs/Cordova/vimedo.dos/ionic.config.json",
+		"/C/itr/NodeJs/Cordova/vimedo/www/templates/escritorio.html",
+		"/C/itr/NodeJs/Cordova/vimedo/www/templates/login.html",
+		"/C/itr/NodeJs/Cordova/vimedo.dos/src/templates/escritorio.html"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 90.0,
+		"where_history":
+		[
+			"C:\\itr\\NodeJs\\Backend",
+			"C:\\itr\\NodeJs\\Frontend",
+			"C:\\itr\\NodeJs\\Ionic\\www,*.js,*.html",
+			"C:\\itr\\NodeJs\\Ionic,*.js,*.html",
+			"C:\\itr\\NodeJs\\Ionic",
+			"C:\\itr\\NodeJs\\Backend",
+			"C:\\itr\\NodeJs\\Ionic",
+			"C:\\itr\\NodeJs\\Frontend",
+			"C:\\itr\\NodeJs\\Backend",
+			"C:\\itr\\NodeJs\\Frontend",
+			"C:\\itr\\NodeJs\\Ionic",
+			"C:\\itr\\NodeJs\\Frontend",
+			"C:\\itr\\NodeJs\\Ionic",
+			"C:\\itr\\NodeJs\\Backend",
+			"C:\\itr\\NodeJs\\Backend,*.html",
+			"C:\\itr\\NodeJs\\Backend\\*.html",
+			"C:\\itr\\NodeJs\\Backend",
+			"C:\\itr\\NodeJs\\Cordova\\vimedo",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"\\",
+			"Validation failed",
+			"192.168.1.33",
+			"101",
+			"initSolicitudes()",
+			"RegistrationFactory",
+			"i",
+			"strong",
+			"document.getElementById(\"map\")",
+			"http://devfanatic.com/blog/ion",
+			"require",
+			"item-icon-left",
+			"lu",
+			"data.loggedUser",
+			"MapManager",
+			"domicilio",
+			"d1",
+			"wrap",
+			"a",
+			"java",
+			"$scope",
+			"\t    $",
+			"registrarseUno",
+			"$state",
+			"menu.",
+			"menu.pacientes",
+			"menu.",
+			"sideMenu",
+			"menuCtrl",
+			"side-menu21",
+			".scroll ",
+			".scroll",
+			"solicitudCtrl",
+			" ng-disabled=\"loginform.email.$invalid\"",
+			"menu.pro.escritorio",
+			"mongoose-deep-populate",
+			"registrarseDos",
+			"registrarseUno",
+			"placeholder",
+			"span",
+			"placeholder",
+			"      <div class=\"spacer\" style=\"height: 40px;\"></div>\n",
+			".button",
+			".button ",
+			"button-block",
+			"login-form1",
+			"input",
+			"myForm",
+			"login-form1",
+			"name",
+			"login-form1.email",
+			"username",
+			"Username",
+			"username",
+			"placeholder",
+			"myForm",
+			"SERVER",
+			"'",
+			"paciente",
+			"pacientes",
+			"RegistrationFactory",
+			"l",
+			"RegistrationFactory.data().loggedUser",
+			"retrievedPrepas",
+			"server",
+			"registrando",
+			"socios",
+			"nombre",
+			"PersonaFisica validation failed",
+			"60cd6e859b9f557d2312f5bf532f6aec5f284980",
+			"ion-side-menu-content",
+			"';",
+			"html",
+			"escritorio",
+			".html",
+			"login",
+			"paciente2",
+			"paciente",
+			"paciente2Ctrl",
+			"mess",
+			"side-menu21",
+			"{\n",
+			"solicitudController",
+			"\"prepa",
+			"val",
+			"espe",
+			"\t\n",
+			"prepa",
+			"espe",
+			"espe1",
+			"espe",
+			"select",
+			"registrarse",
+			"model",
+			"placeholder",
+			"setProfesional",
+			"method: \"POST\"",
+			"ng",
+			"placeholder",
+			"ion-nav-bar",
+			"controllers",
+			"service-worker",
+			"$state.go",
+			"registrarseDosCtrl",
+			"registrarse",
+			"hrefInappbrowser",
+			"disableSideMenuDrag",
+			"initMap",
+			"calcularRutaSolicitud",
+			"centrarMapa",
+			"registrarseUnoCtrl",
+			"disableSideMenuDrag",
+			"cargarProfesionales",
+			"input ",
+			"ion-side-menus",
+			"sidemenu",
+			"side-menu21",
+			"side-menu",
+			"registrarseUno",
+			"\n    <table width=\"100%\">\n      <tbody>\n        <tr>\n          <td width=\"49%\" align=\"center\">\n            <a ui-sref=\"registrarseUno\" id=\"Escritorio-button1\" class=\"button button-assertive  button-block\">Registrarse</a>\n          </td>\n          <td width=\"2%\"></td>\n          <td width=\"49%\" align=\"center\">pacientes boton\n          </td>\n        </tr>\n      </tbody>\n    </table>",
+			"registrarseDos"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"RegisterManager",
+			"sideMenu"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 7,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "Ionic/www/templates/solicitudNew.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 814,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								581,
+								581
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "Ionic/www/js/controllers/solicitudesController.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3223,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1595,
+								1595
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": -0.0,
+						"translation.y": 945.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "Ionic/www/templates/registrarseDos.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2218,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1979,
+								1979
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "Ionic/www/js/controllers/registrarseController.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4296,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1139,
+								1139
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 90.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "Ionic/www/js/directives.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1553,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1059,
+								1059
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 150.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "Frontend/public/views/solicitudesMenu.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2874,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								59,
+								76
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2147,
+						"regions":
+						{
+							"match":
+							{
+								"flags": 112,
+								"regions":
+								[
+									[
+										176,
+										193
+									],
+									[
+										492,
+										509
+									],
+									[
+										681,
+										698
+									],
+									[
+										817,
+										834
+									],
+									[
+										1004,
+										1021
+									],
+									[
+										1327,
+										1344
+									],
+									[
+										1403,
+										1420
+									],
+									[
+										1734,
+										1751
+									],
+									[
+										2037,
+										2054
+									]
+								],
+								"scope": ""
+							}
+						},
+						"selection":
+						[
+							[
+								1066,
+								1066
+							]
+						],
+						"settings":
+						{
+							"default_dir": "C:\\itr\\NodeJs",
+							"detect_indentation": false,
+							"line_numbers": false,
+							"output_tag": 2,
+							"result_base_dir": "",
+							"result_file_regex": "^([^ \t].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "Socios/app.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 449,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								212,
+								212
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "Frontend/public/app/controllers/solicitudController.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 10458,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								405,
+								405
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": -0.0,
+						"translation.y": 225.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "Ionic/www/js/constants.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 150,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								150,
+								150
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "Backend/controllers/UsuarioController.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 30005,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								7781,
+								7791
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3405.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "Frontend/public/index.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2037,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2013,
+								2013
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 450.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 12,
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": "Frontend/public/map.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 693,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								323,
+								323
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 11,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.doc":
+	{
+		"height": 0.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "itr.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"ion-place-autocomplete.js",
+				"Ionic\\www\\lib\\ionic\\js\\ion-place-autocomplete\\ion-place-autocomplete.js"
+			],
+			[
+				"ionic.app.scss",
+				"Ionic\\scss\\ionic.app.scss"
+			],
+			[
+				"registrdos",
+				"Ionic\\www\\templates\\registrarseDos.html"
+			],
+			[
+				"registrarsedos.html",
+				"Ionic\\www\\templates\\registrarseDos.html"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 317.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

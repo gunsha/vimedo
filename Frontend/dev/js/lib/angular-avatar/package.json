@@ -1,0 +1,113 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "angular-avatar",
+        "scope": null,
+        "escapedName": "angular-avatar",
+        "name": "angular-avatar",
+        "rawSpec": "",
+        "spec": "latest",
+        "type": "tag"
+      },
+      "/Volumes/iGonza/Users/Gonza/Downloads/vimedo_FE"
+    ]
+  ],
+  "_from": "angular-avatar@latest",
+  "_id": "angular-avatar@1.3.0",
+  "_inCache": true,
+  "_location": "/angular-avatar",
+  "_nodeVersion": "5.1.1",
+  "_npmOperationalInternal": {
+    "host": "packages-12-west.internal.npmjs.com",
+    "tmp": "tmp/angular-avatar-1.3.0.tgz_1478512500895_0.9962535281665623"
+  },
+  "_npmUser": {
+    "name": "ajsoriar",
+    "email": "ajsoriar@gmail.com"
+  },
+  "_npmVersion": "3.5.1",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "angular-avatar",
+    "scope": null,
+    "escapedName": "angular-avatar",
+    "name": "angular-avatar",
+    "rawSpec": "",
+    "spec": "latest",
+    "type": "tag"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "https://registry.npmjs.org/angular-avatar/-/angular-avatar-1.3.0.tgz",
+  "_shasum": "8a327edb7e76f062eb62881818bcd4311d2c3652",
+  "_shrinkwrap": null,
+  "_spec": "angular-avatar",
+  "_where": "/Volumes/iGonza/Users/Gonza/Downloads/vimedo_FE",
+  "author": {
+    "name": "Andres J. Soria R.",
+    "email": "<ajsoriar@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/ajsoriar/angular-avatar/issues"
+  },
+  "dependencies": {},
+  "description": "Angular Avatar is a simple and lightweight AngularJS directive that generates a letter's avatar like Microsoft or Google do in their web apps. First letter of each word in a string or a group of initials will be used to generate the avatar. The image of the avatar will be rendered in an html img tag as a real png or jpeg. The image data can be retrieved using javascript to be stored in back-end giving you an initial profile picture in your web or mobile apps when the user does not upload one. Several angular atributes are available to configure the output: size, shape, resolution, colors, etc.",
+  "devDependencies": {
+    "angular": "1.4.5",
+    "angular-mocks": "1.4.5",
+    "grunt": "*",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-copy": "~0.5.0",
+    "grunt-contrib-jshint": "0.7.2",
+    "grunt-contrib-uglify": "~0.2.2",
+    "grunt-contrib-watch": "*",
+    "grunt-karma": "^0.12.0",
+    "jasmine-core": "^2.4.1",
+    "karma": "^0.13.3",
+    "karma-jasmine": "^0.1.0",
+    "karma-phantomjs-launcher": "^0.2.0",
+    "phantomjs": "^1.9.17"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "dist": {
+    "shasum": "8a327edb7e76f062eb62881818bcd4311d2c3652",
+    "tarball": "https://registry.npmjs.org/angular-avatar/-/angular-avatar-1.3.0.tgz"
+  },
+  "gitHead": "7c9effd232bd9cf8c0fa8cad7dad1daeffcd4fdc",
+  "homepage": "https://github.com/ajsoriar/angular-avatar#readme",
+  "keywords": [
+    "avatar",
+    "angular-avatar",
+    "letter avatar",
+    "initials avatar",
+    "angular avatar",
+    "profile picture",
+    "string avatar",
+    "ng-avatar"
+  ],
+  "license": "MIT",
+  "main": "dist/angular-avatar.js",
+  "maintainers": [
+    {
+      "name": "ajsoriar",
+      "email": "ajsoriar@gmail.com"
+    }
+  ],
+  "name": "angular-avatar",
+  "optionalDependencies": {},
+  "readme": "# angular-avatar [![Build Status](https://travis-ci.org/ajsoriar/angular-avatar.svg?branch=master)](https://travis-ci.org/ajsoriar/angular-avatar)\n\n[![npm version](https://badge.fury.io/js/angular-avatar.svg)](https://badge.fury.io/js/angular-avatar)\n[![Bower version](https://badge.fury.io/bo/angular-avatar.svg)](https://badge.fury.io/bo/angular-avatar)\n[![NuGet version](https://badge.fury.io/nu/angular-avatar.svg)](https://badge.fury.io/nu/angular-avatar)\n\nAngular Avatar is a simple and lightweight AngularJS directive that generates a letter's avatar like Microsoft or Google do in their web apps. First letter of each word in a string or a group of initials will be used to generate the avatar. The image of the avatar will be rendered in an html img tag as a real png or jpeg. The image data can be retrieved using javascript to be stored in back-end giving you an initial profile picture in your web or mobile apps when the user does not upload one. Several angular atributes are available to configure the output: size, shape, resolution, colors, etc.\n\n![angular-avatar auto-color feature examples](./demo/angular-avatar-autocolor-example.png?raw=true \"angular-avatar auto-color feature examples\")\n\nThis example in plunker: https://plnkr.co/edit/bhnvU3?p=preview\n\n## Quick start. \n\n#### 1 Download and Install angular-avatar:\n\n - Bower: **bower install angular-avatar**\n - NPM: **npm install angular-avatar**\n - NuGet: **PM> Install-Package angular-avatar**\n - github: **https://github.com/ajsoriar/angular-avatar**\n\n#### 2 Include dependences: \n2.1 angular-avatar.js or angular-avatar.min.js are under dist folder.\n\n2.2 Include angular-avatar.js or angular-avatar.min.js after angular dependences, e.g.\n```javascript\n<script src=\"bower_components/angular/angular.min.js\"></script>\n<script src=\"bower_components/angular-ui-router/release/angular-ui-router.min.js\"></script>\n<script src=\"bower_components/angular-avatar/dist/angular-avatar.js\"></script>\n```\n\n2.3 Add ngAvatar module as a dependency when creating your app, e.g.\n\n```javascript\nvar app = angular.module('myApp', ['ngAvatar']);\n```\n\n#### 3 Use it. \nNo need to inject in controllers just use it in your html code this way:\n```javascript\n<ng-avatar initials=\"A\"></ng-avatar>\n```\nYou will get this:\n![angular-avatar basic usage example](./demo/angular-avatar-basic-example.png?raw=true \"angular-avatar basic usage example\")\n\nThis code will be generated by the directive:\n```javascript\n<div class=\"avatar-wrapper \" style=\"border-radius: 0;display: block;overflow: hidden;width: 45px;height: 45px;\">\n\t<img src=\"data:image/png;base64,iVBORw0KGgo...\" class=\"avatar-picture\" style=\"vertical-align: top;\" height=\"\" width=\"100%\">\n</div>\n```\n\nMore usage examples ready to copy and paste: :+1:\n```javascript\n<ng-avatar initials=\"A\"></ng-avatar>\n<div ng-avatar initials=\"AS\" bg-color=\"#00FF00\"></div>\n<ng-avatar initials=\"AJS\" bg-color=\"cyan\" text-color=\"blue\" round-shape=\"true\" ></ng-avatar>\n<div ng-avatar initials=\"AJ\" bg-color=\"red\" text-color=\"yellow\" picture-resolution=\"512\" width=\"64\"></div>\n<div ng-avatar initials=\"AJ\" bg-color=\"yellow\" text-color=\"green\" picture-resolution=\"1024\" width=\"32\"></div>\n<ng-avatar initials=\"AS\" bg-color=\"lightgreen\" text-color=\"red\" picture-resolution=\"16\" width=\"128\" pixelated=\"false\" ></ng-avatar>\n<ng-avatar initials=\"AS\" bg-color=\"#99f499\" text-color=\"red\" picture-resolution=\"16\" width=\"128\" pixelated=\"true\" ></ng-avatar>\n<ng-avatar initials=\"AS\" round-shape=\"true\" bg-color=\"#a8ff2c\" text-color=\"black\" picture-resolution=\"512\" width=\"42\" pixelated=\"false\" class=\"adres-css\" style=\"border:4px solid red\" ></ng-avatar>\n<ng-avatar initials=\"AS\" round-shape=\"true\" string=\"  andres     jose   soria \" bg-color=\"orange\" text-color=\"#FFF\" picture-resolution=\"256\" width=\"64\" pixelated=\"false\" class=\"adres-css\" style=\"border:4px solid red\" ></ng-avatar>\n<ng-avatar round-shape=\"true\" bg-color=\"#36adf2\" text-color=\"white\" picture-resolution=\"256\" width=\"56\" pixelated=\"false\" class=\"adres-css\" style=\"border:2px solid blue\" ></ng-avatar>\n<ng-avatar initials=\"CM\" corner-radius=\"7\" bg-color=\"#3875d7\"></ng-avatar>\n<div ng-avatar initials=\"jpg\" picture-format=\"jpeg\" bg-color=\"red\" text-color=\"yellow\" width=\"64\" corner-radius=\"5\" ></div>\n<div ng-avatar initials=\"png\" picture-format=\"png\" bg-color=\"purple\" text-color=\"yellow\" width=\"64\" corner-radius=\"5\" ></div>\n```\nYou will get this:\n\n![More angular-avatar basic usage examples](./demo/angular-avatar-examples.png?raw=true \"More angular-avatar basic usage examples\")\n\nRun the live example in plunker: http://plnkr.co/edit/TfCxUn?p=preview\n\n#### 4 Attributes\n\n| option               | default | description           |\n| :------------------- | :----- | :--------------------- |\n| `initials`           | null  | Letters that will be rendered inside the avatar. Commonly the initials of first name and last name or a username. One, two or three letters can be used. |\n| `string`             | null  | Here you can put a group of words like a sentence or your complete name. The first letter of each word will be used to generate the avatar's image. |\n| `bind`               | null  | The avatar component will listen for changes in `string` and `initials`. If the value of the data source in the controller changes the avatar will change as well. |\n| `max-length`         | null  | Limits the number of characters that the avatar displays. |\n| `width`              | 45    | An integer that sets the avatar's width and height in pixels using styles. Height of the avatar will be taken from it's width attribute. height attribute doesn't exist. |\n| `bg-color`           | #000  | This is the background color of the avatar. If not set, the background will be black. You can use regular css color's like color names, hex or rgb. |\n| `text-color`         | #fff  | The color of the letters. Letters will be white if this attribute is not set. Use regular css colors. |\n| `upper-case`         | false | Just put `upper-case=\"true\"` and the input string will be transformed into capitals. |\n| `round-shape`        | false | When set to `true` the avatar will take a round shape. By default the avatar will have a square shape. |\n| `corner-radius`      | 0     | Square avatars can have rounded corners using this property. |\n| `picture-resolution` | 256   | This attribute sets the real resolution (width and height in pixels) of the picture that this directive generates. `width` attribute will scale the picture using only styles. | \n| `pixelated`          | false | If ng-avatar's `width` is bigger than `picture-resolution` attribute, the web browser will scale the image and we will get a blurry picture. This attribute deactivates the anti-aliasing effect and you will get a pixelated image. Useful If you want a retro styling. |\n| `wrapper`            | true  | ng-avatar generates an img tag and a div layer that wraps the image. A boolean false value removes the div that wraps the avatar's image. This wrapping div has an special class `class=\"avatar-wrapper\"` that can be used to apply extra styling. ng-avatar uses this div to generate a round avatar applying extra styles when round-shape attribute is true, `round-shape=\"true\"` |\n| `class`              | null  | Use this attribute in the same way it is used in common html tags. |\n| `img-class`          | null  | Add an additional class to the generated image. Use the attribute in the same way it is used in common html tags. |\n| `style`              | null  | Use this attribute in the same way it is used in common html tags. |\n| `picture-format`     | png   | Set `picture-format=\"jpeg\"` and the avatar will be rendered as a jpeg. If not set, png format will be used by default. |\n| `auto-color`         | false | By default the generated picture will have a black background if no color is assigned. Setting `auto-color=\"true\"` will automatically assign a color to the avatar's background depending on the combination of characters used. |\n| `colors-palette`     | default colors | Change the palette used by `auto-color`. You can provide an array in your HTML or via the controller. |\n| `text-shadow`        | false | This paints an elegant thin shadow around the edges of each letter. |\n\n#### 4 License\n\nMIT\n\nCopyright (c) 2016 \n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n\n**Free Software, Yeah!**\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ajsoriar/angular-avatar.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.3.0"
+}

@@ -1,0 +1,19 @@
+<ion-view title="Alta Profesional Paso Uno" id="page10">
+  <ion-content padding="true" class="has-header">
+    <form id="registrarseUno-form2" class="list" name="registrarseUnoForm">
+      <ion-list id="registrarseUno-list3">
+        <label class="item item-input" id="registrarseUno-input4">
+          <input type="email" ng-model="registrando.email" placeholder="Email" name="email">
+        </label>
+        <label class="item item-input" id="registrarseUno-input5">
+          <input type="password" ng-model="registrando.password" placeholder="Contraseña">
+        </label>
+      </ion-list>
+      <label class="item item-input" id="registrarseUno-input6">
+        <input type="password" ng-model="registrando.confirm" placeholder="Confirmar Contraseña">
+      </label>
+      <ion-checkbox id="registrarseUno-checkbox1" name="agree" class="terminos-y-condiciones" ng-model="registrando.term">Estoy de acuerdo con los Terminos y Condiciones</ion-checkbox>
+      <a ui-sref="registrarseProDos" id="registrarseUno-button3" class="button button-assertive  button-block" ng-click="registrarseUno()" >CONTINUAR</a>
+    </form>
+  </ion-content>
+</ion-view>

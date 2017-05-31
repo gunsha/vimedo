@@ -1,0 +1,94 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="layout.med_registro"
+    android:background="@drawable/back_creme">
+
+
+    <TextView
+        android:text="INGRESE A CONTINUACION LOS DATOS SOLICITADOS"
+        android:layout_width="wrap_content"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="75dp"
+        android:id="@+id/med_ingresar"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="8dp"
+        android:layout_marginEnd="8dp" />
+
+    <ImageView
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        app:srcCompat="@drawable/img_profile"
+        android:layout_marginTop="7dp"
+        android:id="@+id/med_perfil"
+        android:layout_below="@+id/med_ingresar"
+        android:layout_centerHorizontal="true" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="131dp"
+        android:layout_alignTop="@+id/med_perfil"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:weightSum="1">
+
+
+
+        <EditText
+            android:id="@+id/reg_nombre_ape_id"
+            android:text=""
+            android:hint="@string/reg_nombre_ape"
+            android:inputType="textPersonName"
+            style="@style/formInput"
+            android:fontFamily="sans-serif"
+            android:layout_marginTop="40dp"
+            android:layout_weight="0.06" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="62dp"
+        android:weightSum="1"
+        android:layout_below="@+id/med_perfil"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+
+        <EditText
+            android:id="@+id/reg_fecha_nac_id"
+            android:text=""
+            android:hint="@string/reg_fecha_nac"
+            android:inputType="textEmailAddress"
+            style="@style/formInput"
+            android:layout_width="wrap_content"
+            android:layout_weight="0.02"
+            android:layout_height="48dp" />
+
+        <EditText
+            android:id="@+id/reg_documento_id"
+            android:text=""
+            android:hint="@string/reg_documento"
+            android:inputType="textPassword"
+            style="@style/formInput"
+            android:layout_marginRight="50dp"
+            android:layout_marginLeft="0dp"
+            android:layout_width="wrap_content"
+            android:layout_weight="0.02"
+            android:layout_height="48dp" />
+
+    </LinearLayout>
+
+
+</RelativeLayout>

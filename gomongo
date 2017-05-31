@@ -1,0 +1,2 @@
+mongod --bind_ip=$IP --port=8082 --dbpath=/Volumes/iGonza/Users/Gonza/Downloads/vimedo/data --nojournal --rest "$@"
+mongod --dbpath=/Volumes/iGonza/Users/Gonza/Downloads/vimedo/data --nojournal --rest "$@"

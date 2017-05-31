@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1">
+
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="233dp"
+        android:layout_weight="0.78"
+        android:background="@drawable/backgroundpac">
+
+        <TextView
+            android:id="@+id/pac_nombre_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="54dp"
+            android:text="Juan Gonzalez"
+            android:textColor="@color/font_black"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/pac_edad_id"
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/pac_nombre_id"
+            android:layout_centerHorizontal="true"
+            android:text="35 años"
+            android:textColor="@color/gray_0C"
+            android:textSize="20sp"
+            android:textStyle="italic" />
+
+        <TextView
+            android:id="@+id/pac_dni_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/pac_edad_id"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:text="DNI 27.335.512"
+            android:textColor="@color/gray_0C"
+            android:textSize="20sp" />
+
+        <ImageView
+            android:id="@+id/pac_perfil_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/pac_dni_id"
+            android:layout_centerHorizontal="true"
+            app:srcCompat="@drawable/userpc" />
+
+        <ImageView
+            android:id="@+id/pac_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/pac_ubicacion"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginLeft="26dp"
+            android:layout_marginStart="26dp"
+            app:srcCompat="@drawable/ic_location"
+            tools:ignore="VectorDrawableCompat" />
+
+        <TextView
+            android:id="@+id/pac_ubicacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/pac_location"
+            android:layout_alignParentBottom="true"
+            android:layout_alignStart="@+id/pac_location"
+            android:layout_marginLeft="36dp"
+            android:layout_marginStart="36dp"
+            android:text="Ciudad Autonoma de Buenos Aires , Argentina"
+            android:textColor="@color/gray_0C" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:text="Av. Rivadavia 1551"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="11dp"
+            android:id="@+id/textView12"
+            android:textSize="20sp"
+            android:layout_below="@+id/log_btn_editar_id"
+            android:layout_centerHorizontal="true"
+            android:textColor="@color/gray_0C"/>
+
+        <TextView
+            android:text="Entre Montevideo y Paraná"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView14"
+            android:textSize="20sp"
+            android:textColor="@color/gray_0C"
+            android:layout_below="@+id/textView12"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:text="Ciudad Autonoma de Buenos Aires"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="13dp"
+            android:id="@+id/textView16"
+            android:textSize="20sp"
+            android:textColor="@color/gray_0C"
+            android:layout_below="@+id/textView14"
+            android:layout_centerHorizontal="true" />
+
+        <Button
+            android:id="@+id/log_btn_editar_id"
+            android:text="@string/btn_editar_lbl"
+            android:layout_width="130dp"
+            android:layout_height="35dp"
+            android:textColor="#ffffff"
+            android:background="@drawable/circlebutton"
+            android:layout_alignParentTop="true"
+            android:layout_alignLeft="@+id/textView18"
+            android:layout_alignStart="@+id/textView18"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:text="11 08 97 55 66"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView18"
+            android:textSize="20sp"
+            android:textColor="@color/gray_0C"
+            android:layout_below="@+id/textView16"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="18dp" />
+
+
+    </RelativeLayout>
+</LinearLayout>
+
+

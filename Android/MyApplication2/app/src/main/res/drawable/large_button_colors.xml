@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:state_pressed="true" >
+        <shape android:shape="rectangle">
+            <corners android:radius="5dip" />
+            <stroke android:width="1dip" android:color="@color/vimedo_orange_pressed" />
+            <gradient android:angle="-90" android:startColor="@color/vimedo_orange_pressed" android:endColor="@color/vimedo_orange_pressed"  />
+        </shape>
+    </item>
+    <item android:state_focused="true">
+        <shape android:shape="rectangle"  >
+            <corners android:radius="5dip" />
+            <stroke android:width="1dip" android:color="@color/vimedo_orange_pressed" />
+            <solid android:color="@color/vimedo_orange"/>
+        </shape>
+    </item>
+    <item >
+        <shape android:shape="rectangle"  >
+            <corners android:radius="5dip" />
+            <stroke android:width="1dip" android:color="@color/vimedo_orange" />
+            <gradient android:angle="-90" android:startColor="@color/vimedo_orange" android:endColor="@color/vimedo_orange" />
+        </shape>
+    </item>
+</selector>

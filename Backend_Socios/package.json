@@ -1,0 +1,14 @@
+{
+  "name": "sociosservice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "test"
+  },
+  "dependencies": {
+    "express": "~4.13.4"
+  },
+  "author": "gabriel leyba",
+  "license": "ISC"
+}

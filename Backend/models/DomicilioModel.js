@@ -1,0 +1,1 @@
+var mongoose = require('mongoose');var Schema   = mongoose.Schema;var DomicilioSchema = new Schema({	'calle' : String,	'numero' : Number,	'localidad' : String,	'entrecalles' : String,	'lat' : Number,	'long' : Number,	'provincia' : String});module.exports = mongoose.model('Domicilio', DomicilioSchema);

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="gray_0E">#E0E0E0</color>
+    <color name="gray_0C">#C0C0C0</color>
+    <color name="gray_0A">#A0A0A0</color>
+    <color name="gray_08">#808080</color>
+    <color name="gray_05">#505050</color>
+    <color name="white">#FFFFFF</color>
+    <color name="red">#FFFFFF</color>
+    <color name="green_01">#4ac14f</color>
+    <color name="green_02">#008000</color>
+    <color name="mainBackgroundColor">#CCA090</color>
+    <!--color name="mainBackgroundColor">#FFD0B0</color-->
+    <color name="facebook_color">#3B579D</color>
+    <color name="google_color">#DD4E42</color>
+    <color name="vimedo_orange">#FF7B23</color>
+    <color name="vimedo_orange_pressed">#CF4B13</color>
+    <color name="font_black">#F000</color>
+    <color name="transparent">#00000000</color>
+</resources>

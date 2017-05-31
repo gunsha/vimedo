@@ -1,0 +1,17 @@
+<ion-view title="Solicitar medico" id="page8">
+  <ion-content padding="true" class="has-header">
+    <form id="solicitarMedico-form2" class="list" name="solicitarMedicoForm">
+  <div class="item item-divider">
+    Sintomas
+  </div>
+        <label class="item item-input item-text-wrap" id="solicitarMedico-input4">
+          <textarea rows="5" ng-model="solicitador.sintomas" placeholder="Describa los sintomas que tiene" name="sintomas"></textarea>
+        </label>
+  <div class="item item-divider">
+    Domicilio
+  </div>
+  </div>
+    <domicilioradio ng-repeat="d in solicitador.domicilios" data="d" model="solicitador.domicilio"></domicilioradio>
+      <button id="solicitarMedico-button3" class="button button-assertive  button-block" ng-click="solicitarMedico()">SOLICITAR</abutton
+  </ion-content>
+</ion-view>

@@ -1,0 +1,25 @@
+<ion-view title="Login" id="page4">
+  <ion-content padding="true" class="has-header">
+    <form id="login-form1" name="loginform" class="list" novalidate>
+      <ion-list id="login-list2">
+        <label class="item item-input" id="login-input1">
+          <input type="email" ng-model="login.email" placeholder="Email" name="email" required>
+        </label>
+        <label class="item item-input" id="login-input2">
+          <input type="password" ng-model="login.password" placeholder="Password" name="password" required>
+        </label>
+      </ion-list>
+      <div class="spacer" style="height: 20px;"></div>
+      <button class="button button-block button-positive" ng-disabled="loginform.email.$invalid" ng-click="loginUsuario()">Log in</button>
+      <div>
+        <button class="button-small button-block button-positive" ng-click="logintest1()">test1 (paciente)</button>
+        <button class="button-small button-block button-positive" ng-click="loginm007()">m007 (medico)</button>
+      </div>
+      <div class="spacer" style="height: 40px;"></div>
+      <div id="login-button-bar1" class="button-bar">
+        <a ui-sref="registrarsePre" id="login-button1" class="button button-stable  button-block"><span style="font-size: 13px">Registrarse</span></a>
+        <a ui-sref="olvideContrasenia" id="login-button7" class="button button-stable  button-block"><span style="font-size: 13px">Olvide mi contraseña</span></a>
+      </div>
+    </form>
+  </ion-content>
+</ion-view>

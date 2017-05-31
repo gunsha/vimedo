@@ -1,0 +1,156 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="5dp"
+    android:background="@color/mainBackgroundColor"
+    tools:context="layout.SolicitarMedicoOk">
+
+    <Button
+        android:id="@+id/btn_pac_vis_pen_volver_id"
+        android:text="@string/aceptar"
+        style="@style/vimedoButton"
+        android:visibility="gone"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:textColor="#ffffff" />
+
+    <LinearLayout
+        android:id="@+id/pac_vis_pen_no_asignado_container_id"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:padding="10dp"
+        android:layout_alignParentTop="true">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:src="@drawable/user_icon_24dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="30dp" />
+
+        <TextView
+            android:text="@string/profesional_no_asignado"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textColor="@color/green_02"
+            android:textSize="20sp"
+            android:layout_marginTop="50dp"
+            android:id="@+id/solic_completo"
+            android:gravity="center"
+            android:layout_marginEnd="70dp"
+            android:layout_marginRight="70dp"
+            android:layout_marginStart="70dp"
+            android:layout_marginLeft="70dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/pac_vis_pen_asignado_container_id"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:padding="10dp"
+        android:layout_alignParentTop="true" >
+
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/pac_vis_pen_prof_img_id"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:src="@drawable/user_icon_24dp"
+            android:layout_marginBottom="0dp"
+            android:layout_marginTop="10dp" />
+        <TextView
+            android:id="@+id/pac_vis_pen_nomape_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/gray_05"
+            android:textStyle="bold"
+            android:textSize="17sp"
+            android:layout_marginTop="5dp" />
+
+        <TextView
+            android:id="@+id/pac_vis_pen_especialidad_id"
+            android:gravity="center"
+            android:textColor="@color/gray_08"
+            android:layout_width="match_parent"
+            android:layout_marginTop="5dp"
+            android:textSize="14sp"
+            android:layout_height="wrap_content" />
+
+        <RatingBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/pac_vis_pen_ratingBar"
+            android:scaleX=".5"
+            android:scaleY=".5"
+            android:progressTint="@color/vimedo_orange"
+            android:progressBackgroundTint="@android:color/darker_gray"
+            android:secondaryProgressTint="@android:color/darker_gray"
+            android:layout_gravity="center"
+            android:isIndicator="true"
+            android:focusable="false"
+            android:numStars="5"/>
+
+        <TextView
+           android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/horario_arribo_aproximado"
+            android:gravity="center"
+            android:textColor="@color/gray_05"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginTop="0dp" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center|center_vertical">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:tint="@color/vimedo_orange_pressed"
+                android:scaleX="0.5"
+                android:scaleY="0.5"
+                android:src="@drawable/ic_clock"/>
+            <TextView
+                android:id="@+id/pac_vis_pen_horario_estimado_arrivo_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/gray_05"
+                android:textSize="14sp"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:text="@string/perfil"
+            android:textColor="@color/gray_05"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginTop="5dp" />
+
+        <TextView
+            android:id="@+id/pac_vis_pen_perfil_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:textColor="@color/gray_08"
+            android:layout_marginTop="5dp"
+            android:textSize="14sp" />
+
+        <com.google.android.gms.maps.MapView
+            android:id="@+id/prof_vis_pen_pacientes_Map_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+</RelativeLayout>

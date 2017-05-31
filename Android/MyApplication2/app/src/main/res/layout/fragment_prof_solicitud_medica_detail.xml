@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/mainBackgroundColor"
+    tools:context="layout.PacEscritorio">
+
+    <Button
+        android:id="@+id/btn_continuar_id"
+        android:text="@string/btn_visita_finalizada_lbl"
+        style="@style/vimedoButton"
+        android:layout_marginBottom="20dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:textColor="#ffffff"/>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:weightSum="1"
+        android:layout_margin="10dp"
+        android:layout_alignParentTop="true">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/sm_detail_pac_user_icon_id"
+            android:layout_width="match_parent"
+            android:layout_height="130dp"
+            android:src="@drawable/user_icon_24dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="20dp" />
+
+        <TextView
+            android:id="@+id/sm_detail_pac_nombre_apellido_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text=""
+            android:textColor="@color/gray_05"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:id="@+id/sm_detail_pac_documento_id"
+            android:text=""
+            android:gravity="center"
+            android:textColor="@color/gray_05"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.01" />
+
+        <TextView
+            android:id="@+id/sm_detail_pac_credencial_id"
+            android:text=""
+            android:gravity="center"
+            android:textColor="@color/gray_05"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_weight="0.01" />
+
+        <TextView
+           android:text="@string/sintomas"
+            android:gravity="left"
+            android:textColor="@color/font_black"
+            android:textStyle="italic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_weight="0.01" />
+
+        <TextView
+            android:id="@+id/sm_detail_pac_sintomas_id"
+            android:text=""
+            android:gravity="left"
+            android:textColor="@color/gray_05"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.01" />
+
+        <TextView
+            android:text="@string/antecedentes_medicos"
+            android:gravity="left"
+            android:textColor="@color/font_black"
+            android:textStyle="italic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_weight="0.01" />
+
+        <TextView
+            android:id="@+id/sm_detail_pac_antec_medicos_id"
+            android:text=""
+            android:gravity="left"
+            android:textColor="@color/gray_05"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.01" />
+
+    </LinearLayout>
+</RelativeLayout>

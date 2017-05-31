@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <ImageView
+        app:srcCompat="@drawable/ic_fecha"
+        android:layout_marginLeft="24dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="34dp"
+        android:id="@+id/ic_fecha"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_width="50sp"
+        android:layout_height="40sp" />
+
+    <TextView
+        android:text="Septiembre,"
+        android:textStyle="bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/visita_mes"
+        android:layout_alignTop="@+id/visita_fecha"
+        android:layout_toRightOf="@+id/visita_fecha"
+        android:layout_toEndOf="@+id/visita_fecha"
+        android:layout_marginTop="10dp" />
+
+    <TextView
+        android:text="2016"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/visitas_anio"
+        android:layout_alignBaseline="@+id/visita_mes"
+        android:layout_alignBottom="@+id/visita_mes"
+        android:layout_toRightOf="@+id/visita_mes"
+        android:layout_toEndOf="@+id/visita_mes" />
+
+    <TextView
+        android:text="08:00"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/visitas_hora"
+        android:layout_below="@+id/visita_mes"
+        android:layout_toRightOf="@+id/visita_fecha"
+        android:layout_toEndOf="@+id/visita_fecha" />
+
+    <TextView
+        android:text="am"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/visitas_hora_tipo"
+        android:layout_below="@+id/visita_mes"
+        android:layout_toRightOf="@+id/visitas_hora"
+        android:layout_toEndOf="@+id/visitas_hora" />
+
+    <TextView
+        android:text="Paciente:"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:id="@+id/visitas_paciente"
+        android:layout_below="@+id/ic_fecha"
+        android:layout_alignRight="@+id/visita_fecha"
+        android:layout_alignEnd="@+id/visita_fecha"
+        android:textStyle="bold"
+        android:textColor="@color/vimedo_orange"/>
+
+    <TextView
+        android:text="21"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="40sp"
+        android:id="@+id/visita_fecha"
+        android:layout_above="@+id/pac_nombre"
+        android:layout_toRightOf="@+id/ic_fecha"
+        android:layout_toEndOf="@+id/ic_fecha" />
+
+    <TextView
+        android:text="Juan Carlos Gomez"
+        android:textStyle="bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/pac_nombre"
+        android:textSize="18sp"
+        android:layout_alignBaseline="@+id/visitas_paciente"
+        android:layout_alignBottom="@+id/visitas_paciente"
+        android:layout_toRightOf="@+id/visitas_paciente"
+        android:layout_toEndOf="@+id/visitas_paciente" />
+
+    <TextView
+        android:text="Diagnostico:"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/visitas_paciente"
+        android:layout_alignLeft="@+id/visitas_paciente"
+        android:layout_alignStart="@+id/visitas_paciente"
+        android:id="@+id/pac_diagnostico"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        android:textColor="@color/vimedo_orange"
+        />
+
+    <TextView
+        android:text="Faringitis Aguda."
+        android:textSize="18sp"
+        android:textColor="@color/gray_08"
+
+        android:textStyle="italic"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView11"
+        android:layout_alignBaseline="@+id/pac_diagnostico"
+        android:layout_alignBottom="@+id/pac_diagnostico"
+        android:layout_toRightOf="@+id/visitas_hora"
+        android:layout_toEndOf="@+id/visitas_hora" />
+
+
+</RelativeLayout>

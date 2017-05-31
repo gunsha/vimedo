@@ -1,0 +1,45 @@
+<ion-view title="Perfil" id="page1" hide-back-button="true">
+  <ion-content padding="true" class="has-header">
+    <div style="margin: 0px; text-align: center;">
+      <span class="nombre-titulo" ng-bind="nomape"></span>
+    </div>
+    <div style="margin: 0px; text-align: left;">
+      <span class="nombre-titulo"></span>
+      
+
+
+      <!-- <domicilio data="d" model="mod"></domicilio> -->
+      
+<ion-radio class="item wrap" ng-value="'{{d._id}}'" ng-model="selectedDirId"  ng-click="showDir('{{d._id}}')" ng-repeat="d in domicilios" >
+              {{d.calle}} {{d.numero}}, {{d.localidad}}<br/>
+              entre: {{d.entrecalles}}
+      </ion-radio>
+
+
+      <div class="item wrap item-icon-left" ng-click="newDire()" ng-show="!vars.showTheForm">
+        <i class="icon ion-plus-circled"></i>Agregar Direccion
+      </div>
+      
+      <div class="item wrap" ng-show="vars.showTheForm" >
+        <form ng-submit="processForm()" name="registrationForm">
+            <button type="button" ng-click="hidemap();vars.showTheForm = false">Cancel</button>
+            <!-- <div id="map" data-tap-disabled="true"></div> -->
+            <input id="autocomplete" placeholder="Ingrese su direccion" class="autocomplete" type="text" ng-focus="disableTap()"></input>
+        </form>
+      </div>
+    </div>
+    <div class="spacer" style="height: 20px;"></div>
+    <div style="margin: 0px; text-align: left;">
+      <div id="map" data-tap-disabled="true" style="height: 300px"></div>
+    </div>
+
+<!-- <ion-content scroll="false">
+    
+</ion-content>
+ -->      
+
+
+
+
+  </ion-content>
+</ion-view>

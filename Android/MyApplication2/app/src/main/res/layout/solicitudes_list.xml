@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="5dp"
+    android:orientation="horizontal">
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/afi_item_imagen_id"
+        android:src="@drawable/user_icon_24dp"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:layout_width="50dp"
+        android:layout_height="35dp" />
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/afi_item_nomape_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="@color/gray_05"
+            android:textIsSelectable="false" />
+        <TextView
+            android:id="@+id/afi_item_credencial_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="@color/gray_08"
+            android:textIsSelectable="false" />
+        <TextView
+            android:id="@+id/afi_item_direccion__id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="@color/gray_08"
+            android:textIsSelectable="false" />
+    </LinearLayout>
+</LinearLayout>

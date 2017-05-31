@@ -1,0 +1,24 @@
+{
+    "secciones": [
+        "index",
+        "nav",
+        "auth",
+        "profesionales",
+        "pacientes"
+    ],
+    "core": [
+        "main",
+        "app",
+        "states"
+    ],
+    "libs": [
+        "angular/angular.min",
+        "angular-ui-router/release/angular-ui-router.min",
+        "angular-jwt/dist/angular-jwt.min",
+        "angular-growl-v2/build/angular-growl.min",
+        "angular-table",
+        "sweetalert2/dist/sweetalert2.min",
+        "angular-avatar/dist/angular-avatar.min"
+    ],
+    "components": []
+}

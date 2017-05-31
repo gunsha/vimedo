@@ -1,0 +1,86 @@
+<resources>
+    <string name="app_name">VIMEDO</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <!-- Login screen -->
+    <string name="user_name">Usuario</string>
+    <string name="email">E-mail</string>
+    <string name="password">Contraseña</string>
+    <string name="registrarse">REGISTRARSE</string>
+    <string name="olv_password">OLVIDÉ MI CONTRASEÑA</string>
+    <string name="iniciar_sesion">Iniciar sesión con</string>
+    <string name="btn_ingresar_lbl">Ingresar</string>
+
+    <!-- Registro screen -->
+    <string name="resgistro_title">Registrarse</string>
+    <string name="reg_email">E-mail</string>
+    <string name="reg_pass">Contraseña</string>
+    <string name="reg_pass_confirm">Confirmar contraseña</string>
+    <string name="reg_credencial">Credencial</string>
+    <string name="reg_terminos">Estoy de acuerdo con los terminos y condiciones.</string>
+    <string name="btn_continuar_lbl">Continuar</string>
+    <string name="btn_cancelar_reg_lbl">Cancelar</string>
+    <string name="reg_nombre_ape">Nombre y Apellido</string>
+    <string name="reg_fecha_nac">Fecha de Nacimiento</string>
+    <string name="reg_documento">DNI / LC / LE Nª</string>
+    <string name="reg_calle_nro">Calle y Nùmero</string>
+    <string name="reg_localidad">Localidad</string>
+    <string name="reg_provincia">Provincia</string>
+    <string name="reg_telefono">Telèfono / Celular</string>
+
+    <!-- Perfil Paciente -->
+    <string name="btn_editar_lbl">Editar</string>
+
+    <!-- Calificar Profesional -->
+    <string name="btn_calificar_lbl">Calificar</string>
+
+    <!-- Recuperar Contraseña -->
+    <string name="btn_recup_lbl">Enviar</string>
+
+    <!-- Ver Perfil Doctor -->
+    <string name="btn_perfil_volver">Volver</string>
+    <!-- Solicitar Médico -->
+    <string name="btn_solic_lbl">Ver Perfil</string>
+
+    <!-- Solcitar medico Final -->
+    <string name="btn_aceptar_lbl"> Aceptar</string>
+    <string name="volver">VOLVER</string>
+    <string name="soy_prof_text">Soy Profesional</string>
+    <string name="reg_mp">MP</string>
+    <string name="btn_registrarse_lbl">REGISTRARSE</string>
+    <string name="ingresar_domicilio">Ingresar Domicilio</string>
+    <string name="domicilio">Domicilio</string>
+    <string name="numero">Número</string>
+    <string name="registrar_pedido">Registrar Pedido</string>
+    <string name="sintomas">Sintomas</string>
+    <string name="sintomas_hint">Describa los sintomas que tuvo</string>
+    <string name="tiempo">Tiempo</string>
+    <string name="domicilios_registrados">Domicilios Registrados</string>
+    <string name="ltimos_domicilios_utilizados">Últimos Domicilios Utilizados</string>
+    <string name="agregar_domicilio">Agregar Otro Domicilio</string>
+    <string name="afiliados_gf">Afiliados del Grupo Familiar</string>
+    <string name="visita_pendiente">VISITA PENDIENTE</string>
+    <string name="solicitar_medico">SOLICITAR MEDICO</string>
+    <string name="notificaciones">NOTIFICACIONES</string>
+    <string name="aceptar">ACEPTAR</string>
+    <string name="datos_procesados">HEMOS PROCESADO SUS DATOS CON ËXITO</string>
+    <string name="profesional_no_asignado">Todavía no se le ha asignado ningún médico a su pedido</string>
+    <string name="perfil">Perfil:</string>
+    <string name="horario_arribo_aproximado">Horario de arribo aproximado</string>
+    <string name="solicitudes_pendientes">Solicitudes Pendientes</string>
+    <string name="btn_visita_finalizada_lbl">VISITA FINALIZADA</string>
+    <string name="antecedentes_medicos">Antecedentes médicos:</string>
+    <string name="puntuacion_general">General</string>
+    <string name="_por_profesional">Ud. fue atendido/a por este profesional</string>
+    <string name="puntuacion_claridad">Claridad</string>
+    <string name="puntuacion_puntualidad">Puntualidad</string>
+    <string name="puntuacion_amabilidad">Amabilidad</string>
+
+</resources>

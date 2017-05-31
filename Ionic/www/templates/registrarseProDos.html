@@ -1,0 +1,44 @@
+<ion-view title="Alta Profesional Paso Dos" id="page10">
+  <ion-content padding="true" class="has-header">
+    <h5 id="registrarseDos-heading1" style="color:#000000;text-align:center;">INGRESE A CONTINUACIÓN LOS DATOS SOLICITADOS</h5>
+    <form id="registrarseDos-form3" class="list">
+      <ion-list id="registrarseDos-list5">
+        <label class="item item-input" id="registrarseDos-input7">
+          <input type="text" ng-model="registrando.nomape" placeholder="Nombre y Apellido">
+        </label>
+        <label class="item item-input" id="registrarseDos-input8">
+          <input type="text" ng-model="registrando.fenac" placeholder="Fecha de Nacimiento">
+        </label>
+        <label class="item item-input" id="registrarseDos-input9">
+          <input type="text" ng-model="registrando.dnilcle" placeholder="DNI / LC / LE N°">
+        </label>
+        <label class="item item-input" id="registrarseDos-input10">
+          <input type="text" ng-model="registrando.dopart" placeholder="Domicilio Particular">
+        </label>
+        <label class="item item-select" id="registrarseDos-select1" name="espe" style="height: 45px">
+          <select ng-model="registrando.espe"  ng-options="o._id as o.nombre for o in retrievedEspes">
+            <option value="">Seleccionar Especialidad</option>
+          </select>
+        </label>
+      </ion-list>
+      <label class="item item-input" id="registrarseDos-input12">
+        <input type="text" ng-model="registrando.matrina" placeholder="Matricula Nacional N°">
+      </label>
+      <label class="item item-input" id="registrarseDos-input13">
+        <input type="text" ng-model="registrando.titu" placeholder="Titulo">
+      </label>
+      <label class="item item-input" id="registrarseDos-input14">
+        <input type="text" ng-model="registrando.matripro" placeholder="Matricula Provincial N°">
+      </label>
+      <label class="item item-input" id="registrarseDos-input15">
+        <input type="text" ng-model="registrando.pro" placeholder="Provincia">
+      </label>
+      <label class="item item-select" id="registrarseDos-select2" name="prepa">
+        <select ng-model="registrando.prepa" ng-options="o._id as o.nombre for o in retrievedPrepas">
+            <option value="">Seleccionar Prepaga</option>
+        </select>
+      </label>
+      <a ui-sref="mensajes" id="registrarseUno-button3" class="button button-assertive  button-block" ng-click="registrarUsuario()">COMENZAR</a>
+    </form>
+  </ion-content>
+</ion-view>
