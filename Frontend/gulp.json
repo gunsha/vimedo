@@ -4,7 +4,8 @@
         "nav",
         "auth",
         "profesionales",
-        "pacientes"
+        "pacientes",
+        "solicitudes"
     ],
     "core": [
         "main",
@@ -19,7 +20,9 @@
         "angular-growl-v2/build/angular-growl.min",
         "angular-table",
         "sweetalert2/dist/sweetalert2.min",
-        "angular-avatar/dist/angular-avatar.min"
+        "angular-avatar/dist/angular-avatar.min",
+        "ng-map.min",
+        "moment/min/moment.min"
     ],
     "components": []
 }

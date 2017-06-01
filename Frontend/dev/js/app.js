@@ -1,7 +1,9 @@
 // var apiRoute = 'http://vimedo.gunsha.c9users.io:8080';
+// var client = "http://vimedo.gunsha.c9users.io:8081";
 var apiRoute = 'http://localhost:3000';
+var client = "http://localhost:3001";
 
-angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table','ngAvatar','blockUI'])
+angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table','ngAvatar','blockUI','ngMap'])
     .run(['$rootScope', '$state', 'authManager', 'jwtHelper', '$anchorScroll', 'growl', function(r, s, authManager, jwtHelper, $anchorScroll, growl) {
         r.hideNav = false;
         r.navTitle = '';
