@@ -2,7 +2,7 @@
 // var apiRoute = 'http://vimedo.gunsha.c9users.io:8080';
 var apiRoute = 'http://localhost:3000';
 
-angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table','ngAvatar'])
+angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table','ngAvatar','blockUI'])
     .run(['$rootScope', '$state', 'authManager', 'jwtHelper', '$anchorScroll', 'growl', function(r, s, authManager, jwtHelper, $anchorScroll, growl) {
         r.hideNav = false;
         r.navTitle = '';
@@ -135,8 +135,8 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
             }
         };
     }])
-    .config(['$httpProvider', 'jwtOptionsProvider', 'growlProvider',
-        function($httpProvider, jwtOptionsProvider, growlProvider) {
+    .config(['$httpProvider', 'jwtOptionsProvider', 'growlProvider','blockUIConfig',
+        function($httpProvider, jwtOptionsProvider, growlProvider,blockUIConfig) {
             jwtOptionsProvider.config({
                 whiteListedDomains: ['localhost'],
                 unauthenticatedRedirectPath: '/login',
@@ -153,6 +153,7 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
             growlProvider.globalTimeToLive(3000);
             growlProvider.globalDisableCountDown(true);
             growlProvider.globalDisableIcons(true);
+            blockUIConfig.template = '<div class="cssload-container"><div class="cssload-speeding-wheel"></div></div>';
 
         }
     ])

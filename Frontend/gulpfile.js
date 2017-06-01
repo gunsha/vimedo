@@ -88,7 +88,7 @@ gulp.task('seccion',function(){
 });
 gulp.task('css',function(){
   
-  gulp.src([])
+  gulp.src(['./dev/css/app.css'])
   .pipe(concat('app.css'))
   .pipe(cssMin())
   .pipe(gulp.dest('./css'));

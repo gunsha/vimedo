@@ -13,6 +13,7 @@
     ],
     "libs": [
         "angular/angular.min",
+        "angular-block-ui/dist/angular-block-ui.min",
         "angular-ui-router/release/angular-ui-router.min",
         "angular-jwt/dist/angular-jwt.min",
         "angular-growl-v2/build/angular-growl.min",
