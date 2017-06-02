@@ -6,6 +6,11 @@ function profesionalesCtrl(s, r, profesionalesService, state) {
 	vm.profesionales = [];
 	vm.profesionalesOrig = [];
 	vm.modalPro = {};
+	
+	vm.tableConfig = {
+        maxPages:"10",
+        itemsPerPage: "8"
+    };
 
 	vm.filterList = function(){
 		var lower = vm.query.toLowerCase();

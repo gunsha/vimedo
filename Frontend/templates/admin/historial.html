@@ -1,0 +1,201 @@
+<section class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box">
+        <div class="box-header with-border">
+          <h3 class="box-title">Listado de Solicitudes Medicas</h3>
+        </div>
+        <!-- /.box-header -->
+        <div class="box-body">
+          <div class="row">
+            <div class="col-lg-12 box-tools">
+              <div class="pull-left">
+                <!-- <a href="#" class="btn btn-md btn-primary" data-toggle="modal" data-target="#newModal"><span class="glyphicon glyphicon-plus"></span> Nuevo</a> -->
+              </div>
+              <div class="pull-right has-feedback">
+                <input type="text" class="form-control input-sm" ng-model="ctrl.query" ng-change="ctrl.filterList();" placeholder="Filtrar">
+                <span class="glyphicon glyphicon-search form-control-feedback"></span>
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered" at-table at-list="ctrl.solicitudes" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
+              <thead>
+              </thead>
+              <tbody>
+                <tr>
+                  <td at-sortable at-attribute="fechaAlta" at-title="Alta"> {{item.fechaAlta | date:'dd/MM/yyyy HH:MM'}} </td>
+                  <td at-implicit at-sortable at-attribute="afiliado.personaFisica.nombre" at-title="Nombre"></td>
+                  <td at-implicit at-sortable at-attribute="afiliado.personaFisica.apellido" at-title="Apellido"></td>
+                  <td at-implicit at-sortable at-attribute="afiliado.personaFisica.nroDocumento" at-title="DNI / LC / LE N°"></td>
+                  <td at-implicit at-attribute="afiliado.credencial" at-title="Credencial"></td>
+                  <td at-title="Ver">
+                    <a href="#" class="btn btn-success" ng-click="ctrl.view(item);"><span class="glyphicon glyphicon-zoom-in"></span> </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- /.box-body -->
+        <div class="box-footer clearfix">
+          <at-pagination class="pagination pagination-sm no-margin pull-right" at-config="ctrl.tableConfig" at-list="ctrl.solicitudes"></at-pagination>
+        </div>
+      </div>
+      <!-- /.box -->
+    </div>
+  </div>
+</section>
+<div id="newModal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Nuevo Afiliado</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" ng-submit="ctrl.savePro();">
+          <fieldset>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newName">Nombre</label>
+              <div class="col-md-5">
+                <input id="modalPro.name" ng-model="ctrl.modalPro.name" name="newName" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newApellido">Apellido</label>
+              <div class="col-md-5">
+                <input id="modalPro.apellido" ng-model="ctrl.modalPro.apellido" name="newApellido" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newDoc">DNI / LC / LE N°</label>
+              <div class="col-md-5">
+                <input id="modalPro.doc" ng-model="ctrl.modalPro.doc" name="newDoc" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newMatricula">Matricula</label>
+              <div class="col-md-5">
+                <input id="modalPro.matricula" ng-model="ctrl.modalPro.matricula" name="newMatricula" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newEmail">Email</label>
+              <div class="col-md-5">
+                <input id="modalPro.email" ng-model="ctrl.modalPro.email" name="newEmail" type="email" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newTelefono">Telefono</label>
+              <div class="col-md-5">
+                <input id="modalPro.telefono" ng-model="ctrl.modalPro.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newDireccion">Direccion</label>
+              <div class="col-md-5">
+                <input id="modalPro.direccion" ng-model="ctrl.modalPro.direccion" name="newDireccion" type="text" placeholder="" class="form-control input-md" required="">
+              </div>
+            </div>
+            <!-- Button (Double) -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="guardarNew"></label>
+              <div class="col-md-8">
+                <button id="guardarNew" type="submit" name="guardarNew" class="btn btn-success">Aceptar</button>
+                <button id="cancelarNew" name="cancelarNew" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<div id="viewModal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{{ctrl.objSel.afiliado.personaFisica.nombre +' '+ ctrl.objSel.afiliado.personaFisica.apellido}}</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" ng-submit="ctrl.savePro();">
+          <fieldset>
+          <legend>Solicitud</legend>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Alta Solicitud</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.fechaAlta | date:'dd/MM/yyyy HH:MM'}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Sintomas</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.sintomas}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Tiempo de Sintomas</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.horasSintomas}} hs. {{ctrl.objSel.minutosSintomas}} min.</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Antecedentes</label>
+              <div class="col-md-5">
+                <p class="form-control-static" ng-repeat="antecedentes in ctrl.objSel.antecedentesMedicos">{{antecedentes.nombre}}</p>
+              </div>
+            </div>
+            <legend>Profesional Asignado</legend>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Nombre</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.profesional.personaFisica.nombre +' '+ ctrl.objSel.profesional.personaFisica.apellido}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Matricula</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.profesional.matricula }}</p>
+              </div>
+            </div>
+            <legend>Afiliado</legend>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Credencial</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.afiliado.credencial}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">DNI / LC / LE N°</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.afiliado.personaFisica.nroDocumento}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Fecha de nacimiento</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.afiliado.personaFisica.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Domicilio/s</label>
+              <div class="col-md-5">
+                <p class="form-control-static" ><u>Calle</u>: {{ctrl.objSel.domicilio.calle + ' ' + ctrl.objSel.domicilio.numero }}</p>
+                <p class="form-control-static" ><u>Entre Calles</u>: {{ctrl.objSel.domicilio.entrecalles }}</p>
+                <p class="form-control-static" ><u>Localidad</u>: {{ctrl.objSel.domicilio.localidad + ', ' + ctrl.objSel.domicilio.provincia}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Telefono/s</label>
+              <div class="col-md-5">
+                <p class="form-control-static" ng-repeat="tel in ctrl.objSel.afiliado.personaFisica.telefonos">{{tel}}</p>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

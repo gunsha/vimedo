@@ -7,6 +7,12 @@ function pacientesCtrl(r, pacientesService, state) {
 	vm.afiliadosOrg = [];
 
 	vm.modalAfil = {};
+	vm.afilSel = {};
+
+	vm.tableConfig = {
+        maxPages:"10",
+        itemsPerPage: "8"
+    };
 
 	vm.filterList = function(){
 		var lower = vm.query.toLowerCase();
@@ -27,6 +33,11 @@ function pacientesCtrl(r, pacientesService, state) {
 			vm.afiliadosOrg = data;
 		});
 	}
+
+	vm.viewAfil = function(afil){
+		vm.afilSel = afil;
+		$('#viewModal').modal();
+	};
 
 	vm.saveAfil = function(){
 		vm.modalAfil = {};

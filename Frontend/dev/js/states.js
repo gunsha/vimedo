@@ -85,7 +85,7 @@ angular.module('vimedo')
                 views: {
                     'contentView@admin': {
                         templateUrl: 'templates/admin/historial.html',
-                        controller: 'authCtrl as ctrl'
+                        controller: 'solicitudesCtrl as ctrl'
                     }
                 },
                     data:{

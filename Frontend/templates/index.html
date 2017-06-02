@@ -3,7 +3,8 @@
 		<div class="col-md-5">
 			<div class="list-group" style="height: 600px;max-height:600px;overflow-y:auto;">
 				<div ng-repeat="s in ctrl.solicitudes track by $index" >
-					<button type="button" class="list-group-item"  ng-class="{0: 'list-group-item-danger', 1: 'list-group-item-success'}[s.estado]" ng-click="ctrl.toogleMenu(s._id);ctrl.centrarMapa(s.domicilio.latitud, s.domicilio.longitud)"><span ng-show="s.estado == 1" class="fa fa-check pull-right"></span>{{s.afiliado.personaFisica.nombre}} {{s.afiliado.personaFisica.apellido}}</button>
+					<button type="button" class="list-group-item"  ng-class="{0: 'list-group-item-danger', 1: 'list-group-item-success'}[s.estado]" ng-click="ctrl.toogleMenu(s._id);ctrl.centrarMapa(s.domicilio.latitud, s.domicilio.longitud)"><span ng-show="s.estado == 1" class="fa fa-check pull-right"></span>
+					{{s.afiliado.personaFisica.nombre}} {{s.afiliado.personaFisica.apellido}}</button>
 		  			<div id="{{s._id}}Menu" class="container-data hide">
 		  				<div class="row-fluid">
 		  					<u>Creado el</u>: {{s.fechaAlta}}
