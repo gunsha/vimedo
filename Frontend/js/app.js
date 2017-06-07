@@ -4,7 +4,7 @@
 var apiRoute = 'http://localhost:3000';
 var client = "http://localhost:3001";
 
-angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table','ngAvatar','blockUI','ngMap'])
+angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table', 'ngAvatar', 'blockUI', 'ngMap','ngAnimate','ui.bootstrap'])
     .run(['$rootScope', '$state', 'authManager', 'jwtHelper', '$anchorScroll', 'growl', function(r, s, authManager, jwtHelper, $anchorScroll, growl) {
         r.hideNav = false;
         r.navTitle = '';
@@ -78,11 +78,8 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
             if (toState.data && toState.data.requiresLogin && !r.user || (toState.data && toState.data.requiresRole && !r.hasAnyRole(toState.data.requiresRole))) {
                 growl.error('acceso no autorizado');
                 event.preventDefault();
-                console.log('error')
-                // if (s.current !== 'app.login') {
-                    s.go('app.login');
-                    $('.modal').modal('hide');
-                // }
+                s.go('app.login');
+                $('.modal').modal('hide');
             }
             $anchorScroll(0);
         });
@@ -92,19 +89,15 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
                 r.navTitle = toState.data.pageTitle;
             r.active = s.current.name;
             $('body').removeClass('sidebar-open');
-            if(!r.user)
+            if (!r.user)
                 s.go('app.login');
         });
 
         r.$on('$stateNotFound', function(event, unfoundState, fromState, fromParams) {
-            console.log(unfoundState.to);
-            console.log(unfoundState.toParams);
-            console.log(unfoundState.options);
             s.go('app');
         });
 
         r.$on('$stateChangeError', function(event, toState, toParams, fromState, fromParams, error) {
-            console.log(error);
             s.go('app');
         });
 
@@ -137,11 +130,15 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
             }
         };
     }])
-    .config(['$httpProvider', 'jwtOptionsProvider', 'growlProvider','blockUIConfig',
-        function($httpProvider, jwtOptionsProvider, growlProvider,blockUIConfig) {
+    .config(['$httpProvider', 'jwtOptionsProvider', 'growlProvider', 'blockUIConfig',
+        function($httpProvider, jwtOptionsProvider, growlProvider, blockUIConfig) {
             jwtOptionsProvider.config({
                 whiteListedDomains: ['localhost'],
-                unauthenticatedRedirectPath: '/login',
+                unauthenticatedRedirector: ['$state', 'growl', function($state, growl) {
+                    $state.go('app.login');
+                    growl.warning('Su sesi&oacute;n ha expirado.');
+                }],
+                loginPath: 'app.login',
                 tokenGetter: ['options', function(options) {
                     // Skip authentication for any requests ending in .html
                     if (options && options.url && options.url.substr(options.url.length - 5) == '.html') {
@@ -179,8 +176,8 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
     })
     .filter('replaceCommaSpace', function() {
         return function(input) {
-            if(input)
-            return input.replace(/,/g, ' ');
+            if (input)
+                return input.replace(/,/g, ' ');
         };
     })
     .filter('monthNameUC', function() {
@@ -481,8 +478,7 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
                         this.infowindow.setContent(compiledContent);
                         // vm.calcularRutaSolicitud(this.solicitud);
                         return this.infowindow.open(map, this);
-                    })
-                    console.log('latlng ' + latlng)
+                    });
                     mark.setPosition(latlng);
                     mark.setMap(map);
                     vm.map.setCenter(latlng);
@@ -971,7 +967,11 @@ function solicitudesService(r, h) {
         list: list,
         calcularRutaProfesional:calcularRutaProfesional,
         calcularRutaSolicitud:calcularRutaSolicitud,
-        setProfesional:setProfesional
+        setProfesional:setProfesional,
+        autocompleteCie10: cieAutocomplete,
+        autocompleteAfiliado: autocompleteAfiliado,
+        create: create
+
     };
     return service;
 
@@ -997,49 +997,157 @@ function solicitudesService(r, h) {
         });
     }
 
+    function cieAutocomplete(term){
+        return h.get(apiRoute + '/antecedentesMedicos/cieautocomplete?term='+term).then(function(resp) {
+            return resp.data;
+        });
+    }
+
+    function autocompleteAfiliado(term){
+        return h.get(apiRoute + '/antecedentesMedicos/afiliadoautocomplete?term='+term).then(function(resp) {
+            return resp.data;
+        });
+    }
+
+    function create(obj){
+        return h.post(apiRoute + '/solicitudesMedicas/',obj).then(function(resp) {
+            return resp.data;
+        });
+    }
+
 }
-angular.module('vimedo').controller('solicitudesCtrl', ['$rootScope', 'solicitudesService', '$state', solicitudesCtrl]);
+angular.module('vimedo').controller('solicitudesCtrl', ['$rootScope', 'solicitudesService', '$state', 'growl', solicitudesCtrl]);
 
-function solicitudesCtrl(r, solicitudesService, state) {
-	var vm = this;
+function solicitudesCtrl(r, solicitudesService, state, growl) {
+    var vm = this;
 
-	vm.solicitudes = [];
-	vm.solicitudesOrig = [];
-	vm.modalPro = {};
-	vm.objSel = {};
-	
-	vm.tableConfig = {
-        maxPages:"10",
+    vm.solicitudes = [];
+    vm.solicitudesOrig = [];
+    vm.modalPro = {
+        sintomas: [],
+        antecedentes: []
+    };
+    vm.objSel = {};
+
+    vm.tableConfig = {
+        maxPages: "10",
         itemsPerPage: "8"
     };
 
-	vm.filterList = function(){
-		var lower = vm.query.toLowerCase();
-		vm.solicitudes = vm.solicitudesOrig
-		.filter(function(i){
-    		if(		i.afiliado.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
-    				i.afiliado.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1 ){
-    			return i;
-    		}
-    	});
-	}
+    vm.filterList = function() {
+        var lower = vm.query.toLowerCase();
+        vm.solicitudes = vm.solicitudesOrig
+            .filter(function(i) {
+                if (i.afiliado.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                    i.afiliado.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) {
+                    return i;
+                }
+            });
+    }
 
-	vm.updateList = function(){
-		solicitudesService.list().then(function(data){
-			vm.solicitudes = data;
-			vm.solicitudesOrig = data;
-		});
-	}
+    vm.autocompleteCie = function(val) {
+        return solicitudesService.autocompleteCie10(val).then(function(data) {
+            return data;
+        })
+    }
 
-	vm.view = function(obj){
-		vm.objSel = obj;
-		$('#viewModal').modal();
-	};
+    vm.autocompleteAfil = function(val) {
+        return solicitudesService.autocompleteAfiliado(val).then(function(data) {
+            return data;
+        })
+    }
 
-	vm.savePro = function(){
-		vm.modalPro = {};
-		$('#newModal').modal('hide');
-	};
+    vm.selectSintoma = function(item, type) {
+        if (item && item.dec10) {
+            if (type) {
+                vm.modalPro.antecedentes.push(item);
+            } else {
+                vm.modalPro.sintomas.push(item);
+            }
+        }
+        if (!item && ((!type && vm.asyncSelected !== '') || (type && vm.asyncSelectedA !== ''))) {
+            if (type) {
+                vm.modalPro.antecedentes.push({
+                    dec10: vm.asyncSelectedA
+                });
+            } else {
+                vm.modalPro.sintomas.push({
+                    dec10: vm.asyncSelected
+                });
+            }
+        }
+        vm.asyncSelected = '';
+        vm.asyncSelectedA = '';
+    };
 
-	vm.updateList();
+    vm.removeSintoma = function(index, type) {
+        if (type)
+            vm.modalPro.sintomas.splice(index, 1);
+        else
+            vm.modalPro.antecedentes.splice(index, 1);
+    };
+
+    vm.updateList = function() {
+        solicitudesService.list().then(function(data) {
+            vm.solicitudes = data;
+            vm.solicitudesOrig = data;
+        });
+    }
+
+    vm.view = function(obj) {
+        vm.objSel = obj;
+        $('#viewModal').modal();
+    };
+
+    vm.savePro = function() {
+        if (vm.modalPro.afiliado)
+            if (vm.modalPro.sintomas.length !== 0) {
+                var sintomasCie = [];
+                var sintomas = [];
+                var antecedentesCie = [];
+                var antecedentes = [];
+                vm.modalPro.sintomas.map(function(item) {
+                    if (item._id) {
+                        sintomasCie.push(item._id);
+                    } else {
+                        sintomas.push(item.dec10);
+                    }
+                });
+                vm.modalPro.antecedentes.map(function(item) {
+                    if (item._id) {
+                        antecedentesCie.push(item._id);
+                    } else {
+                        antecedentes.push(item.dec10);
+                    }
+                });
+
+                var req = {
+                    'sintomas': sintomas.toString(),
+                    'sintomasCie': sintomasCie,
+                    'horasSintomas': vm.modalPro.horasSintomas,
+                    'minutosSintomas': vm.modalPro.minutosSintomas,
+                    'afiliado': vm.modalPro.afiliado._id,
+                    'domicilio': vm.modalPro.domicilioSel._id,
+                    'antecedentesCie': antecedentesCie,
+                    'antecedentes': antecedentes.toString()
+                };
+
+                solicitudesService.create(req).then(function(data) {
+                    console.log(data);
+                    vm.modalPro = {
+                        sintomas: [],
+                        antecedentes: []
+                    };
+                    vm.updateList();
+                    $('#newModal').modal('hide');
+                })
+
+            } else {
+                growl.error('Seleccione por lo menos un sintoma.');
+            }
+        else
+            growl.error('Seleccione un afiliado.');
+    };
+
+    vm.updateList();
 }

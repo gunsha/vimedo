@@ -317,6 +317,4145 @@ SHORTDAY:"Sun Mon Tue Wed Thu Fri Sat".split(" "),SHORTMONTH:"Jan Feb Mar Apr Ma
 PATTERNS:[{gSize:3,lgSize:3,maxFrac:3,minFrac:0,minInt:1,negPre:"-",negSuf:"",posPre:"",posSuf:""},{gSize:3,lgSize:3,maxFrac:2,minFrac:2,minInt:1,negPre:"-\u00a4",negSuf:"",posPre:"\u00a4",posSuf:""}]},id:"en-us",localeID:"en_US",pluralCat:function(a,c){var e=a|0,f=c;void 0===f&&(f=Math.min(b(a),3));Math.pow(10,f);return 1==e&&0==f?"one":"other"}})}]),F(C.document).ready(function(){fe(C.document,Bc)}))})(window);!window.angular.$$csp().noInlineStyle&&window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
 //# sourceMappingURL=angular.min.js.map
 
+/**
+ * @license AngularJS v1.5.8
+ * (c) 2010-2016 Google, Inc. http://angularjs.org
+ * License: MIT
+ */
+(function(window, angular) {'use strict';
+
+var ELEMENT_NODE = 1;
+var COMMENT_NODE = 8;
+
+var ADD_CLASS_SUFFIX = '-add';
+var REMOVE_CLASS_SUFFIX = '-remove';
+var EVENT_CLASS_PREFIX = 'ng-';
+var ACTIVE_CLASS_SUFFIX = '-active';
+var PREPARE_CLASS_SUFFIX = '-prepare';
+
+var NG_ANIMATE_CLASSNAME = 'ng-animate';
+var NG_ANIMATE_CHILDREN_DATA = '$$ngAnimateChildren';
+
+// Detect proper transitionend/animationend event names.
+var CSS_PREFIX = '', TRANSITION_PROP, TRANSITIONEND_EVENT, ANIMATION_PROP, ANIMATIONEND_EVENT;
+
+// If unprefixed events are not supported but webkit-prefixed are, use the latter.
+// Otherwise, just use W3C names, browsers not supporting them at all will just ignore them.
+// Note: Chrome implements `window.onwebkitanimationend` and doesn't implement `window.onanimationend`
+// but at the same time dispatches the `animationend` event and not `webkitAnimationEnd`.
+// Register both events in case `window.onanimationend` is not supported because of that,
+// do the same for `transitionend` as Safari is likely to exhibit similar behavior.
+// Also, the only modern browser that uses vendor prefixes for transitions/keyframes is webkit
+// therefore there is no reason to test anymore for other vendor prefixes:
+// http://caniuse.com/#search=transition
+if ((window.ontransitionend === void 0) && (window.onwebkittransitionend !== void 0)) {
+  CSS_PREFIX = '-webkit-';
+  TRANSITION_PROP = 'WebkitTransition';
+  TRANSITIONEND_EVENT = 'webkitTransitionEnd transitionend';
+} else {
+  TRANSITION_PROP = 'transition';
+  TRANSITIONEND_EVENT = 'transitionend';
+}
+
+if ((window.onanimationend === void 0) && (window.onwebkitanimationend !== void 0)) {
+  CSS_PREFIX = '-webkit-';
+  ANIMATION_PROP = 'WebkitAnimation';
+  ANIMATIONEND_EVENT = 'webkitAnimationEnd animationend';
+} else {
+  ANIMATION_PROP = 'animation';
+  ANIMATIONEND_EVENT = 'animationend';
+}
+
+var DURATION_KEY = 'Duration';
+var PROPERTY_KEY = 'Property';
+var DELAY_KEY = 'Delay';
+var TIMING_KEY = 'TimingFunction';
+var ANIMATION_ITERATION_COUNT_KEY = 'IterationCount';
+var ANIMATION_PLAYSTATE_KEY = 'PlayState';
+var SAFE_FAST_FORWARD_DURATION_VALUE = 9999;
+
+var ANIMATION_DELAY_PROP = ANIMATION_PROP + DELAY_KEY;
+var ANIMATION_DURATION_PROP = ANIMATION_PROP + DURATION_KEY;
+var TRANSITION_DELAY_PROP = TRANSITION_PROP + DELAY_KEY;
+var TRANSITION_DURATION_PROP = TRANSITION_PROP + DURATION_KEY;
+
+var ngMinErr = angular.$$minErr('ng');
+function assertArg(arg, name, reason) {
+  if (!arg) {
+    throw ngMinErr('areq', "Argument '{0}' is {1}", (name || '?'), (reason || "required"));
+  }
+  return arg;
+}
+
+function mergeClasses(a,b) {
+  if (!a && !b) return '';
+  if (!a) return b;
+  if (!b) return a;
+  if (isArray(a)) a = a.join(' ');
+  if (isArray(b)) b = b.join(' ');
+  return a + ' ' + b;
+}
+
+function packageStyles(options) {
+  var styles = {};
+  if (options && (options.to || options.from)) {
+    styles.to = options.to;
+    styles.from = options.from;
+  }
+  return styles;
+}
+
+function pendClasses(classes, fix, isPrefix) {
+  var className = '';
+  classes = isArray(classes)
+      ? classes
+      : classes && isString(classes) && classes.length
+          ? classes.split(/\s+/)
+          : [];
+  forEach(classes, function(klass, i) {
+    if (klass && klass.length > 0) {
+      className += (i > 0) ? ' ' : '';
+      className += isPrefix ? fix + klass
+                            : klass + fix;
+    }
+  });
+  return className;
+}
+
+function removeFromArray(arr, val) {
+  var index = arr.indexOf(val);
+  if (val >= 0) {
+    arr.splice(index, 1);
+  }
+}
+
+function stripCommentsFromElement(element) {
+  if (element instanceof jqLite) {
+    switch (element.length) {
+      case 0:
+        return element;
+
+      case 1:
+        // there is no point of stripping anything if the element
+        // is the only element within the jqLite wrapper.
+        // (it's important that we retain the element instance.)
+        if (element[0].nodeType === ELEMENT_NODE) {
+          return element;
+        }
+        break;
+
+      default:
+        return jqLite(extractElementNode(element));
+    }
+  }
+
+  if (element.nodeType === ELEMENT_NODE) {
+    return jqLite(element);
+  }
+}
+
+function extractElementNode(element) {
+  if (!element[0]) return element;
+  for (var i = 0; i < element.length; i++) {
+    var elm = element[i];
+    if (elm.nodeType == ELEMENT_NODE) {
+      return elm;
+    }
+  }
+}
+
+function $$addClass($$jqLite, element, className) {
+  forEach(element, function(elm) {
+    $$jqLite.addClass(elm, className);
+  });
+}
+
+function $$removeClass($$jqLite, element, className) {
+  forEach(element, function(elm) {
+    $$jqLite.removeClass(elm, className);
+  });
+}
+
+function applyAnimationClassesFactory($$jqLite) {
+  return function(element, options) {
+    if (options.addClass) {
+      $$addClass($$jqLite, element, options.addClass);
+      options.addClass = null;
+    }
+    if (options.removeClass) {
+      $$removeClass($$jqLite, element, options.removeClass);
+      options.removeClass = null;
+    }
+  };
+}
+
+function prepareAnimationOptions(options) {
+  options = options || {};
+  if (!options.$$prepared) {
+    var domOperation = options.domOperation || noop;
+    options.domOperation = function() {
+      options.$$domOperationFired = true;
+      domOperation();
+      domOperation = noop;
+    };
+    options.$$prepared = true;
+  }
+  return options;
+}
+
+function applyAnimationStyles(element, options) {
+  applyAnimationFromStyles(element, options);
+  applyAnimationToStyles(element, options);
+}
+
+function applyAnimationFromStyles(element, options) {
+  if (options.from) {
+    element.css(options.from);
+    options.from = null;
+  }
+}
+
+function applyAnimationToStyles(element, options) {
+  if (options.to) {
+    element.css(options.to);
+    options.to = null;
+  }
+}
+
+function mergeAnimationDetails(element, oldAnimation, newAnimation) {
+  var target = oldAnimation.options || {};
+  var newOptions = newAnimation.options || {};
+
+  var toAdd = (target.addClass || '') + ' ' + (newOptions.addClass || '');
+  var toRemove = (target.removeClass || '') + ' ' + (newOptions.removeClass || '');
+  var classes = resolveElementClasses(element.attr('class'), toAdd, toRemove);
+
+  if (newOptions.preparationClasses) {
+    target.preparationClasses = concatWithSpace(newOptions.preparationClasses, target.preparationClasses);
+    delete newOptions.preparationClasses;
+  }
+
+  // noop is basically when there is no callback; otherwise something has been set
+  var realDomOperation = target.domOperation !== noop ? target.domOperation : null;
+
+  extend(target, newOptions);
+
+  // TODO(matsko or sreeramu): proper fix is to maintain all animation callback in array and call at last,but now only leave has the callback so no issue with this.
+  if (realDomOperation) {
+    target.domOperation = realDomOperation;
+  }
+
+  if (classes.addClass) {
+    target.addClass = classes.addClass;
+  } else {
+    target.addClass = null;
+  }
+
+  if (classes.removeClass) {
+    target.removeClass = classes.removeClass;
+  } else {
+    target.removeClass = null;
+  }
+
+  oldAnimation.addClass = target.addClass;
+  oldAnimation.removeClass = target.removeClass;
+
+  return target;
+}
+
+function resolveElementClasses(existing, toAdd, toRemove) {
+  var ADD_CLASS = 1;
+  var REMOVE_CLASS = -1;
+
+  var flags = {};
+  existing = splitClassesToLookup(existing);
+
+  toAdd = splitClassesToLookup(toAdd);
+  forEach(toAdd, function(value, key) {
+    flags[key] = ADD_CLASS;
+  });
+
+  toRemove = splitClassesToLookup(toRemove);
+  forEach(toRemove, function(value, key) {
+    flags[key] = flags[key] === ADD_CLASS ? null : REMOVE_CLASS;
+  });
+
+  var classes = {
+    addClass: '',
+    removeClass: ''
+  };
+
+  forEach(flags, function(val, klass) {
+    var prop, allow;
+    if (val === ADD_CLASS) {
+      prop = 'addClass';
+      allow = !existing[klass] || existing[klass + REMOVE_CLASS_SUFFIX];
+    } else if (val === REMOVE_CLASS) {
+      prop = 'removeClass';
+      allow = existing[klass] || existing[klass + ADD_CLASS_SUFFIX];
+    }
+    if (allow) {
+      if (classes[prop].length) {
+        classes[prop] += ' ';
+      }
+      classes[prop] += klass;
+    }
+  });
+
+  function splitClassesToLookup(classes) {
+    if (isString(classes)) {
+      classes = classes.split(' ');
+    }
+
+    var obj = {};
+    forEach(classes, function(klass) {
+      // sometimes the split leaves empty string values
+      // incase extra spaces were applied to the options
+      if (klass.length) {
+        obj[klass] = true;
+      }
+    });
+    return obj;
+  }
+
+  return classes;
+}
+
+function getDomNode(element) {
+  return (element instanceof jqLite) ? element[0] : element;
+}
+
+function applyGeneratedPreparationClasses(element, event, options) {
+  var classes = '';
+  if (event) {
+    classes = pendClasses(event, EVENT_CLASS_PREFIX, true);
+  }
+  if (options.addClass) {
+    classes = concatWithSpace(classes, pendClasses(options.addClass, ADD_CLASS_SUFFIX));
+  }
+  if (options.removeClass) {
+    classes = concatWithSpace(classes, pendClasses(options.removeClass, REMOVE_CLASS_SUFFIX));
+  }
+  if (classes.length) {
+    options.preparationClasses = classes;
+    element.addClass(classes);
+  }
+}
+
+function clearGeneratedClasses(element, options) {
+  if (options.preparationClasses) {
+    element.removeClass(options.preparationClasses);
+    options.preparationClasses = null;
+  }
+  if (options.activeClasses) {
+    element.removeClass(options.activeClasses);
+    options.activeClasses = null;
+  }
+}
+
+function blockTransitions(node, duration) {
+  // we use a negative delay value since it performs blocking
+  // yet it doesn't kill any existing transitions running on the
+  // same element which makes this safe for class-based animations
+  var value = duration ? '-' + duration + 's' : '';
+  applyInlineStyle(node, [TRANSITION_DELAY_PROP, value]);
+  return [TRANSITION_DELAY_PROP, value];
+}
+
+function blockKeyframeAnimations(node, applyBlock) {
+  var value = applyBlock ? 'paused' : '';
+  var key = ANIMATION_PROP + ANIMATION_PLAYSTATE_KEY;
+  applyInlineStyle(node, [key, value]);
+  return [key, value];
+}
+
+function applyInlineStyle(node, styleTuple) {
+  var prop = styleTuple[0];
+  var value = styleTuple[1];
+  node.style[prop] = value;
+}
+
+function concatWithSpace(a,b) {
+  if (!a) return b;
+  if (!b) return a;
+  return a + ' ' + b;
+}
+
+var $$rAFSchedulerFactory = ['$$rAF', function($$rAF) {
+  var queue, cancelFn;
+
+  function scheduler(tasks) {
+    // we make a copy since RAFScheduler mutates the state
+    // of the passed in array variable and this would be difficult
+    // to track down on the outside code
+    queue = queue.concat(tasks);
+    nextTick();
+  }
+
+  queue = scheduler.queue = [];
+
+  /* waitUntilQuiet does two things:
+   * 1. It will run the FINAL `fn` value only when an uncanceled RAF has passed through
+   * 2. It will delay the next wave of tasks from running until the quiet `fn` has run.
+   *
+   * The motivation here is that animation code can request more time from the scheduler
+   * before the next wave runs. This allows for certain DOM properties such as classes to
+   * be resolved in time for the next animation to run.
+   */
+  scheduler.waitUntilQuiet = function(fn) {
+    if (cancelFn) cancelFn();
+
+    cancelFn = $$rAF(function() {
+      cancelFn = null;
+      fn();
+      nextTick();
+    });
+  };
+
+  return scheduler;
+
+  function nextTick() {
+    if (!queue.length) return;
+
+    var items = queue.shift();
+    for (var i = 0; i < items.length; i++) {
+      items[i]();
+    }
+
+    if (!cancelFn) {
+      $$rAF(function() {
+        if (!cancelFn) nextTick();
+      });
+    }
+  }
+}];
+
+/**
+ * @ngdoc directive
+ * @name ngAnimateChildren
+ * @restrict AE
+ * @element ANY
+ *
+ * @description
+ *
+ * ngAnimateChildren allows you to specify that children of this element should animate even if any
+ * of the children's parents are currently animating. By default, when an element has an active `enter`, `leave`, or `move`
+ * (structural) animation, child elements that also have an active structural animation are not animated.
+ *
+ * Note that even if `ngAnimteChildren` is set, no child animations will run when the parent element is removed from the DOM (`leave` animation).
+ *
+ *
+ * @param {string} ngAnimateChildren If the value is empty, `true` or `on`,
+ *     then child animations are allowed. If the value is `false`, child animations are not allowed.
+ *
+ * @example
+ * <example module="ngAnimateChildren" name="ngAnimateChildren" deps="angular-animate.js" animations="true">
+     <file name="index.html">
+       <div ng-controller="mainController as main">
+         <label>Show container? <input type="checkbox" ng-model="main.enterElement" /></label>
+         <label>Animate children? <input type="checkbox" ng-model="main.animateChildren" /></label>
+         <hr>
+         <div ng-animate-children="{{main.animateChildren}}">
+           <div ng-if="main.enterElement" class="container">
+             List of items:
+             <div ng-repeat="item in [0, 1, 2, 3]" class="item">Item {{item}}</div>
+           </div>
+         </div>
+       </div>
+     </file>
+     <file name="animations.css">
+
+      .container.ng-enter,
+      .container.ng-leave {
+        transition: all ease 1.5s;
+      }
+
+      .container.ng-enter,
+      .container.ng-leave-active {
+        opacity: 0;
+      }
+
+      .container.ng-leave,
+      .container.ng-enter-active {
+        opacity: 1;
+      }
+
+      .item {
+        background: firebrick;
+        color: #FFF;
+        margin-bottom: 10px;
+      }
+
+      .item.ng-enter,
+      .item.ng-leave {
+        transition: transform 1.5s ease;
+      }
+
+      .item.ng-enter {
+        transform: translateX(50px);
+      }
+
+      .item.ng-enter-active {
+        transform: translateX(0);
+      }
+    </file>
+    <file name="script.js">
+      angular.module('ngAnimateChildren', ['ngAnimate'])
+        .controller('mainController', function() {
+          this.animateChildren = false;
+          this.enterElement = false;
+        });
+    </file>
+  </example>
+ */
+var $$AnimateChildrenDirective = ['$interpolate', function($interpolate) {
+  return {
+    link: function(scope, element, attrs) {
+      var val = attrs.ngAnimateChildren;
+      if (isString(val) && val.length === 0) { //empty attribute
+        element.data(NG_ANIMATE_CHILDREN_DATA, true);
+      } else {
+        // Interpolate and set the value, so that it is available to
+        // animations that run right after compilation
+        setData($interpolate(val)(scope));
+        attrs.$observe('ngAnimateChildren', setData);
+      }
+
+      function setData(value) {
+        value = value === 'on' || value === 'true';
+        element.data(NG_ANIMATE_CHILDREN_DATA, value);
+      }
+    }
+  };
+}];
+
+var ANIMATE_TIMER_KEY = '$$animateCss';
+
+/**
+ * @ngdoc service
+ * @name $animateCss
+ * @kind object
+ *
+ * @description
+ * The `$animateCss` service is a useful utility to trigger customized CSS-based transitions/keyframes
+ * from a JavaScript-based animation or directly from a directive. The purpose of `$animateCss` is NOT
+ * to side-step how `$animate` and ngAnimate work, but the goal is to allow pre-existing animations or
+ * directives to create more complex animations that can be purely driven using CSS code.
+ *
+ * Note that only browsers that support CSS transitions and/or keyframe animations are capable of
+ * rendering animations triggered via `$animateCss` (bad news for IE9 and lower).
+ *
+ * ## Usage
+ * Once again, `$animateCss` is designed to be used inside of a registered JavaScript animation that
+ * is powered by ngAnimate. It is possible to use `$animateCss` directly inside of a directive, however,
+ * any automatic control over cancelling animations and/or preventing animations from being run on
+ * child elements will not be handled by Angular. For this to work as expected, please use `$animate` to
+ * trigger the animation and then setup a JavaScript animation that injects `$animateCss` to trigger
+ * the CSS animation.
+ *
+ * The example below shows how we can create a folding animation on an element using `ng-if`:
+ *
+ * ```html
+ * <!-- notice the `fold-animation` CSS class -->
+ * <div ng-if="onOff" class="fold-animation">
+ *   This element will go BOOM
+ * </div>
+ * <button ng-click="onOff=true">Fold In</button>
+ * ```
+ *
+ * Now we create the **JavaScript animation** that will trigger the CSS transition:
+ *
+ * ```js
+ * ngModule.animation('.fold-animation', ['$animateCss', function($animateCss) {
+ *   return {
+ *     enter: function(element, doneFn) {
+ *       var height = element[0].offsetHeight;
+ *       return $animateCss(element, {
+ *         from: { height:'0px' },
+ *         to: { height:height + 'px' },
+ *         duration: 1 // one second
+ *       });
+ *     }
+ *   }
+ * }]);
+ * ```
+ *
+ * ## More Advanced Uses
+ *
+ * `$animateCss` is the underlying code that ngAnimate uses to power **CSS-based animations** behind the scenes. Therefore CSS hooks
+ * like `.ng-EVENT`, `.ng-EVENT-active`, `.ng-EVENT-stagger` are all features that can be triggered using `$animateCss` via JavaScript code.
+ *
+ * This also means that just about any combination of adding classes, removing classes, setting styles, dynamically setting a keyframe animation,
+ * applying a hardcoded duration or delay value, changing the animation easing or applying a stagger animation are all options that work with
+ * `$animateCss`. The service itself is smart enough to figure out the combination of options and examine the element styling properties in order
+ * to provide a working animation that will run in CSS.
+ *
+ * The example below showcases a more advanced version of the `.fold-animation` from the example above:
+ *
+ * ```js
+ * ngModule.animation('.fold-animation', ['$animateCss', function($animateCss) {
+ *   return {
+ *     enter: function(element, doneFn) {
+ *       var height = element[0].offsetHeight;
+ *       return $animateCss(element, {
+ *         addClass: 'red large-text pulse-twice',
+ *         easing: 'ease-out',
+ *         from: { height:'0px' },
+ *         to: { height:height + 'px' },
+ *         duration: 1 // one second
+ *       });
+ *     }
+ *   }
+ * }]);
+ * ```
+ *
+ * Since we're adding/removing CSS classes then the CSS transition will also pick those up:
+ *
+ * ```css
+ * /&#42; since a hardcoded duration value of 1 was provided in the JavaScript animation code,
+ * the CSS classes below will be transitioned despite them being defined as regular CSS classes &#42;/
+ * .red { background:red; }
+ * .large-text { font-size:20px; }
+ *
+ * /&#42; we can also use a keyframe animation and $animateCss will make it work alongside the transition &#42;/
+ * .pulse-twice {
+ *   animation: 0.5s pulse linear 2;
+ *   -webkit-animation: 0.5s pulse linear 2;
+ * }
+ *
+ * @keyframes pulse {
+ *   from { transform: scale(0.5); }
+ *   to { transform: scale(1.5); }
+ * }
+ *
+ * @-webkit-keyframes pulse {
+ *   from { -webkit-transform: scale(0.5); }
+ *   to { -webkit-transform: scale(1.5); }
+ * }
+ * ```
+ *
+ * Given this complex combination of CSS classes, styles and options, `$animateCss` will figure everything out and make the animation happen.
+ *
+ * ## How the Options are handled
+ *
+ * `$animateCss` is very versatile and intelligent when it comes to figuring out what configurations to apply to the element to ensure the animation
+ * works with the options provided. Say for example we were adding a class that contained a keyframe value and we wanted to also animate some inline
+ * styles using the `from` and `to` properties.
+ *
+ * ```js
+ * var animator = $animateCss(element, {
+ *   from: { background:'red' },
+ *   to: { background:'blue' }
+ * });
+ * animator.start();
+ * ```
+ *
+ * ```css
+ * .rotating-animation {
+ *   animation:0.5s rotate linear;
+ *   -webkit-animation:0.5s rotate linear;
+ * }
+ *
+ * @keyframes rotate {
+ *   from { transform: rotate(0deg); }
+ *   to { transform: rotate(360deg); }
+ * }
+ *
+ * @-webkit-keyframes rotate {
+ *   from { -webkit-transform: rotate(0deg); }
+ *   to { -webkit-transform: rotate(360deg); }
+ * }
+ * ```
+ *
+ * The missing pieces here are that we do not have a transition set (within the CSS code nor within the `$animateCss` options) and the duration of the animation is
+ * going to be detected from what the keyframe styles on the CSS class are. In this event, `$animateCss` will automatically create an inline transition
+ * style matching the duration detected from the keyframe style (which is present in the CSS class that is being added) and then prepare both the transition
+ * and keyframe animations to run in parallel on the element. Then when the animation is underway the provided `from` and `to` CSS styles will be applied
+ * and spread across the transition and keyframe animation.
+ *
+ * ## What is returned
+ *
+ * `$animateCss` works in two stages: a preparation phase and an animation phase. Therefore when `$animateCss` is first called it will NOT actually
+ * start the animation. All that is going on here is that the element is being prepared for the animation (which means that the generated CSS classes are
+ * added and removed on the element). Once `$animateCss` is called it will return an object with the following properties:
+ *
+ * ```js
+ * var animator = $animateCss(element, { ... });
+ * ```
+ *
+ * Now what do the contents of our `animator` variable look like:
+ *
+ * ```js
+ * {
+ *   // starts the animation
+ *   start: Function,
+ *
+ *   // ends (aborts) the animation
+ *   end: Function
+ * }
+ * ```
+ *
+ * To actually start the animation we need to run `animation.start()` which will then return a promise that we can hook into to detect when the animation ends.
+ * If we choose not to run the animation then we MUST run `animation.end()` to perform a cleanup on the element (since some CSS classes and styles may have been
+ * applied to the element during the preparation phase). Note that all other properties such as duration, delay, transitions and keyframes are just properties
+ * and that changing them will not reconfigure the parameters of the animation.
+ *
+ * ### runner.done() vs runner.then()
+ * It is documented that `animation.start()` will return a promise object and this is true, however, there is also an additional method available on the
+ * runner called `.done(callbackFn)`. The done method works the same as `.finally(callbackFn)`, however, it does **not trigger a digest to occur**.
+ * Therefore, for performance reasons, it's always best to use `runner.done(callback)` instead of `runner.then()`, `runner.catch()` or `runner.finally()`
+ * unless you really need a digest to kick off afterwards.
+ *
+ * Keep in mind that, to make this easier, ngAnimate has tweaked the JS animations API to recognize when a runner instance is returned from $animateCss
+ * (so there is no need to call `runner.done(doneFn)` inside of your JavaScript animation code).
+ * Check the {@link ngAnimate.$animateCss#usage animation code above} to see how this works.
+ *
+ * @param {DOMElement} element the element that will be animated
+ * @param {object} options the animation-related options that will be applied during the animation
+ *
+ * * `event` - The DOM event (e.g. enter, leave, move). When used, a generated CSS class of `ng-EVENT` and `ng-EVENT-active` will be applied
+ * to the element during the animation. Multiple events can be provided when spaces are used as a separator. (Note that this will not perform any DOM operation.)
+ * * `structural` - Indicates that the `ng-` prefix will be added to the event class. Setting to `false` or omitting will turn `ng-EVENT` and
+ * `ng-EVENT-active` in `EVENT` and `EVENT-active`. Unused if `event` is omitted.
+ * * `easing` - The CSS easing value that will be applied to the transition or keyframe animation (or both).
+ * * `transitionStyle` - The raw CSS transition style that will be used (e.g. `1s linear all`).
+ * * `keyframeStyle` - The raw CSS keyframe animation style that will be used (e.g. `1s my_animation linear`).
+ * * `from` - The starting CSS styles (a key/value object) that will be applied at the start of the animation.
+ * * `to` - The ending CSS styles (a key/value object) that will be applied across the animation via a CSS transition.
+ * * `addClass` - A space separated list of CSS classes that will be added to the element and spread across the animation.
+ * * `removeClass` - A space separated list of CSS classes that will be removed from the element and spread across the animation.
+ * * `duration` - A number value representing the total duration of the transition and/or keyframe (note that a value of 1 is 1000ms). If a value of `0`
+ * is provided then the animation will be skipped entirely.
+ * * `delay` - A number value representing the total delay of the transition and/or keyframe (note that a value of 1 is 1000ms). If a value of `true` is
+ * used then whatever delay value is detected from the CSS classes will be mirrored on the elements styles (e.g. by setting delay true then the style value
+ * of the element will be `transition-delay: DETECTED_VALUE`). Using `true` is useful when you want the CSS classes and inline styles to all share the same
+ * CSS delay value.
+ * * `stagger` - A numeric time value representing the delay between successively animated elements
+ * ({@link ngAnimate#css-staggering-animations Click here to learn how CSS-based staggering works in ngAnimate.})
+ * * `staggerIndex` - The numeric index representing the stagger item (e.g. a value of 5 is equal to the sixth item in the stagger; therefore when a
+ *   `stagger` option value of `0.1` is used then there will be a stagger delay of `600ms`)
+ * * `applyClassesEarly` - Whether or not the classes being added or removed will be used when detecting the animation. This is set by `$animate` when enter/leave/move animations are fired to ensure that the CSS classes are resolved in time. (Note that this will prevent any transitions from occurring on the classes being added and removed.)
+ * * `cleanupStyles` - Whether or not the provided `from` and `to` styles will be removed once
+ *    the animation is closed. This is useful for when the styles are used purely for the sake of
+ *    the animation and do not have a lasting visual effect on the element (e.g. a collapse and open animation).
+ *    By default this value is set to `false`.
+ *
+ * @return {object} an object with start and end methods and details about the animation.
+ *
+ * * `start` - The method to start the animation. This will return a `Promise` when called.
+ * * `end` - This method will cancel the animation and remove all applied CSS classes and styles.
+ */
+var ONE_SECOND = 1000;
+var BASE_TEN = 10;
+
+var ELAPSED_TIME_MAX_DECIMAL_PLACES = 3;
+var CLOSING_TIME_BUFFER = 1.5;
+
+var DETECT_CSS_PROPERTIES = {
+  transitionDuration:      TRANSITION_DURATION_PROP,
+  transitionDelay:         TRANSITION_DELAY_PROP,
+  transitionProperty:      TRANSITION_PROP + PROPERTY_KEY,
+  animationDuration:       ANIMATION_DURATION_PROP,
+  animationDelay:          ANIMATION_DELAY_PROP,
+  animationIterationCount: ANIMATION_PROP + ANIMATION_ITERATION_COUNT_KEY
+};
+
+var DETECT_STAGGER_CSS_PROPERTIES = {
+  transitionDuration:      TRANSITION_DURATION_PROP,
+  transitionDelay:         TRANSITION_DELAY_PROP,
+  animationDuration:       ANIMATION_DURATION_PROP,
+  animationDelay:          ANIMATION_DELAY_PROP
+};
+
+function getCssKeyframeDurationStyle(duration) {
+  return [ANIMATION_DURATION_PROP, duration + 's'];
+}
+
+function getCssDelayStyle(delay, isKeyframeAnimation) {
+  var prop = isKeyframeAnimation ? ANIMATION_DELAY_PROP : TRANSITION_DELAY_PROP;
+  return [prop, delay + 's'];
+}
+
+function computeCssStyles($window, element, properties) {
+  var styles = Object.create(null);
+  var detectedStyles = $window.getComputedStyle(element) || {};
+  forEach(properties, function(formalStyleName, actualStyleName) {
+    var val = detectedStyles[formalStyleName];
+    if (val) {
+      var c = val.charAt(0);
+
+      // only numerical-based values have a negative sign or digit as the first value
+      if (c === '-' || c === '+' || c >= 0) {
+        val = parseMaxTime(val);
+      }
+
+      // by setting this to null in the event that the delay is not set or is set directly as 0
+      // then we can still allow for negative values to be used later on and not mistake this
+      // value for being greater than any other negative value.
+      if (val === 0) {
+        val = null;
+      }
+      styles[actualStyleName] = val;
+    }
+  });
+
+  return styles;
+}
+
+function parseMaxTime(str) {
+  var maxValue = 0;
+  var values = str.split(/\s*,\s*/);
+  forEach(values, function(value) {
+    // it's always safe to consider only second values and omit `ms` values since
+    // getComputedStyle will always handle the conversion for us
+    if (value.charAt(value.length - 1) == 's') {
+      value = value.substring(0, value.length - 1);
+    }
+    value = parseFloat(value) || 0;
+    maxValue = maxValue ? Math.max(value, maxValue) : value;
+  });
+  return maxValue;
+}
+
+function truthyTimingValue(val) {
+  return val === 0 || val != null;
+}
+
+function getCssTransitionDurationStyle(duration, applyOnlyDuration) {
+  var style = TRANSITION_PROP;
+  var value = duration + 's';
+  if (applyOnlyDuration) {
+    style += DURATION_KEY;
+  } else {
+    value += ' linear all';
+  }
+  return [style, value];
+}
+
+function createLocalCacheLookup() {
+  var cache = Object.create(null);
+  return {
+    flush: function() {
+      cache = Object.create(null);
+    },
+
+    count: function(key) {
+      var entry = cache[key];
+      return entry ? entry.total : 0;
+    },
+
+    get: function(key) {
+      var entry = cache[key];
+      return entry && entry.value;
+    },
+
+    put: function(key, value) {
+      if (!cache[key]) {
+        cache[key] = { total: 1, value: value };
+      } else {
+        cache[key].total++;
+      }
+    }
+  };
+}
+
+// we do not reassign an already present style value since
+// if we detect the style property value again we may be
+// detecting styles that were added via the `from` styles.
+// We make use of `isDefined` here since an empty string
+// or null value (which is what getPropertyValue will return
+// for a non-existing style) will still be marked as a valid
+// value for the style (a falsy value implies that the style
+// is to be removed at the end of the animation). If we had a simple
+// "OR" statement then it would not be enough to catch that.
+function registerRestorableStyles(backup, node, properties) {
+  forEach(properties, function(prop) {
+    backup[prop] = isDefined(backup[prop])
+        ? backup[prop]
+        : node.style.getPropertyValue(prop);
+  });
+}
+
+var $AnimateCssProvider = ['$animateProvider', function($animateProvider) {
+  var gcsLookup = createLocalCacheLookup();
+  var gcsStaggerLookup = createLocalCacheLookup();
+
+  this.$get = ['$window', '$$jqLite', '$$AnimateRunner', '$timeout',
+               '$$forceReflow', '$sniffer', '$$rAFScheduler', '$$animateQueue',
+       function($window,   $$jqLite,   $$AnimateRunner,   $timeout,
+                $$forceReflow,   $sniffer,   $$rAFScheduler, $$animateQueue) {
+
+    var applyAnimationClasses = applyAnimationClassesFactory($$jqLite);
+
+    var parentCounter = 0;
+    function gcsHashFn(node, extraClasses) {
+      var KEY = "$$ngAnimateParentKey";
+      var parentNode = node.parentNode;
+      var parentID = parentNode[KEY] || (parentNode[KEY] = ++parentCounter);
+      return parentID + '-' + node.getAttribute('class') + '-' + extraClasses;
+    }
+
+    function computeCachedCssStyles(node, className, cacheKey, properties) {
+      var timings = gcsLookup.get(cacheKey);
+
+      if (!timings) {
+        timings = computeCssStyles($window, node, properties);
+        if (timings.animationIterationCount === 'infinite') {
+          timings.animationIterationCount = 1;
+        }
+      }
+
+      // we keep putting this in multiple times even though the value and the cacheKey are the same
+      // because we're keeping an internal tally of how many duplicate animations are detected.
+      gcsLookup.put(cacheKey, timings);
+      return timings;
+    }
+
+    function computeCachedCssStaggerStyles(node, className, cacheKey, properties) {
+      var stagger;
+
+      // if we have one or more existing matches of matching elements
+      // containing the same parent + CSS styles (which is how cacheKey works)
+      // then staggering is possible
+      if (gcsLookup.count(cacheKey) > 0) {
+        stagger = gcsStaggerLookup.get(cacheKey);
+
+        if (!stagger) {
+          var staggerClassName = pendClasses(className, '-stagger');
+
+          $$jqLite.addClass(node, staggerClassName);
+
+          stagger = computeCssStyles($window, node, properties);
+
+          // force the conversion of a null value to zero incase not set
+          stagger.animationDuration = Math.max(stagger.animationDuration, 0);
+          stagger.transitionDuration = Math.max(stagger.transitionDuration, 0);
+
+          $$jqLite.removeClass(node, staggerClassName);
+
+          gcsStaggerLookup.put(cacheKey, stagger);
+        }
+      }
+
+      return stagger || {};
+    }
+
+    var cancelLastRAFRequest;
+    var rafWaitQueue = [];
+    function waitUntilQuiet(callback) {
+      rafWaitQueue.push(callback);
+      $$rAFScheduler.waitUntilQuiet(function() {
+        gcsLookup.flush();
+        gcsStaggerLookup.flush();
+
+        // DO NOT REMOVE THIS LINE OR REFACTOR OUT THE `pageWidth` variable.
+        // PLEASE EXAMINE THE `$$forceReflow` service to understand why.
+        var pageWidth = $$forceReflow();
+
+        // we use a for loop to ensure that if the queue is changed
+        // during this looping then it will consider new requests
+        for (var i = 0; i < rafWaitQueue.length; i++) {
+          rafWaitQueue[i](pageWidth);
+        }
+        rafWaitQueue.length = 0;
+      });
+    }
+
+    function computeTimings(node, className, cacheKey) {
+      var timings = computeCachedCssStyles(node, className, cacheKey, DETECT_CSS_PROPERTIES);
+      var aD = timings.animationDelay;
+      var tD = timings.transitionDelay;
+      timings.maxDelay = aD && tD
+          ? Math.max(aD, tD)
+          : (aD || tD);
+      timings.maxDuration = Math.max(
+          timings.animationDuration * timings.animationIterationCount,
+          timings.transitionDuration);
+
+      return timings;
+    }
+
+    return function init(element, initialOptions) {
+      // all of the animation functions should create
+      // a copy of the options data, however, if a
+      // parent service has already created a copy then
+      // we should stick to using that
+      var options = initialOptions || {};
+      if (!options.$$prepared) {
+        options = prepareAnimationOptions(copy(options));
+      }
+
+      var restoreStyles = {};
+      var node = getDomNode(element);
+      if (!node
+          || !node.parentNode
+          || !$$animateQueue.enabled()) {
+        return closeAndReturnNoopAnimator();
+      }
+
+      var temporaryStyles = [];
+      var classes = element.attr('class');
+      var styles = packageStyles(options);
+      var animationClosed;
+      var animationPaused;
+      var animationCompleted;
+      var runner;
+      var runnerHost;
+      var maxDelay;
+      var maxDelayTime;
+      var maxDuration;
+      var maxDurationTime;
+      var startTime;
+      var events = [];
+
+      if (options.duration === 0 || (!$sniffer.animations && !$sniffer.transitions)) {
+        return closeAndReturnNoopAnimator();
+      }
+
+      var method = options.event && isArray(options.event)
+            ? options.event.join(' ')
+            : options.event;
+
+      var isStructural = method && options.structural;
+      var structuralClassName = '';
+      var addRemoveClassName = '';
+
+      if (isStructural) {
+        structuralClassName = pendClasses(method, EVENT_CLASS_PREFIX, true);
+      } else if (method) {
+        structuralClassName = method;
+      }
+
+      if (options.addClass) {
+        addRemoveClassName += pendClasses(options.addClass, ADD_CLASS_SUFFIX);
+      }
+
+      if (options.removeClass) {
+        if (addRemoveClassName.length) {
+          addRemoveClassName += ' ';
+        }
+        addRemoveClassName += pendClasses(options.removeClass, REMOVE_CLASS_SUFFIX);
+      }
+
+      // there may be a situation where a structural animation is combined together
+      // with CSS classes that need to resolve before the animation is computed.
+      // However this means that there is no explicit CSS code to block the animation
+      // from happening (by setting 0s none in the class name). If this is the case
+      // we need to apply the classes before the first rAF so we know to continue if
+      // there actually is a detected transition or keyframe animation
+      if (options.applyClassesEarly && addRemoveClassName.length) {
+        applyAnimationClasses(element, options);
+      }
+
+      var preparationClasses = [structuralClassName, addRemoveClassName].join(' ').trim();
+      var fullClassName = classes + ' ' + preparationClasses;
+      var activeClasses = pendClasses(preparationClasses, ACTIVE_CLASS_SUFFIX);
+      var hasToStyles = styles.to && Object.keys(styles.to).length > 0;
+      var containsKeyframeAnimation = (options.keyframeStyle || '').length > 0;
+
+      // there is no way we can trigger an animation if no styles and
+      // no classes are being applied which would then trigger a transition,
+      // unless there a is raw keyframe value that is applied to the element.
+      if (!containsKeyframeAnimation
+           && !hasToStyles
+           && !preparationClasses) {
+        return closeAndReturnNoopAnimator();
+      }
+
+      var cacheKey, stagger;
+      if (options.stagger > 0) {
+        var staggerVal = parseFloat(options.stagger);
+        stagger = {
+          transitionDelay: staggerVal,
+          animationDelay: staggerVal,
+          transitionDuration: 0,
+          animationDuration: 0
+        };
+      } else {
+        cacheKey = gcsHashFn(node, fullClassName);
+        stagger = computeCachedCssStaggerStyles(node, preparationClasses, cacheKey, DETECT_STAGGER_CSS_PROPERTIES);
+      }
+
+      if (!options.$$skipPreparationClasses) {
+        $$jqLite.addClass(element, preparationClasses);
+      }
+
+      var applyOnlyDuration;
+
+      if (options.transitionStyle) {
+        var transitionStyle = [TRANSITION_PROP, options.transitionStyle];
+        applyInlineStyle(node, transitionStyle);
+        temporaryStyles.push(transitionStyle);
+      }
+
+      if (options.duration >= 0) {
+        applyOnlyDuration = node.style[TRANSITION_PROP].length > 0;
+        var durationStyle = getCssTransitionDurationStyle(options.duration, applyOnlyDuration);
+
+        // we set the duration so that it will be picked up by getComputedStyle later
+        applyInlineStyle(node, durationStyle);
+        temporaryStyles.push(durationStyle);
+      }
+
+      if (options.keyframeStyle) {
+        var keyframeStyle = [ANIMATION_PROP, options.keyframeStyle];
+        applyInlineStyle(node, keyframeStyle);
+        temporaryStyles.push(keyframeStyle);
+      }
+
+      var itemIndex = stagger
+          ? options.staggerIndex >= 0
+              ? options.staggerIndex
+              : gcsLookup.count(cacheKey)
+          : 0;
+
+      var isFirst = itemIndex === 0;
+
+      // this is a pre-emptive way of forcing the setup classes to be added and applied INSTANTLY
+      // without causing any combination of transitions to kick in. By adding a negative delay value
+      // it forces the setup class' transition to end immediately. We later then remove the negative
+      // transition delay to allow for the transition to naturally do it's thing. The beauty here is
+      // that if there is no transition defined then nothing will happen and this will also allow
+      // other transitions to be stacked on top of each other without any chopping them out.
+      if (isFirst && !options.skipBlocking) {
+        blockTransitions(node, SAFE_FAST_FORWARD_DURATION_VALUE);
+      }
+
+      var timings = computeTimings(node, fullClassName, cacheKey);
+      var relativeDelay = timings.maxDelay;
+      maxDelay = Math.max(relativeDelay, 0);
+      maxDuration = timings.maxDuration;
+
+      var flags = {};
+      flags.hasTransitions          = timings.transitionDuration > 0;
+      flags.hasAnimations           = timings.animationDuration > 0;
+      flags.hasTransitionAll        = flags.hasTransitions && timings.transitionProperty == 'all';
+      flags.applyTransitionDuration = hasToStyles && (
+                                        (flags.hasTransitions && !flags.hasTransitionAll)
+                                         || (flags.hasAnimations && !flags.hasTransitions));
+      flags.applyAnimationDuration  = options.duration && flags.hasAnimations;
+      flags.applyTransitionDelay    = truthyTimingValue(options.delay) && (flags.applyTransitionDuration || flags.hasTransitions);
+      flags.applyAnimationDelay     = truthyTimingValue(options.delay) && flags.hasAnimations;
+      flags.recalculateTimingStyles = addRemoveClassName.length > 0;
+
+      if (flags.applyTransitionDuration || flags.applyAnimationDuration) {
+        maxDuration = options.duration ? parseFloat(options.duration) : maxDuration;
+
+        if (flags.applyTransitionDuration) {
+          flags.hasTransitions = true;
+          timings.transitionDuration = maxDuration;
+          applyOnlyDuration = node.style[TRANSITION_PROP + PROPERTY_KEY].length > 0;
+          temporaryStyles.push(getCssTransitionDurationStyle(maxDuration, applyOnlyDuration));
+        }
+
+        if (flags.applyAnimationDuration) {
+          flags.hasAnimations = true;
+          timings.animationDuration = maxDuration;
+          temporaryStyles.push(getCssKeyframeDurationStyle(maxDuration));
+        }
+      }
+
+      if (maxDuration === 0 && !flags.recalculateTimingStyles) {
+        return closeAndReturnNoopAnimator();
+      }
+
+      if (options.delay != null) {
+        var delayStyle;
+        if (typeof options.delay !== "boolean") {
+          delayStyle = parseFloat(options.delay);
+          // number in options.delay means we have to recalculate the delay for the closing timeout
+          maxDelay = Math.max(delayStyle, 0);
+        }
+
+        if (flags.applyTransitionDelay) {
+          temporaryStyles.push(getCssDelayStyle(delayStyle));
+        }
+
+        if (flags.applyAnimationDelay) {
+          temporaryStyles.push(getCssDelayStyle(delayStyle, true));
+        }
+      }
+
+      // we need to recalculate the delay value since we used a pre-emptive negative
+      // delay value and the delay value is required for the final event checking. This
+      // property will ensure that this will happen after the RAF phase has passed.
+      if (options.duration == null && timings.transitionDuration > 0) {
+        flags.recalculateTimingStyles = flags.recalculateTimingStyles || isFirst;
+      }
+
+      maxDelayTime = maxDelay * ONE_SECOND;
+      maxDurationTime = maxDuration * ONE_SECOND;
+      if (!options.skipBlocking) {
+        flags.blockTransition = timings.transitionDuration > 0;
+        flags.blockKeyframeAnimation = timings.animationDuration > 0 &&
+                                       stagger.animationDelay > 0 &&
+                                       stagger.animationDuration === 0;
+      }
+
+      if (options.from) {
+        if (options.cleanupStyles) {
+          registerRestorableStyles(restoreStyles, node, Object.keys(options.from));
+        }
+        applyAnimationFromStyles(element, options);
+      }
+
+      if (flags.blockTransition || flags.blockKeyframeAnimation) {
+        applyBlocking(maxDuration);
+      } else if (!options.skipBlocking) {
+        blockTransitions(node, false);
+      }
+
+      // TODO(matsko): for 1.5 change this code to have an animator object for better debugging
+      return {
+        $$willAnimate: true,
+        end: endFn,
+        start: function() {
+          if (animationClosed) return;
+
+          runnerHost = {
+            end: endFn,
+            cancel: cancelFn,
+            resume: null, //this will be set during the start() phase
+            pause: null
+          };
+
+          runner = new $$AnimateRunner(runnerHost);
+
+          waitUntilQuiet(start);
+
+          // we don't have access to pause/resume the animation
+          // since it hasn't run yet. AnimateRunner will therefore
+          // set noop functions for resume and pause and they will
+          // later be overridden once the animation is triggered
+          return runner;
+        }
+      };
+
+      function endFn() {
+        close();
+      }
+
+      function cancelFn() {
+        close(true);
+      }
+
+      function close(rejected) { // jshint ignore:line
+        // if the promise has been called already then we shouldn't close
+        // the animation again
+        if (animationClosed || (animationCompleted && animationPaused)) return;
+        animationClosed = true;
+        animationPaused = false;
+
+        if (!options.$$skipPreparationClasses) {
+          $$jqLite.removeClass(element, preparationClasses);
+        }
+        $$jqLite.removeClass(element, activeClasses);
+
+        blockKeyframeAnimations(node, false);
+        blockTransitions(node, false);
+
+        forEach(temporaryStyles, function(entry) {
+          // There is only one way to remove inline style properties entirely from elements.
+          // By using `removeProperty` this works, but we need to convert camel-cased CSS
+          // styles down to hyphenated values.
+          node.style[entry[0]] = '';
+        });
+
+        applyAnimationClasses(element, options);
+        applyAnimationStyles(element, options);
+
+        if (Object.keys(restoreStyles).length) {
+          forEach(restoreStyles, function(value, prop) {
+            value ? node.style.setProperty(prop, value)
+                  : node.style.removeProperty(prop);
+          });
+        }
+
+        // the reason why we have this option is to allow a synchronous closing callback
+        // that is fired as SOON as the animation ends (when the CSS is removed) or if
+        // the animation never takes off at all. A good example is a leave animation since
+        // the element must be removed just after the animation is over or else the element
+        // will appear on screen for one animation frame causing an overbearing flicker.
+        if (options.onDone) {
+          options.onDone();
+        }
+
+        if (events && events.length) {
+          // Remove the transitionend / animationend listener(s)
+          element.off(events.join(' '), onAnimationProgress);
+        }
+
+        //Cancel the fallback closing timeout and remove the timer data
+        var animationTimerData = element.data(ANIMATE_TIMER_KEY);
+        if (animationTimerData) {
+          $timeout.cancel(animationTimerData[0].timer);
+          element.removeData(ANIMATE_TIMER_KEY);
+        }
+
+        // if the preparation function fails then the promise is not setup
+        if (runner) {
+          runner.complete(!rejected);
+        }
+      }
+
+      function applyBlocking(duration) {
+        if (flags.blockTransition) {
+          blockTransitions(node, duration);
+        }
+
+        if (flags.blockKeyframeAnimation) {
+          blockKeyframeAnimations(node, !!duration);
+        }
+      }
+
+      function closeAndReturnNoopAnimator() {
+        runner = new $$AnimateRunner({
+          end: endFn,
+          cancel: cancelFn
+        });
+
+        // should flush the cache animation
+        waitUntilQuiet(noop);
+        close();
+
+        return {
+          $$willAnimate: false,
+          start: function() {
+            return runner;
+          },
+          end: endFn
+        };
+      }
+
+      function onAnimationProgress(event) {
+        event.stopPropagation();
+        var ev = event.originalEvent || event;
+
+        // we now always use `Date.now()` due to the recent changes with
+        // event.timeStamp in Firefox, Webkit and Chrome (see #13494 for more info)
+        var timeStamp = ev.$manualTimeStamp || Date.now();
+
+        /* Firefox (or possibly just Gecko) likes to not round values up
+         * when a ms measurement is used for the animation */
+        var elapsedTime = parseFloat(ev.elapsedTime.toFixed(ELAPSED_TIME_MAX_DECIMAL_PLACES));
+
+        /* $manualTimeStamp is a mocked timeStamp value which is set
+         * within browserTrigger(). This is only here so that tests can
+         * mock animations properly. Real events fallback to event.timeStamp,
+         * or, if they don't, then a timeStamp is automatically created for them.
+         * We're checking to see if the timeStamp surpasses the expected delay,
+         * but we're using elapsedTime instead of the timeStamp on the 2nd
+         * pre-condition since animationPauseds sometimes close off early */
+        if (Math.max(timeStamp - startTime, 0) >= maxDelayTime && elapsedTime >= maxDuration) {
+          // we set this flag to ensure that if the transition is paused then, when resumed,
+          // the animation will automatically close itself since transitions cannot be paused.
+          animationCompleted = true;
+          close();
+        }
+      }
+
+      function start() {
+        if (animationClosed) return;
+        if (!node.parentNode) {
+          close();
+          return;
+        }
+
+        // even though we only pause keyframe animations here the pause flag
+        // will still happen when transitions are used. Only the transition will
+        // not be paused since that is not possible. If the animation ends when
+        // paused then it will not complete until unpaused or cancelled.
+        var playPause = function(playAnimation) {
+          if (!animationCompleted) {
+            animationPaused = !playAnimation;
+            if (timings.animationDuration) {
+              var value = blockKeyframeAnimations(node, animationPaused);
+              animationPaused
+                  ? temporaryStyles.push(value)
+                  : removeFromArray(temporaryStyles, value);
+            }
+          } else if (animationPaused && playAnimation) {
+            animationPaused = false;
+            close();
+          }
+        };
+
+        // checking the stagger duration prevents an accidentally cascade of the CSS delay style
+        // being inherited from the parent. If the transition duration is zero then we can safely
+        // rely that the delay value is an intentional stagger delay style.
+        var maxStagger = itemIndex > 0
+                         && ((timings.transitionDuration && stagger.transitionDuration === 0) ||
+                            (timings.animationDuration && stagger.animationDuration === 0))
+                         && Math.max(stagger.animationDelay, stagger.transitionDelay);
+        if (maxStagger) {
+          $timeout(triggerAnimationStart,
+                   Math.floor(maxStagger * itemIndex * ONE_SECOND),
+                   false);
+        } else {
+          triggerAnimationStart();
+        }
+
+        // this will decorate the existing promise runner with pause/resume methods
+        runnerHost.resume = function() {
+          playPause(true);
+        };
+
+        runnerHost.pause = function() {
+          playPause(false);
+        };
+
+        function triggerAnimationStart() {
+          // just incase a stagger animation kicks in when the animation
+          // itself was cancelled entirely
+          if (animationClosed) return;
+
+          applyBlocking(false);
+
+          forEach(temporaryStyles, function(entry) {
+            var key = entry[0];
+            var value = entry[1];
+            node.style[key] = value;
+          });
+
+          applyAnimationClasses(element, options);
+          $$jqLite.addClass(element, activeClasses);
+
+          if (flags.recalculateTimingStyles) {
+            fullClassName = node.className + ' ' + preparationClasses;
+            cacheKey = gcsHashFn(node, fullClassName);
+
+            timings = computeTimings(node, fullClassName, cacheKey);
+            relativeDelay = timings.maxDelay;
+            maxDelay = Math.max(relativeDelay, 0);
+            maxDuration = timings.maxDuration;
+
+            if (maxDuration === 0) {
+              close();
+              return;
+            }
+
+            flags.hasTransitions = timings.transitionDuration > 0;
+            flags.hasAnimations = timings.animationDuration > 0;
+          }
+
+          if (flags.applyAnimationDelay) {
+            relativeDelay = typeof options.delay !== "boolean" && truthyTimingValue(options.delay)
+                  ? parseFloat(options.delay)
+                  : relativeDelay;
+
+            maxDelay = Math.max(relativeDelay, 0);
+            timings.animationDelay = relativeDelay;
+            delayStyle = getCssDelayStyle(relativeDelay, true);
+            temporaryStyles.push(delayStyle);
+            node.style[delayStyle[0]] = delayStyle[1];
+          }
+
+          maxDelayTime = maxDelay * ONE_SECOND;
+          maxDurationTime = maxDuration * ONE_SECOND;
+
+          if (options.easing) {
+            var easeProp, easeVal = options.easing;
+            if (flags.hasTransitions) {
+              easeProp = TRANSITION_PROP + TIMING_KEY;
+              temporaryStyles.push([easeProp, easeVal]);
+              node.style[easeProp] = easeVal;
+            }
+            if (flags.hasAnimations) {
+              easeProp = ANIMATION_PROP + TIMING_KEY;
+              temporaryStyles.push([easeProp, easeVal]);
+              node.style[easeProp] = easeVal;
+            }
+          }
+
+          if (timings.transitionDuration) {
+            events.push(TRANSITIONEND_EVENT);
+          }
+
+          if (timings.animationDuration) {
+            events.push(ANIMATIONEND_EVENT);
+          }
+
+          startTime = Date.now();
+          var timerTime = maxDelayTime + CLOSING_TIME_BUFFER * maxDurationTime;
+          var endTime = startTime + timerTime;
+
+          var animationsData = element.data(ANIMATE_TIMER_KEY) || [];
+          var setupFallbackTimer = true;
+          if (animationsData.length) {
+            var currentTimerData = animationsData[0];
+            setupFallbackTimer = endTime > currentTimerData.expectedEndTime;
+            if (setupFallbackTimer) {
+              $timeout.cancel(currentTimerData.timer);
+            } else {
+              animationsData.push(close);
+            }
+          }
+
+          if (setupFallbackTimer) {
+            var timer = $timeout(onAnimationExpired, timerTime, false);
+            animationsData[0] = {
+              timer: timer,
+              expectedEndTime: endTime
+            };
+            animationsData.push(close);
+            element.data(ANIMATE_TIMER_KEY, animationsData);
+          }
+
+          if (events.length) {
+            element.on(events.join(' '), onAnimationProgress);
+          }
+
+          if (options.to) {
+            if (options.cleanupStyles) {
+              registerRestorableStyles(restoreStyles, node, Object.keys(options.to));
+            }
+            applyAnimationToStyles(element, options);
+          }
+        }
+
+        function onAnimationExpired() {
+          var animationsData = element.data(ANIMATE_TIMER_KEY);
+
+          // this will be false in the event that the element was
+          // removed from the DOM (via a leave animation or something
+          // similar)
+          if (animationsData) {
+            for (var i = 1; i < animationsData.length; i++) {
+              animationsData[i]();
+            }
+            element.removeData(ANIMATE_TIMER_KEY);
+          }
+        }
+      }
+    };
+  }];
+}];
+
+var $$AnimateCssDriverProvider = ['$$animationProvider', function($$animationProvider) {
+  $$animationProvider.drivers.push('$$animateCssDriver');
+
+  var NG_ANIMATE_SHIM_CLASS_NAME = 'ng-animate-shim';
+  var NG_ANIMATE_ANCHOR_CLASS_NAME = 'ng-anchor';
+
+  var NG_OUT_ANCHOR_CLASS_NAME = 'ng-anchor-out';
+  var NG_IN_ANCHOR_CLASS_NAME = 'ng-anchor-in';
+
+  function isDocumentFragment(node) {
+    return node.parentNode && node.parentNode.nodeType === 11;
+  }
+
+  this.$get = ['$animateCss', '$rootScope', '$$AnimateRunner', '$rootElement', '$sniffer', '$$jqLite', '$document',
+       function($animateCss,   $rootScope,   $$AnimateRunner,   $rootElement,   $sniffer,   $$jqLite,   $document) {
+
+    // only browsers that support these properties can render animations
+    if (!$sniffer.animations && !$sniffer.transitions) return noop;
+
+    var bodyNode = $document[0].body;
+    var rootNode = getDomNode($rootElement);
+
+    var rootBodyElement = jqLite(
+      // this is to avoid using something that exists outside of the body
+      // we also special case the doc fragment case because our unit test code
+      // appends the $rootElement to the body after the app has been bootstrapped
+      isDocumentFragment(rootNode) || bodyNode.contains(rootNode) ? rootNode : bodyNode
+    );
+
+    var applyAnimationClasses = applyAnimationClassesFactory($$jqLite);
+
+    return function initDriverFn(animationDetails) {
+      return animationDetails.from && animationDetails.to
+          ? prepareFromToAnchorAnimation(animationDetails.from,
+                                         animationDetails.to,
+                                         animationDetails.classes,
+                                         animationDetails.anchors)
+          : prepareRegularAnimation(animationDetails);
+    };
+
+    function filterCssClasses(classes) {
+      //remove all the `ng-` stuff
+      return classes.replace(/\bng-\S+\b/g, '');
+    }
+
+    function getUniqueValues(a, b) {
+      if (isString(a)) a = a.split(' ');
+      if (isString(b)) b = b.split(' ');
+      return a.filter(function(val) {
+        return b.indexOf(val) === -1;
+      }).join(' ');
+    }
+
+    function prepareAnchoredAnimation(classes, outAnchor, inAnchor) {
+      var clone = jqLite(getDomNode(outAnchor).cloneNode(true));
+      var startingClasses = filterCssClasses(getClassVal(clone));
+
+      outAnchor.addClass(NG_ANIMATE_SHIM_CLASS_NAME);
+      inAnchor.addClass(NG_ANIMATE_SHIM_CLASS_NAME);
+
+      clone.addClass(NG_ANIMATE_ANCHOR_CLASS_NAME);
+
+      rootBodyElement.append(clone);
+
+      var animatorIn, animatorOut = prepareOutAnimation();
+
+      // the user may not end up using the `out` animation and
+      // only making use of the `in` animation or vice-versa.
+      // In either case we should allow this and not assume the
+      // animation is over unless both animations are not used.
+      if (!animatorOut) {
+        animatorIn = prepareInAnimation();
+        if (!animatorIn) {
+          return end();
+        }
+      }
+
+      var startingAnimator = animatorOut || animatorIn;
+
+      return {
+        start: function() {
+          var runner;
+
+          var currentAnimation = startingAnimator.start();
+          currentAnimation.done(function() {
+            currentAnimation = null;
+            if (!animatorIn) {
+              animatorIn = prepareInAnimation();
+              if (animatorIn) {
+                currentAnimation = animatorIn.start();
+                currentAnimation.done(function() {
+                  currentAnimation = null;
+                  end();
+                  runner.complete();
+                });
+                return currentAnimation;
+              }
+            }
+            // in the event that there is no `in` animation
+            end();
+            runner.complete();
+          });
+
+          runner = new $$AnimateRunner({
+            end: endFn,
+            cancel: endFn
+          });
+
+          return runner;
+
+          function endFn() {
+            if (currentAnimation) {
+              currentAnimation.end();
+            }
+          }
+        }
+      };
+
+      function calculateAnchorStyles(anchor) {
+        var styles = {};
+
+        var coords = getDomNode(anchor).getBoundingClientRect();
+
+        // we iterate directly since safari messes up and doesn't return
+        // all the keys for the coords object when iterated
+        forEach(['width','height','top','left'], function(key) {
+          var value = coords[key];
+          switch (key) {
+            case 'top':
+              value += bodyNode.scrollTop;
+              break;
+            case 'left':
+              value += bodyNode.scrollLeft;
+              break;
+          }
+          styles[key] = Math.floor(value) + 'px';
+        });
+        return styles;
+      }
+
+      function prepareOutAnimation() {
+        var animator = $animateCss(clone, {
+          addClass: NG_OUT_ANCHOR_CLASS_NAME,
+          delay: true,
+          from: calculateAnchorStyles(outAnchor)
+        });
+
+        // read the comment within `prepareRegularAnimation` to understand
+        // why this check is necessary
+        return animator.$$willAnimate ? animator : null;
+      }
+
+      function getClassVal(element) {
+        return element.attr('class') || '';
+      }
+
+      function prepareInAnimation() {
+        var endingClasses = filterCssClasses(getClassVal(inAnchor));
+        var toAdd = getUniqueValues(endingClasses, startingClasses);
+        var toRemove = getUniqueValues(startingClasses, endingClasses);
+
+        var animator = $animateCss(clone, {
+          to: calculateAnchorStyles(inAnchor),
+          addClass: NG_IN_ANCHOR_CLASS_NAME + ' ' + toAdd,
+          removeClass: NG_OUT_ANCHOR_CLASS_NAME + ' ' + toRemove,
+          delay: true
+        });
+
+        // read the comment within `prepareRegularAnimation` to understand
+        // why this check is necessary
+        return animator.$$willAnimate ? animator : null;
+      }
+
+      function end() {
+        clone.remove();
+        outAnchor.removeClass(NG_ANIMATE_SHIM_CLASS_NAME);
+        inAnchor.removeClass(NG_ANIMATE_SHIM_CLASS_NAME);
+      }
+    }
+
+    function prepareFromToAnchorAnimation(from, to, classes, anchors) {
+      var fromAnimation = prepareRegularAnimation(from, noop);
+      var toAnimation = prepareRegularAnimation(to, noop);
+
+      var anchorAnimations = [];
+      forEach(anchors, function(anchor) {
+        var outElement = anchor['out'];
+        var inElement = anchor['in'];
+        var animator = prepareAnchoredAnimation(classes, outElement, inElement);
+        if (animator) {
+          anchorAnimations.push(animator);
+        }
+      });
+
+      // no point in doing anything when there are no elements to animate
+      if (!fromAnimation && !toAnimation && anchorAnimations.length === 0) return;
+
+      return {
+        start: function() {
+          var animationRunners = [];
+
+          if (fromAnimation) {
+            animationRunners.push(fromAnimation.start());
+          }
+
+          if (toAnimation) {
+            animationRunners.push(toAnimation.start());
+          }
+
+          forEach(anchorAnimations, function(animation) {
+            animationRunners.push(animation.start());
+          });
+
+          var runner = new $$AnimateRunner({
+            end: endFn,
+            cancel: endFn // CSS-driven animations cannot be cancelled, only ended
+          });
+
+          $$AnimateRunner.all(animationRunners, function(status) {
+            runner.complete(status);
+          });
+
+          return runner;
+
+          function endFn() {
+            forEach(animationRunners, function(runner) {
+              runner.end();
+            });
+          }
+        }
+      };
+    }
+
+    function prepareRegularAnimation(animationDetails) {
+      var element = animationDetails.element;
+      var options = animationDetails.options || {};
+
+      if (animationDetails.structural) {
+        options.event = animationDetails.event;
+        options.structural = true;
+        options.applyClassesEarly = true;
+
+        // we special case the leave animation since we want to ensure that
+        // the element is removed as soon as the animation is over. Otherwise
+        // a flicker might appear or the element may not be removed at all
+        if (animationDetails.event === 'leave') {
+          options.onDone = options.domOperation;
+        }
+      }
+
+      // We assign the preparationClasses as the actual animation event since
+      // the internals of $animateCss will just suffix the event token values
+      // with `-active` to trigger the animation.
+      if (options.preparationClasses) {
+        options.event = concatWithSpace(options.event, options.preparationClasses);
+      }
+
+      var animator = $animateCss(element, options);
+
+      // the driver lookup code inside of $$animation attempts to spawn a
+      // driver one by one until a driver returns a.$$willAnimate animator object.
+      // $animateCss will always return an object, however, it will pass in
+      // a flag as a hint as to whether an animation was detected or not
+      return animator.$$willAnimate ? animator : null;
+    }
+  }];
+}];
+
+// TODO(matsko): use caching here to speed things up for detection
+// TODO(matsko): add documentation
+//  by the time...
+
+var $$AnimateJsProvider = ['$animateProvider', function($animateProvider) {
+  this.$get = ['$injector', '$$AnimateRunner', '$$jqLite',
+       function($injector,   $$AnimateRunner,   $$jqLite) {
+
+    var applyAnimationClasses = applyAnimationClassesFactory($$jqLite);
+         // $animateJs(element, 'enter');
+    return function(element, event, classes, options) {
+      var animationClosed = false;
+
+      // the `classes` argument is optional and if it is not used
+      // then the classes will be resolved from the element's className
+      // property as well as options.addClass/options.removeClass.
+      if (arguments.length === 3 && isObject(classes)) {
+        options = classes;
+        classes = null;
+      }
+
+      options = prepareAnimationOptions(options);
+      if (!classes) {
+        classes = element.attr('class') || '';
+        if (options.addClass) {
+          classes += ' ' + options.addClass;
+        }
+        if (options.removeClass) {
+          classes += ' ' + options.removeClass;
+        }
+      }
+
+      var classesToAdd = options.addClass;
+      var classesToRemove = options.removeClass;
+
+      // the lookupAnimations function returns a series of animation objects that are
+      // matched up with one or more of the CSS classes. These animation objects are
+      // defined via the module.animation factory function. If nothing is detected then
+      // we don't return anything which then makes $animation query the next driver.
+      var animations = lookupAnimations(classes);
+      var before, after;
+      if (animations.length) {
+        var afterFn, beforeFn;
+        if (event == 'leave') {
+          beforeFn = 'leave';
+          afterFn = 'afterLeave'; // TODO(matsko): get rid of this
+        } else {
+          beforeFn = 'before' + event.charAt(0).toUpperCase() + event.substr(1);
+          afterFn = event;
+        }
+
+        if (event !== 'enter' && event !== 'move') {
+          before = packageAnimations(element, event, options, animations, beforeFn);
+        }
+        after  = packageAnimations(element, event, options, animations, afterFn);
+      }
+
+      // no matching animations
+      if (!before && !after) return;
+
+      function applyOptions() {
+        options.domOperation();
+        applyAnimationClasses(element, options);
+      }
+
+      function close() {
+        animationClosed = true;
+        applyOptions();
+        applyAnimationStyles(element, options);
+      }
+
+      var runner;
+
+      return {
+        $$willAnimate: true,
+        end: function() {
+          if (runner) {
+            runner.end();
+          } else {
+            close();
+            runner = new $$AnimateRunner();
+            runner.complete(true);
+          }
+          return runner;
+        },
+        start: function() {
+          if (runner) {
+            return runner;
+          }
+
+          runner = new $$AnimateRunner();
+          var closeActiveAnimations;
+          var chain = [];
+
+          if (before) {
+            chain.push(function(fn) {
+              closeActiveAnimations = before(fn);
+            });
+          }
+
+          if (chain.length) {
+            chain.push(function(fn) {
+              applyOptions();
+              fn(true);
+            });
+          } else {
+            applyOptions();
+          }
+
+          if (after) {
+            chain.push(function(fn) {
+              closeActiveAnimations = after(fn);
+            });
+          }
+
+          runner.setHost({
+            end: function() {
+              endAnimations();
+            },
+            cancel: function() {
+              endAnimations(true);
+            }
+          });
+
+          $$AnimateRunner.chain(chain, onComplete);
+          return runner;
+
+          function onComplete(success) {
+            close(success);
+            runner.complete(success);
+          }
+
+          function endAnimations(cancelled) {
+            if (!animationClosed) {
+              (closeActiveAnimations || noop)(cancelled);
+              onComplete(cancelled);
+            }
+          }
+        }
+      };
+
+      function executeAnimationFn(fn, element, event, options, onDone) {
+        var args;
+        switch (event) {
+          case 'animate':
+            args = [element, options.from, options.to, onDone];
+            break;
+
+          case 'setClass':
+            args = [element, classesToAdd, classesToRemove, onDone];
+            break;
+
+          case 'addClass':
+            args = [element, classesToAdd, onDone];
+            break;
+
+          case 'removeClass':
+            args = [element, classesToRemove, onDone];
+            break;
+
+          default:
+            args = [element, onDone];
+            break;
+        }
+
+        args.push(options);
+
+        var value = fn.apply(fn, args);
+        if (value) {
+          if (isFunction(value.start)) {
+            value = value.start();
+          }
+
+          if (value instanceof $$AnimateRunner) {
+            value.done(onDone);
+          } else if (isFunction(value)) {
+            // optional onEnd / onCancel callback
+            return value;
+          }
+        }
+
+        return noop;
+      }
+
+      function groupEventedAnimations(element, event, options, animations, fnName) {
+        var operations = [];
+        forEach(animations, function(ani) {
+          var animation = ani[fnName];
+          if (!animation) return;
+
+          // note that all of these animations will run in parallel
+          operations.push(function() {
+            var runner;
+            var endProgressCb;
+
+            var resolved = false;
+            var onAnimationComplete = function(rejected) {
+              if (!resolved) {
+                resolved = true;
+                (endProgressCb || noop)(rejected);
+                runner.complete(!rejected);
+              }
+            };
+
+            runner = new $$AnimateRunner({
+              end: function() {
+                onAnimationComplete();
+              },
+              cancel: function() {
+                onAnimationComplete(true);
+              }
+            });
+
+            endProgressCb = executeAnimationFn(animation, element, event, options, function(result) {
+              var cancelled = result === false;
+              onAnimationComplete(cancelled);
+            });
+
+            return runner;
+          });
+        });
+
+        return operations;
+      }
+
+      function packageAnimations(element, event, options, animations, fnName) {
+        var operations = groupEventedAnimations(element, event, options, animations, fnName);
+        if (operations.length === 0) {
+          var a,b;
+          if (fnName === 'beforeSetClass') {
+            a = groupEventedAnimations(element, 'removeClass', options, animations, 'beforeRemoveClass');
+            b = groupEventedAnimations(element, 'addClass', options, animations, 'beforeAddClass');
+          } else if (fnName === 'setClass') {
+            a = groupEventedAnimations(element, 'removeClass', options, animations, 'removeClass');
+            b = groupEventedAnimations(element, 'addClass', options, animations, 'addClass');
+          }
+
+          if (a) {
+            operations = operations.concat(a);
+          }
+          if (b) {
+            operations = operations.concat(b);
+          }
+        }
+
+        if (operations.length === 0) return;
+
+        // TODO(matsko): add documentation
+        return function startAnimation(callback) {
+          var runners = [];
+          if (operations.length) {
+            forEach(operations, function(animateFn) {
+              runners.push(animateFn());
+            });
+          }
+
+          runners.length ? $$AnimateRunner.all(runners, callback) : callback();
+
+          return function endFn(reject) {
+            forEach(runners, function(runner) {
+              reject ? runner.cancel() : runner.end();
+            });
+          };
+        };
+      }
+    };
+
+    function lookupAnimations(classes) {
+      classes = isArray(classes) ? classes : classes.split(' ');
+      var matches = [], flagMap = {};
+      for (var i=0; i < classes.length; i++) {
+        var klass = classes[i],
+            animationFactory = $animateProvider.$$registeredAnimations[klass];
+        if (animationFactory && !flagMap[klass]) {
+          matches.push($injector.get(animationFactory));
+          flagMap[klass] = true;
+        }
+      }
+      return matches;
+    }
+  }];
+}];
+
+var $$AnimateJsDriverProvider = ['$$animationProvider', function($$animationProvider) {
+  $$animationProvider.drivers.push('$$animateJsDriver');
+  this.$get = ['$$animateJs', '$$AnimateRunner', function($$animateJs, $$AnimateRunner) {
+    return function initDriverFn(animationDetails) {
+      if (animationDetails.from && animationDetails.to) {
+        var fromAnimation = prepareAnimation(animationDetails.from);
+        var toAnimation = prepareAnimation(animationDetails.to);
+        if (!fromAnimation && !toAnimation) return;
+
+        return {
+          start: function() {
+            var animationRunners = [];
+
+            if (fromAnimation) {
+              animationRunners.push(fromAnimation.start());
+            }
+
+            if (toAnimation) {
+              animationRunners.push(toAnimation.start());
+            }
+
+            $$AnimateRunner.all(animationRunners, done);
+
+            var runner = new $$AnimateRunner({
+              end: endFnFactory(),
+              cancel: endFnFactory()
+            });
+
+            return runner;
+
+            function endFnFactory() {
+              return function() {
+                forEach(animationRunners, function(runner) {
+                  // at this point we cannot cancel animations for groups just yet. 1.5+
+                  runner.end();
+                });
+              };
+            }
+
+            function done(status) {
+              runner.complete(status);
+            }
+          }
+        };
+      } else {
+        return prepareAnimation(animationDetails);
+      }
+    };
+
+    function prepareAnimation(animationDetails) {
+      // TODO(matsko): make sure to check for grouped animations and delegate down to normal animations
+      var element = animationDetails.element;
+      var event = animationDetails.event;
+      var options = animationDetails.options;
+      var classes = animationDetails.classes;
+      return $$animateJs(element, event, classes, options);
+    }
+  }];
+}];
+
+var NG_ANIMATE_ATTR_NAME = 'data-ng-animate';
+var NG_ANIMATE_PIN_DATA = '$ngAnimatePin';
+var $$AnimateQueueProvider = ['$animateProvider', function($animateProvider) {
+  var PRE_DIGEST_STATE = 1;
+  var RUNNING_STATE = 2;
+  var ONE_SPACE = ' ';
+
+  var rules = this.rules = {
+    skip: [],
+    cancel: [],
+    join: []
+  };
+
+  function makeTruthyCssClassMap(classString) {
+    if (!classString) {
+      return null;
+    }
+
+    var keys = classString.split(ONE_SPACE);
+    var map = Object.create(null);
+
+    forEach(keys, function(key) {
+      map[key] = true;
+    });
+    return map;
+  }
+
+  function hasMatchingClasses(newClassString, currentClassString) {
+    if (newClassString && currentClassString) {
+      var currentClassMap = makeTruthyCssClassMap(currentClassString);
+      return newClassString.split(ONE_SPACE).some(function(className) {
+        return currentClassMap[className];
+      });
+    }
+  }
+
+  function isAllowed(ruleType, element, currentAnimation, previousAnimation) {
+    return rules[ruleType].some(function(fn) {
+      return fn(element, currentAnimation, previousAnimation);
+    });
+  }
+
+  function hasAnimationClasses(animation, and) {
+    var a = (animation.addClass || '').length > 0;
+    var b = (animation.removeClass || '').length > 0;
+    return and ? a && b : a || b;
+  }
+
+  rules.join.push(function(element, newAnimation, currentAnimation) {
+    // if the new animation is class-based then we can just tack that on
+    return !newAnimation.structural && hasAnimationClasses(newAnimation);
+  });
+
+  rules.skip.push(function(element, newAnimation, currentAnimation) {
+    // there is no need to animate anything if no classes are being added and
+    // there is no structural animation that will be triggered
+    return !newAnimation.structural && !hasAnimationClasses(newAnimation);
+  });
+
+  rules.skip.push(function(element, newAnimation, currentAnimation) {
+    // why should we trigger a new structural animation if the element will
+    // be removed from the DOM anyway?
+    return currentAnimation.event == 'leave' && newAnimation.structural;
+  });
+
+  rules.skip.push(function(element, newAnimation, currentAnimation) {
+    // if there is an ongoing current animation then don't even bother running the class-based animation
+    return currentAnimation.structural && currentAnimation.state === RUNNING_STATE && !newAnimation.structural;
+  });
+
+  rules.cancel.push(function(element, newAnimation, currentAnimation) {
+    // there can never be two structural animations running at the same time
+    return currentAnimation.structural && newAnimation.structural;
+  });
+
+  rules.cancel.push(function(element, newAnimation, currentAnimation) {
+    // if the previous animation is already running, but the new animation will
+    // be triggered, but the new animation is structural
+    return currentAnimation.state === RUNNING_STATE && newAnimation.structural;
+  });
+
+  rules.cancel.push(function(element, newAnimation, currentAnimation) {
+    // cancel the animation if classes added / removed in both animation cancel each other out,
+    // but only if the current animation isn't structural
+
+    if (currentAnimation.structural) return false;
+
+    var nA = newAnimation.addClass;
+    var nR = newAnimation.removeClass;
+    var cA = currentAnimation.addClass;
+    var cR = currentAnimation.removeClass;
+
+    // early detection to save the global CPU shortage :)
+    if ((isUndefined(nA) && isUndefined(nR)) || (isUndefined(cA) && isUndefined(cR))) {
+      return false;
+    }
+
+    return hasMatchingClasses(nA, cR) || hasMatchingClasses(nR, cA);
+  });
+
+  this.$get = ['$$rAF', '$rootScope', '$rootElement', '$document', '$$HashMap',
+               '$$animation', '$$AnimateRunner', '$templateRequest', '$$jqLite', '$$forceReflow',
+       function($$rAF,   $rootScope,   $rootElement,   $document,   $$HashMap,
+                $$animation,   $$AnimateRunner,   $templateRequest,   $$jqLite,   $$forceReflow) {
+
+    var activeAnimationsLookup = new $$HashMap();
+    var disabledElementsLookup = new $$HashMap();
+    var animationsEnabled = null;
+
+    function postDigestTaskFactory() {
+      var postDigestCalled = false;
+      return function(fn) {
+        // we only issue a call to postDigest before
+        // it has first passed. This prevents any callbacks
+        // from not firing once the animation has completed
+        // since it will be out of the digest cycle.
+        if (postDigestCalled) {
+          fn();
+        } else {
+          $rootScope.$$postDigest(function() {
+            postDigestCalled = true;
+            fn();
+          });
+        }
+      };
+    }
+
+    // Wait until all directive and route-related templates are downloaded and
+    // compiled. The $templateRequest.totalPendingRequests variable keeps track of
+    // all of the remote templates being currently downloaded. If there are no
+    // templates currently downloading then the watcher will still fire anyway.
+    var deregisterWatch = $rootScope.$watch(
+      function() { return $templateRequest.totalPendingRequests === 0; },
+      function(isEmpty) {
+        if (!isEmpty) return;
+        deregisterWatch();
+
+        // Now that all templates have been downloaded, $animate will wait until
+        // the post digest queue is empty before enabling animations. By having two
+        // calls to $postDigest calls we can ensure that the flag is enabled at the
+        // very end of the post digest queue. Since all of the animations in $animate
+        // use $postDigest, it's important that the code below executes at the end.
+        // This basically means that the page is fully downloaded and compiled before
+        // any animations are triggered.
+        $rootScope.$$postDigest(function() {
+          $rootScope.$$postDigest(function() {
+            // we check for null directly in the event that the application already called
+            // .enabled() with whatever arguments that it provided it with
+            if (animationsEnabled === null) {
+              animationsEnabled = true;
+            }
+          });
+        });
+      }
+    );
+
+    var callbackRegistry = Object.create(null);
+
+    // remember that the classNameFilter is set during the provider/config
+    // stage therefore we can optimize here and setup a helper function
+    var classNameFilter = $animateProvider.classNameFilter();
+    var isAnimatableClassName = !classNameFilter
+              ? function() { return true; }
+              : function(className) {
+                return classNameFilter.test(className);
+              };
+
+    var applyAnimationClasses = applyAnimationClassesFactory($$jqLite);
+
+    function normalizeAnimationDetails(element, animation) {
+      return mergeAnimationDetails(element, animation, {});
+    }
+
+    // IE9-11 has no method "contains" in SVG element and in Node.prototype. Bug #10259.
+    var contains = window.Node.prototype.contains || function(arg) {
+      // jshint bitwise: false
+      return this === arg || !!(this.compareDocumentPosition(arg) & 16);
+      // jshint bitwise: true
+    };
+
+    function findCallbacks(parent, element, event) {
+      var targetNode = getDomNode(element);
+      var targetParentNode = getDomNode(parent);
+
+      var matches = [];
+      var entries = callbackRegistry[event];
+      if (entries) {
+        forEach(entries, function(entry) {
+          if (contains.call(entry.node, targetNode)) {
+            matches.push(entry.callback);
+          } else if (event === 'leave' && contains.call(entry.node, targetParentNode)) {
+            matches.push(entry.callback);
+          }
+        });
+      }
+
+      return matches;
+    }
+
+    function filterFromRegistry(list, matchContainer, matchCallback) {
+      var containerNode = extractElementNode(matchContainer);
+      return list.filter(function(entry) {
+        var isMatch = entry.node === containerNode &&
+                        (!matchCallback || entry.callback === matchCallback);
+        return !isMatch;
+      });
+    }
+
+    function cleanupEventListeners(phase, element) {
+      if (phase === 'close' && !element[0].parentNode) {
+        // If the element is not attached to a parentNode, it has been removed by
+        // the domOperation, and we can safely remove the event callbacks
+        $animate.off(element);
+      }
+    }
+
+    var $animate = {
+      on: function(event, container, callback) {
+        var node = extractElementNode(container);
+        callbackRegistry[event] = callbackRegistry[event] || [];
+        callbackRegistry[event].push({
+          node: node,
+          callback: callback
+        });
+
+        // Remove the callback when the element is removed from the DOM
+        jqLite(container).on('$destroy', function() {
+          var animationDetails = activeAnimationsLookup.get(node);
+
+          if (!animationDetails) {
+            // If there's an animation ongoing, the callback calling code will remove
+            // the event listeners. If we'd remove here, the callbacks would be removed
+            // before the animation ends
+            $animate.off(event, container, callback);
+          }
+        });
+      },
+
+      off: function(event, container, callback) {
+        if (arguments.length === 1 && !isString(arguments[0])) {
+          container = arguments[0];
+          for (var eventType in callbackRegistry) {
+            callbackRegistry[eventType] = filterFromRegistry(callbackRegistry[eventType], container);
+          }
+
+          return;
+        }
+
+        var entries = callbackRegistry[event];
+        if (!entries) return;
+
+        callbackRegistry[event] = arguments.length === 1
+            ? null
+            : filterFromRegistry(entries, container, callback);
+      },
+
+      pin: function(element, parentElement) {
+        assertArg(isElement(element), 'element', 'not an element');
+        assertArg(isElement(parentElement), 'parentElement', 'not an element');
+        element.data(NG_ANIMATE_PIN_DATA, parentElement);
+      },
+
+      push: function(element, event, options, domOperation) {
+        options = options || {};
+        options.domOperation = domOperation;
+        return queueAnimation(element, event, options);
+      },
+
+      // this method has four signatures:
+      //  () - global getter
+      //  (bool) - global setter
+      //  (element) - element getter
+      //  (element, bool) - element setter<F37>
+      enabled: function(element, bool) {
+        var argCount = arguments.length;
+
+        if (argCount === 0) {
+          // () - Global getter
+          bool = !!animationsEnabled;
+        } else {
+          var hasElement = isElement(element);
+
+          if (!hasElement) {
+            // (bool) - Global setter
+            bool = animationsEnabled = !!element;
+          } else {
+            var node = getDomNode(element);
+
+            if (argCount === 1) {
+              // (element) - Element getter
+              bool = !disabledElementsLookup.get(node);
+            } else {
+              // (element, bool) - Element setter
+              disabledElementsLookup.put(node, !bool);
+            }
+          }
+        }
+
+        return bool;
+      }
+    };
+
+    return $animate;
+
+    function queueAnimation(element, event, initialOptions) {
+      // we always make a copy of the options since
+      // there should never be any side effects on
+      // the input data when running `$animateCss`.
+      var options = copy(initialOptions);
+
+      var node, parent;
+      element = stripCommentsFromElement(element);
+      if (element) {
+        node = getDomNode(element);
+        parent = element.parent();
+      }
+
+      options = prepareAnimationOptions(options);
+
+      // we create a fake runner with a working promise.
+      // These methods will become available after the digest has passed
+      var runner = new $$AnimateRunner();
+
+      // this is used to trigger callbacks in postDigest mode
+      var runInNextPostDigestOrNow = postDigestTaskFactory();
+
+      if (isArray(options.addClass)) {
+        options.addClass = options.addClass.join(' ');
+      }
+
+      if (options.addClass && !isString(options.addClass)) {
+        options.addClass = null;
+      }
+
+      if (isArray(options.removeClass)) {
+        options.removeClass = options.removeClass.join(' ');
+      }
+
+      if (options.removeClass && !isString(options.removeClass)) {
+        options.removeClass = null;
+      }
+
+      if (options.from && !isObject(options.from)) {
+        options.from = null;
+      }
+
+      if (options.to && !isObject(options.to)) {
+        options.to = null;
+      }
+
+      // there are situations where a directive issues an animation for
+      // a jqLite wrapper that contains only comment nodes... If this
+      // happens then there is no way we can perform an animation
+      if (!node) {
+        close();
+        return runner;
+      }
+
+      var className = [node.className, options.addClass, options.removeClass].join(' ');
+      if (!isAnimatableClassName(className)) {
+        close();
+        return runner;
+      }
+
+      var isStructural = ['enter', 'move', 'leave'].indexOf(event) >= 0;
+
+      var documentHidden = $document[0].hidden;
+
+      // this is a hard disable of all animations for the application or on
+      // the element itself, therefore  there is no need to continue further
+      // past this point if not enabled
+      // Animations are also disabled if the document is currently hidden (page is not visible
+      // to the user), because browsers slow down or do not flush calls to requestAnimationFrame
+      var skipAnimations = !animationsEnabled || documentHidden || disabledElementsLookup.get(node);
+      var existingAnimation = (!skipAnimations && activeAnimationsLookup.get(node)) || {};
+      var hasExistingAnimation = !!existingAnimation.state;
+
+      // there is no point in traversing the same collection of parent ancestors if a followup
+      // animation will be run on the same element that already did all that checking work
+      if (!skipAnimations && (!hasExistingAnimation || existingAnimation.state != PRE_DIGEST_STATE)) {
+        skipAnimations = !areAnimationsAllowed(element, parent, event);
+      }
+
+      if (skipAnimations) {
+        // Callbacks should fire even if the document is hidden (regression fix for issue #14120)
+        if (documentHidden) notifyProgress(runner, event, 'start');
+        close();
+        if (documentHidden) notifyProgress(runner, event, 'close');
+        return runner;
+      }
+
+      if (isStructural) {
+        closeChildAnimations(element);
+      }
+
+      var newAnimation = {
+        structural: isStructural,
+        element: element,
+        event: event,
+        addClass: options.addClass,
+        removeClass: options.removeClass,
+        close: close,
+        options: options,
+        runner: runner
+      };
+
+      if (hasExistingAnimation) {
+        var skipAnimationFlag = isAllowed('skip', element, newAnimation, existingAnimation);
+        if (skipAnimationFlag) {
+          if (existingAnimation.state === RUNNING_STATE) {
+            close();
+            return runner;
+          } else {
+            mergeAnimationDetails(element, existingAnimation, newAnimation);
+            return existingAnimation.runner;
+          }
+        }
+        var cancelAnimationFlag = isAllowed('cancel', element, newAnimation, existingAnimation);
+        if (cancelAnimationFlag) {
+          if (existingAnimation.state === RUNNING_STATE) {
+            // this will end the animation right away and it is safe
+            // to do so since the animation is already running and the
+            // runner callback code will run in async
+            existingAnimation.runner.end();
+          } else if (existingAnimation.structural) {
+            // this means that the animation is queued into a digest, but
+            // hasn't started yet. Therefore it is safe to run the close
+            // method which will call the runner methods in async.
+            existingAnimation.close();
+          } else {
+            // this will merge the new animation options into existing animation options
+            mergeAnimationDetails(element, existingAnimation, newAnimation);
+
+            return existingAnimation.runner;
+          }
+        } else {
+          // a joined animation means that this animation will take over the existing one
+          // so an example would involve a leave animation taking over an enter. Then when
+          // the postDigest kicks in the enter will be ignored.
+          var joinAnimationFlag = isAllowed('join', element, newAnimation, existingAnimation);
+          if (joinAnimationFlag) {
+            if (existingAnimation.state === RUNNING_STATE) {
+              normalizeAnimationDetails(element, newAnimation);
+            } else {
+              applyGeneratedPreparationClasses(element, isStructural ? event : null, options);
+
+              event = newAnimation.event = existingAnimation.event;
+              options = mergeAnimationDetails(element, existingAnimation, newAnimation);
+
+              //we return the same runner since only the option values of this animation will
+              //be fed into the `existingAnimation`.
+              return existingAnimation.runner;
+            }
+          }
+        }
+      } else {
+        // normalization in this case means that it removes redundant CSS classes that
+        // already exist (addClass) or do not exist (removeClass) on the element
+        normalizeAnimationDetails(element, newAnimation);
+      }
+
+      // when the options are merged and cleaned up we may end up not having to do
+      // an animation at all, therefore we should check this before issuing a post
+      // digest callback. Structural animations will always run no matter what.
+      var isValidAnimation = newAnimation.structural;
+      if (!isValidAnimation) {
+        // animate (from/to) can be quickly checked first, otherwise we check if any classes are present
+        isValidAnimation = (newAnimation.event === 'animate' && Object.keys(newAnimation.options.to || {}).length > 0)
+                            || hasAnimationClasses(newAnimation);
+      }
+
+      if (!isValidAnimation) {
+        close();
+        clearElementAnimationState(element);
+        return runner;
+      }
+
+      // the counter keeps track of cancelled animations
+      var counter = (existingAnimation.counter || 0) + 1;
+      newAnimation.counter = counter;
+
+      markElementAnimationState(element, PRE_DIGEST_STATE, newAnimation);
+
+      $rootScope.$$postDigest(function() {
+        var animationDetails = activeAnimationsLookup.get(node);
+        var animationCancelled = !animationDetails;
+        animationDetails = animationDetails || {};
+
+        // if addClass/removeClass is called before something like enter then the
+        // registered parent element may not be present. The code below will ensure
+        // that a final value for parent element is obtained
+        var parentElement = element.parent() || [];
+
+        // animate/structural/class-based animations all have requirements. Otherwise there
+        // is no point in performing an animation. The parent node must also be set.
+        var isValidAnimation = parentElement.length > 0
+                                && (animationDetails.event === 'animate'
+                                    || animationDetails.structural
+                                    || hasAnimationClasses(animationDetails));
+
+        // this means that the previous animation was cancelled
+        // even if the follow-up animation is the same event
+        if (animationCancelled || animationDetails.counter !== counter || !isValidAnimation) {
+          // if another animation did not take over then we need
+          // to make sure that the domOperation and options are
+          // handled accordingly
+          if (animationCancelled) {
+            applyAnimationClasses(element, options);
+            applyAnimationStyles(element, options);
+          }
+
+          // if the event changed from something like enter to leave then we do
+          // it, otherwise if it's the same then the end result will be the same too
+          if (animationCancelled || (isStructural && animationDetails.event !== event)) {
+            options.domOperation();
+            runner.end();
+          }
+
+          // in the event that the element animation was not cancelled or a follow-up animation
+          // isn't allowed to animate from here then we need to clear the state of the element
+          // so that any future animations won't read the expired animation data.
+          if (!isValidAnimation) {
+            clearElementAnimationState(element);
+          }
+
+          return;
+        }
+
+        // this combined multiple class to addClass / removeClass into a setClass event
+        // so long as a structural event did not take over the animation
+        event = !animationDetails.structural && hasAnimationClasses(animationDetails, true)
+            ? 'setClass'
+            : animationDetails.event;
+
+        markElementAnimationState(element, RUNNING_STATE);
+        var realRunner = $$animation(element, event, animationDetails.options);
+
+        // this will update the runner's flow-control events based on
+        // the `realRunner` object.
+        runner.setHost(realRunner);
+        notifyProgress(runner, event, 'start', {});
+
+        realRunner.done(function(status) {
+          close(!status);
+          var animationDetails = activeAnimationsLookup.get(node);
+          if (animationDetails && animationDetails.counter === counter) {
+            clearElementAnimationState(getDomNode(element));
+          }
+          notifyProgress(runner, event, 'close', {});
+        });
+      });
+
+      return runner;
+
+      function notifyProgress(runner, event, phase, data) {
+        runInNextPostDigestOrNow(function() {
+          var callbacks = findCallbacks(parent, element, event);
+          if (callbacks.length) {
+            // do not optimize this call here to RAF because
+            // we don't know how heavy the callback code here will
+            // be and if this code is buffered then this can
+            // lead to a performance regression.
+            $$rAF(function() {
+              forEach(callbacks, function(callback) {
+                callback(element, phase, data);
+              });
+              cleanupEventListeners(phase, element);
+            });
+          } else {
+            cleanupEventListeners(phase, element);
+          }
+        });
+        runner.progress(event, phase, data);
+      }
+
+      function close(reject) { // jshint ignore:line
+        clearGeneratedClasses(element, options);
+        applyAnimationClasses(element, options);
+        applyAnimationStyles(element, options);
+        options.domOperation();
+        runner.complete(!reject);
+      }
+    }
+
+    function closeChildAnimations(element) {
+      var node = getDomNode(element);
+      var children = node.querySelectorAll('[' + NG_ANIMATE_ATTR_NAME + ']');
+      forEach(children, function(child) {
+        var state = parseInt(child.getAttribute(NG_ANIMATE_ATTR_NAME));
+        var animationDetails = activeAnimationsLookup.get(child);
+        if (animationDetails) {
+          switch (state) {
+            case RUNNING_STATE:
+              animationDetails.runner.end();
+              /* falls through */
+            case PRE_DIGEST_STATE:
+              activeAnimationsLookup.remove(child);
+              break;
+          }
+        }
+      });
+    }
+
+    function clearElementAnimationState(element) {
+      var node = getDomNode(element);
+      node.removeAttribute(NG_ANIMATE_ATTR_NAME);
+      activeAnimationsLookup.remove(node);
+    }
+
+    function isMatchingElement(nodeOrElmA, nodeOrElmB) {
+      return getDomNode(nodeOrElmA) === getDomNode(nodeOrElmB);
+    }
+
+    /**
+     * This fn returns false if any of the following is true:
+     * a) animations on any parent element are disabled, and animations on the element aren't explicitly allowed
+     * b) a parent element has an ongoing structural animation, and animateChildren is false
+     * c) the element is not a child of the body
+     * d) the element is not a child of the $rootElement
+     */
+    function areAnimationsAllowed(element, parentElement, event) {
+      var bodyElement = jqLite($document[0].body);
+      var bodyElementDetected = isMatchingElement(element, bodyElement) || element[0].nodeName === 'HTML';
+      var rootElementDetected = isMatchingElement(element, $rootElement);
+      var parentAnimationDetected = false;
+      var animateChildren;
+      var elementDisabled = disabledElementsLookup.get(getDomNode(element));
+
+      var parentHost = jqLite.data(element[0], NG_ANIMATE_PIN_DATA);
+      if (parentHost) {
+        parentElement = parentHost;
+      }
+
+      parentElement = getDomNode(parentElement);
+
+      while (parentElement) {
+        if (!rootElementDetected) {
+          // angular doesn't want to attempt to animate elements outside of the application
+          // therefore we need to ensure that the rootElement is an ancestor of the current element
+          rootElementDetected = isMatchingElement(parentElement, $rootElement);
+        }
+
+        if (parentElement.nodeType !== ELEMENT_NODE) {
+          // no point in inspecting the #document element
+          break;
+        }
+
+        var details = activeAnimationsLookup.get(parentElement) || {};
+        // either an enter, leave or move animation will commence
+        // therefore we can't allow any animations to take place
+        // but if a parent animation is class-based then that's ok
+        if (!parentAnimationDetected) {
+          var parentElementDisabled = disabledElementsLookup.get(parentElement);
+
+          if (parentElementDisabled === true && elementDisabled !== false) {
+            // disable animations if the user hasn't explicitly enabled animations on the
+            // current element
+            elementDisabled = true;
+            // element is disabled via parent element, no need to check anything else
+            break;
+          } else if (parentElementDisabled === false) {
+            elementDisabled = false;
+          }
+          parentAnimationDetected = details.structural;
+        }
+
+        if (isUndefined(animateChildren) || animateChildren === true) {
+          var value = jqLite.data(parentElement, NG_ANIMATE_CHILDREN_DATA);
+          if (isDefined(value)) {
+            animateChildren = value;
+          }
+        }
+
+        // there is no need to continue traversing at this point
+        if (parentAnimationDetected && animateChildren === false) break;
+
+        if (!bodyElementDetected) {
+          // we also need to ensure that the element is or will be a part of the body element
+          // otherwise it is pointless to even issue an animation to be rendered
+          bodyElementDetected = isMatchingElement(parentElement, bodyElement);
+        }
+
+        if (bodyElementDetected && rootElementDetected) {
+          // If both body and root have been found, any other checks are pointless,
+          // as no animation data should live outside the application
+          break;
+        }
+
+        if (!rootElementDetected) {
+          // If no rootElement is detected, check if the parentElement is pinned to another element
+          parentHost = jqLite.data(parentElement, NG_ANIMATE_PIN_DATA);
+          if (parentHost) {
+            // The pin target element becomes the next parent element
+            parentElement = getDomNode(parentHost);
+            continue;
+          }
+        }
+
+        parentElement = parentElement.parentNode;
+      }
+
+      var allowAnimation = (!parentAnimationDetected || animateChildren) && elementDisabled !== true;
+      return allowAnimation && rootElementDetected && bodyElementDetected;
+    }
+
+    function markElementAnimationState(element, state, details) {
+      details = details || {};
+      details.state = state;
+
+      var node = getDomNode(element);
+      node.setAttribute(NG_ANIMATE_ATTR_NAME, state);
+
+      var oldValue = activeAnimationsLookup.get(node);
+      var newValue = oldValue
+          ? extend(oldValue, details)
+          : details;
+      activeAnimationsLookup.put(node, newValue);
+    }
+  }];
+}];
+
+var $$AnimationProvider = ['$animateProvider', function($animateProvider) {
+  var NG_ANIMATE_REF_ATTR = 'ng-animate-ref';
+
+  var drivers = this.drivers = [];
+
+  var RUNNER_STORAGE_KEY = '$$animationRunner';
+
+  function setRunner(element, runner) {
+    element.data(RUNNER_STORAGE_KEY, runner);
+  }
+
+  function removeRunner(element) {
+    element.removeData(RUNNER_STORAGE_KEY);
+  }
+
+  function getRunner(element) {
+    return element.data(RUNNER_STORAGE_KEY);
+  }
+
+  this.$get = ['$$jqLite', '$rootScope', '$injector', '$$AnimateRunner', '$$HashMap', '$$rAFScheduler',
+       function($$jqLite,   $rootScope,   $injector,   $$AnimateRunner,   $$HashMap,   $$rAFScheduler) {
+
+    var animationQueue = [];
+    var applyAnimationClasses = applyAnimationClassesFactory($$jqLite);
+
+    function sortAnimations(animations) {
+      var tree = { children: [] };
+      var i, lookup = new $$HashMap();
+
+      // this is done first beforehand so that the hashmap
+      // is filled with a list of the elements that will be animated
+      for (i = 0; i < animations.length; i++) {
+        var animation = animations[i];
+        lookup.put(animation.domNode, animations[i] = {
+          domNode: animation.domNode,
+          fn: animation.fn,
+          children: []
+        });
+      }
+
+      for (i = 0; i < animations.length; i++) {
+        processNode(animations[i]);
+      }
+
+      return flatten(tree);
+
+      function processNode(entry) {
+        if (entry.processed) return entry;
+        entry.processed = true;
+
+        var elementNode = entry.domNode;
+        var parentNode = elementNode.parentNode;
+        lookup.put(elementNode, entry);
+
+        var parentEntry;
+        while (parentNode) {
+          parentEntry = lookup.get(parentNode);
+          if (parentEntry) {
+            if (!parentEntry.processed) {
+              parentEntry = processNode(parentEntry);
+            }
+            break;
+          }
+          parentNode = parentNode.parentNode;
+        }
+
+        (parentEntry || tree).children.push(entry);
+        return entry;
+      }
+
+      function flatten(tree) {
+        var result = [];
+        var queue = [];
+        var i;
+
+        for (i = 0; i < tree.children.length; i++) {
+          queue.push(tree.children[i]);
+        }
+
+        var remainingLevelEntries = queue.length;
+        var nextLevelEntries = 0;
+        var row = [];
+
+        for (i = 0; i < queue.length; i++) {
+          var entry = queue[i];
+          if (remainingLevelEntries <= 0) {
+            remainingLevelEntries = nextLevelEntries;
+            nextLevelEntries = 0;
+            result.push(row);
+            row = [];
+          }
+          row.push(entry.fn);
+          entry.children.forEach(function(childEntry) {
+            nextLevelEntries++;
+            queue.push(childEntry);
+          });
+          remainingLevelEntries--;
+        }
+
+        if (row.length) {
+          result.push(row);
+        }
+
+        return result;
+      }
+    }
+
+    // TODO(matsko): document the signature in a better way
+    return function(element, event, options) {
+      options = prepareAnimationOptions(options);
+      var isStructural = ['enter', 'move', 'leave'].indexOf(event) >= 0;
+
+      // there is no animation at the current moment, however
+      // these runner methods will get later updated with the
+      // methods leading into the driver's end/cancel methods
+      // for now they just stop the animation from starting
+      var runner = new $$AnimateRunner({
+        end: function() { close(); },
+        cancel: function() { close(true); }
+      });
+
+      if (!drivers.length) {
+        close();
+        return runner;
+      }
+
+      setRunner(element, runner);
+
+      var classes = mergeClasses(element.attr('class'), mergeClasses(options.addClass, options.removeClass));
+      var tempClasses = options.tempClasses;
+      if (tempClasses) {
+        classes += ' ' + tempClasses;
+        options.tempClasses = null;
+      }
+
+      var prepareClassName;
+      if (isStructural) {
+        prepareClassName = 'ng-' + event + PREPARE_CLASS_SUFFIX;
+        $$jqLite.addClass(element, prepareClassName);
+      }
+
+      animationQueue.push({
+        // this data is used by the postDigest code and passed into
+        // the driver step function
+        element: element,
+        classes: classes,
+        event: event,
+        structural: isStructural,
+        options: options,
+        beforeStart: beforeStart,
+        close: close
+      });
+
+      element.on('$destroy', handleDestroyedElement);
+
+      // we only want there to be one function called within the post digest
+      // block. This way we can group animations for all the animations that
+      // were apart of the same postDigest flush call.
+      if (animationQueue.length > 1) return runner;
+
+      $rootScope.$$postDigest(function() {
+        var animations = [];
+        forEach(animationQueue, function(entry) {
+          // the element was destroyed early on which removed the runner
+          // form its storage. This means we can't animate this element
+          // at all and it already has been closed due to destruction.
+          if (getRunner(entry.element)) {
+            animations.push(entry);
+          } else {
+            entry.close();
+          }
+        });
+
+        // now any future animations will be in another postDigest
+        animationQueue.length = 0;
+
+        var groupedAnimations = groupAnimations(animations);
+        var toBeSortedAnimations = [];
+
+        forEach(groupedAnimations, function(animationEntry) {
+          toBeSortedAnimations.push({
+            domNode: getDomNode(animationEntry.from ? animationEntry.from.element : animationEntry.element),
+            fn: function triggerAnimationStart() {
+              // it's important that we apply the `ng-animate` CSS class and the
+              // temporary classes before we do any driver invoking since these
+              // CSS classes may be required for proper CSS detection.
+              animationEntry.beforeStart();
+
+              var startAnimationFn, closeFn = animationEntry.close;
+
+              // in the event that the element was removed before the digest runs or
+              // during the RAF sequencing then we should not trigger the animation.
+              var targetElement = animationEntry.anchors
+                  ? (animationEntry.from.element || animationEntry.to.element)
+                  : animationEntry.element;
+
+              if (getRunner(targetElement)) {
+                var operation = invokeFirstDriver(animationEntry);
+                if (operation) {
+                  startAnimationFn = operation.start;
+                }
+              }
+
+              if (!startAnimationFn) {
+                closeFn();
+              } else {
+                var animationRunner = startAnimationFn();
+                animationRunner.done(function(status) {
+                  closeFn(!status);
+                });
+                updateAnimationRunners(animationEntry, animationRunner);
+              }
+            }
+          });
+        });
+
+        // we need to sort each of the animations in order of parent to child
+        // relationships. This ensures that the child classes are applied at the
+        // right time.
+        $$rAFScheduler(sortAnimations(toBeSortedAnimations));
+      });
+
+      return runner;
+
+      // TODO(matsko): change to reference nodes
+      function getAnchorNodes(node) {
+        var SELECTOR = '[' + NG_ANIMATE_REF_ATTR + ']';
+        var items = node.hasAttribute(NG_ANIMATE_REF_ATTR)
+              ? [node]
+              : node.querySelectorAll(SELECTOR);
+        var anchors = [];
+        forEach(items, function(node) {
+          var attr = node.getAttribute(NG_ANIMATE_REF_ATTR);
+          if (attr && attr.length) {
+            anchors.push(node);
+          }
+        });
+        return anchors;
+      }
+
+      function groupAnimations(animations) {
+        var preparedAnimations = [];
+        var refLookup = {};
+        forEach(animations, function(animation, index) {
+          var element = animation.element;
+          var node = getDomNode(element);
+          var event = animation.event;
+          var enterOrMove = ['enter', 'move'].indexOf(event) >= 0;
+          var anchorNodes = animation.structural ? getAnchorNodes(node) : [];
+
+          if (anchorNodes.length) {
+            var direction = enterOrMove ? 'to' : 'from';
+
+            forEach(anchorNodes, function(anchor) {
+              var key = anchor.getAttribute(NG_ANIMATE_REF_ATTR);
+              refLookup[key] = refLookup[key] || {};
+              refLookup[key][direction] = {
+                animationID: index,
+                element: jqLite(anchor)
+              };
+            });
+          } else {
+            preparedAnimations.push(animation);
+          }
+        });
+
+        var usedIndicesLookup = {};
+        var anchorGroups = {};
+        forEach(refLookup, function(operations, key) {
+          var from = operations.from;
+          var to = operations.to;
+
+          if (!from || !to) {
+            // only one of these is set therefore we can't have an
+            // anchor animation since all three pieces are required
+            var index = from ? from.animationID : to.animationID;
+            var indexKey = index.toString();
+            if (!usedIndicesLookup[indexKey]) {
+              usedIndicesLookup[indexKey] = true;
+              preparedAnimations.push(animations[index]);
+            }
+            return;
+          }
+
+          var fromAnimation = animations[from.animationID];
+          var toAnimation = animations[to.animationID];
+          var lookupKey = from.animationID.toString();
+          if (!anchorGroups[lookupKey]) {
+            var group = anchorGroups[lookupKey] = {
+              structural: true,
+              beforeStart: function() {
+                fromAnimation.beforeStart();
+                toAnimation.beforeStart();
+              },
+              close: function() {
+                fromAnimation.close();
+                toAnimation.close();
+              },
+              classes: cssClassesIntersection(fromAnimation.classes, toAnimation.classes),
+              from: fromAnimation,
+              to: toAnimation,
+              anchors: [] // TODO(matsko): change to reference nodes
+            };
+
+            // the anchor animations require that the from and to elements both have at least
+            // one shared CSS class which effectively marries the two elements together to use
+            // the same animation driver and to properly sequence the anchor animation.
+            if (group.classes.length) {
+              preparedAnimations.push(group);
+            } else {
+              preparedAnimations.push(fromAnimation);
+              preparedAnimations.push(toAnimation);
+            }
+          }
+
+          anchorGroups[lookupKey].anchors.push({
+            'out': from.element, 'in': to.element
+          });
+        });
+
+        return preparedAnimations;
+      }
+
+      function cssClassesIntersection(a,b) {
+        a = a.split(' ');
+        b = b.split(' ');
+        var matches = [];
+
+        for (var i = 0; i < a.length; i++) {
+          var aa = a[i];
+          if (aa.substring(0,3) === 'ng-') continue;
+
+          for (var j = 0; j < b.length; j++) {
+            if (aa === b[j]) {
+              matches.push(aa);
+              break;
+            }
+          }
+        }
+
+        return matches.join(' ');
+      }
+
+      function invokeFirstDriver(animationDetails) {
+        // we loop in reverse order since the more general drivers (like CSS and JS)
+        // may attempt more elements, but custom drivers are more particular
+        for (var i = drivers.length - 1; i >= 0; i--) {
+          var driverName = drivers[i];
+          var factory = $injector.get(driverName);
+          var driver = factory(animationDetails);
+          if (driver) {
+            return driver;
+          }
+        }
+      }
+
+      function beforeStart() {
+        element.addClass(NG_ANIMATE_CLASSNAME);
+        if (tempClasses) {
+          $$jqLite.addClass(element, tempClasses);
+        }
+        if (prepareClassName) {
+          $$jqLite.removeClass(element, prepareClassName);
+          prepareClassName = null;
+        }
+      }
+
+      function updateAnimationRunners(animation, newRunner) {
+        if (animation.from && animation.to) {
+          update(animation.from.element);
+          update(animation.to.element);
+        } else {
+          update(animation.element);
+        }
+
+        function update(element) {
+          var runner = getRunner(element);
+          if (runner) runner.setHost(newRunner);
+        }
+      }
+
+      function handleDestroyedElement() {
+        var runner = getRunner(element);
+        if (runner && (event !== 'leave' || !options.$$domOperationFired)) {
+          runner.end();
+        }
+      }
+
+      function close(rejected) { // jshint ignore:line
+        element.off('$destroy', handleDestroyedElement);
+        removeRunner(element);
+
+        applyAnimationClasses(element, options);
+        applyAnimationStyles(element, options);
+        options.domOperation();
+
+        if (tempClasses) {
+          $$jqLite.removeClass(element, tempClasses);
+        }
+
+        element.removeClass(NG_ANIMATE_CLASSNAME);
+        runner.complete(!rejected);
+      }
+    };
+  }];
+}];
+
+/**
+ * @ngdoc directive
+ * @name ngAnimateSwap
+ * @restrict A
+ * @scope
+ *
+ * @description
+ *
+ * ngAnimateSwap is a animation-oriented directive that allows for the container to
+ * be removed and entered in whenever the associated expression changes. A
+ * common usecase for this directive is a rotating banner or slider component which
+ * contains one image being present at a time. When the active image changes
+ * then the old image will perform a `leave` animation and the new element
+ * will be inserted via an `enter` animation.
+ *
+ * @animations
+ * | Animation                        | Occurs                               |
+ * |----------------------------------|--------------------------------------|
+ * | {@link ng.$animate#enter enter}  | when the new element is inserted to the DOM  |
+ * | {@link ng.$animate#leave leave}  | when the old element is removed from the DOM |
+ *
+ * @example
+ * <example name="ngAnimateSwap-directive" module="ngAnimateSwapExample"
+ *          deps="angular-animate.js"
+ *          animations="true" fixBase="true">
+ *   <file name="index.html">
+ *     <div class="container" ng-controller="AppCtrl">
+ *       <div ng-animate-swap="number" class="cell swap-animation" ng-class="colorClass(number)">
+ *         {{ number }}
+ *       </div>
+ *     </div>
+ *   </file>
+ *   <file name="script.js">
+ *     angular.module('ngAnimateSwapExample', ['ngAnimate'])
+ *       .controller('AppCtrl', ['$scope', '$interval', function($scope, $interval) {
+ *         $scope.number = 0;
+ *         $interval(function() {
+ *           $scope.number++;
+ *         }, 1000);
+ *
+ *         var colors = ['red','blue','green','yellow','orange'];
+ *         $scope.colorClass = function(number) {
+ *           return colors[number % colors.length];
+ *         };
+ *       }]);
+ *   </file>
+ *  <file name="animations.css">
+ *  .container {
+ *    height:250px;
+ *    width:250px;
+ *    position:relative;
+ *    overflow:hidden;
+ *    border:2px solid black;
+ *  }
+ *  .container .cell {
+ *    font-size:150px;
+ *    text-align:center;
+ *    line-height:250px;
+ *    position:absolute;
+ *    top:0;
+ *    left:0;
+ *    right:0;
+ *    border-bottom:2px solid black;
+ *  }
+ *  .swap-animation.ng-enter, .swap-animation.ng-leave {
+ *    transition:0.5s linear all;
+ *  }
+ *  .swap-animation.ng-enter {
+ *    top:-250px;
+ *  }
+ *  .swap-animation.ng-enter-active {
+ *    top:0px;
+ *  }
+ *  .swap-animation.ng-leave {
+ *    top:0px;
+ *  }
+ *  .swap-animation.ng-leave-active {
+ *    top:250px;
+ *  }
+ *  .red { background:red; }
+ *  .green { background:green; }
+ *  .blue { background:blue; }
+ *  .yellow { background:yellow; }
+ *  .orange { background:orange; }
+ *  </file>
+ * </example>
+ */
+var ngAnimateSwapDirective = ['$animate', '$rootScope', function($animate, $rootScope) {
+  return {
+    restrict: 'A',
+    transclude: 'element',
+    terminal: true,
+    priority: 600, // we use 600 here to ensure that the directive is caught before others
+    link: function(scope, $element, attrs, ctrl, $transclude) {
+      var previousElement, previousScope;
+      scope.$watchCollection(attrs.ngAnimateSwap || attrs['for'], function(value) {
+        if (previousElement) {
+          $animate.leave(previousElement);
+        }
+        if (previousScope) {
+          previousScope.$destroy();
+          previousScope = null;
+        }
+        if (value || value === 0) {
+          previousScope = scope.$new();
+          $transclude(previousScope, function(element) {
+            previousElement = element;
+            $animate.enter(element, null, $element);
+          });
+        }
+      });
+    }
+  };
+}];
+
+/**
+ * @ngdoc module
+ * @name ngAnimate
+ * @description
+ *
+ * The `ngAnimate` module provides support for CSS-based animations (keyframes and transitions) as well as JavaScript-based animations via
+ * callback hooks. Animations are not enabled by default, however, by including `ngAnimate` the animation hooks are enabled for an Angular app.
+ *
+ * <div doc-module-components="ngAnimate"></div>
+ *
+ * # Usage
+ * Simply put, there are two ways to make use of animations when ngAnimate is used: by using **CSS** and **JavaScript**. The former works purely based
+ * using CSS (by using matching CSS selectors/styles) and the latter triggers animations that are registered via `module.animation()`. For
+ * both CSS and JS animations the sole requirement is to have a matching `CSS class` that exists both in the registered animation and within
+ * the HTML element that the animation will be triggered on.
+ *
+ * ## Directive Support
+ * The following directives are "animation aware":
+ *
+ * | Directive                                                                                                | Supported Animations                                                     |
+ * |----------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+ * | {@link ng.directive:ngRepeat#animations ngRepeat}                                                        | enter, leave and move                                                    |
+ * | {@link ngRoute.directive:ngView#animations ngView}                                                       | enter and leave                                                          |
+ * | {@link ng.directive:ngInclude#animations ngInclude}                                                      | enter and leave                                                          |
+ * | {@link ng.directive:ngSwitch#animations ngSwitch}                                                        | enter and leave                                                          |
+ * | {@link ng.directive:ngIf#animations ngIf}                                                                | enter and leave                                                          |
+ * | {@link ng.directive:ngClass#animations ngClass}                                                          | add and remove (the CSS class(es) present)                               |
+ * | {@link ng.directive:ngShow#animations ngShow} & {@link ng.directive:ngHide#animations ngHide}            | add and remove (the ng-hide class value)                                 |
+ * | {@link ng.directive:form#animation-hooks form} & {@link ng.directive:ngModel#animation-hooks ngModel}    | add and remove (dirty, pristine, valid, invalid & all other validations) |
+ * | {@link module:ngMessages#animations ngMessages}                                                          | add and remove (ng-active & ng-inactive)                                 |
+ * | {@link module:ngMessages#animations ngMessage}                                                           | enter and leave                                                          |
+ *
+ * (More information can be found by visiting each the documentation associated with each directive.)
+ *
+ * ## CSS-based Animations
+ *
+ * CSS-based animations with ngAnimate are unique since they require no JavaScript code at all. By using a CSS class that we reference between our HTML
+ * and CSS code we can create an animation that will be picked up by Angular when an the underlying directive performs an operation.
+ *
+ * The example below shows how an `enter` animation can be made possible on an element using `ng-if`:
+ *
+ * ```html
+ * <div ng-if="bool" class="fade">
+ *    Fade me in out
+ * </div>
+ * <button ng-click="bool=true">Fade In!</button>
+ * <button ng-click="bool=false">Fade Out!</button>
+ * ```
+ *
+ * Notice the CSS class **fade**? We can now create the CSS transition code that references this class:
+ *
+ * ```css
+ * /&#42; The starting CSS styles for the enter animation &#42;/
+ * .fade.ng-enter {
+ *   transition:0.5s linear all;
+ *   opacity:0;
+ * }
+ *
+ * /&#42; The finishing CSS styles for the enter animation &#42;/
+ * .fade.ng-enter.ng-enter-active {
+ *   opacity:1;
+ * }
+ * ```
+ *
+ * The key thing to remember here is that, depending on the animation event (which each of the directives above trigger depending on what's going on) two
+ * generated CSS classes will be applied to the element; in the example above we have `.ng-enter` and `.ng-enter-active`. For CSS transitions, the transition
+ * code **must** be defined within the starting CSS class (in this case `.ng-enter`). The destination class is what the transition will animate towards.
+ *
+ * If for example we wanted to create animations for `leave` and `move` (ngRepeat triggers move) then we can do so using the same CSS naming conventions:
+ *
+ * ```css
+ * /&#42; now the element will fade out before it is removed from the DOM &#42;/
+ * .fade.ng-leave {
+ *   transition:0.5s linear all;
+ *   opacity:1;
+ * }
+ * .fade.ng-leave.ng-leave-active {
+ *   opacity:0;
+ * }
+ * ```
+ *
+ * We can also make use of **CSS Keyframes** by referencing the keyframe animation within the starting CSS class:
+ *
+ * ```css
+ * /&#42; there is no need to define anything inside of the destination
+ * CSS class since the keyframe will take charge of the animation &#42;/
+ * .fade.ng-leave {
+ *   animation: my_fade_animation 0.5s linear;
+ *   -webkit-animation: my_fade_animation 0.5s linear;
+ * }
+ *
+ * @keyframes my_fade_animation {
+ *   from { opacity:1; }
+ *   to { opacity:0; }
+ * }
+ *
+ * @-webkit-keyframes my_fade_animation {
+ *   from { opacity:1; }
+ *   to { opacity:0; }
+ * }
+ * ```
+ *
+ * Feel free also mix transitions and keyframes together as well as any other CSS classes on the same element.
+ *
+ * ### CSS Class-based Animations
+ *
+ * Class-based animations (animations that are triggered via `ngClass`, `ngShow`, `ngHide` and some other directives) have a slightly different
+ * naming convention. Class-based animations are basic enough that a standard transition or keyframe can be referenced on the class being added
+ * and removed.
+ *
+ * For example if we wanted to do a CSS animation for `ngHide` then we place an animation on the `.ng-hide` CSS class:
+ *
+ * ```html
+ * <div ng-show="bool" class="fade">
+ *   Show and hide me
+ * </div>
+ * <button ng-click="bool=!bool">Toggle</button>
+ *
+ * <style>
+ * .fade.ng-hide {
+ *   transition:0.5s linear all;
+ *   opacity:0;
+ * }
+ * </style>
+ * ```
+ *
+ * All that is going on here with ngShow/ngHide behind the scenes is the `.ng-hide` class is added/removed (when the hidden state is valid). Since
+ * ngShow and ngHide are animation aware then we can match up a transition and ngAnimate handles the rest.
+ *
+ * In addition the addition and removal of the CSS class, ngAnimate also provides two helper methods that we can use to further decorate the animation
+ * with CSS styles.
+ *
+ * ```html
+ * <div ng-class="{on:onOff}" class="highlight">
+ *   Highlight this box
+ * </div>
+ * <button ng-click="onOff=!onOff">Toggle</button>
+ *
+ * <style>
+ * .highlight {
+ *   transition:0.5s linear all;
+ * }
+ * .highlight.on-add {
+ *   background:white;
+ * }
+ * .highlight.on {
+ *   background:yellow;
+ * }
+ * .highlight.on-remove {
+ *   background:black;
+ * }
+ * </style>
+ * ```
+ *
+ * We can also make use of CSS keyframes by placing them within the CSS classes.
+ *
+ *
+ * ### CSS Staggering Animations
+ * A Staggering animation is a collection of animations that are issued with a slight delay in between each successive operation resulting in a
+ * curtain-like effect. The ngAnimate module (versions >=1.2) supports staggering animations and the stagger effect can be
+ * performed by creating a **ng-EVENT-stagger** CSS class and attaching that class to the base CSS class used for
+ * the animation. The style property expected within the stagger class can either be a **transition-delay** or an
+ * **animation-delay** property (or both if your animation contains both transitions and keyframe animations).
+ *
+ * ```css
+ * .my-animation.ng-enter {
+ *   /&#42; standard transition code &#42;/
+ *   transition: 1s linear all;
+ *   opacity:0;
+ * }
+ * .my-animation.ng-enter-stagger {
+ *   /&#42; this will have a 100ms delay between each successive leave animation &#42;/
+ *   transition-delay: 0.1s;
+ *
+ *   /&#42; As of 1.4.4, this must always be set: it signals ngAnimate
+ *     to not accidentally inherit a delay property from another CSS class &#42;/
+ *   transition-duration: 0s;
+ * }
+ * .my-animation.ng-enter.ng-enter-active {
+ *   /&#42; standard transition styles &#42;/
+ *   opacity:1;
+ * }
+ * ```
+ *
+ * Staggering animations work by default in ngRepeat (so long as the CSS class is defined). Outside of ngRepeat, to use staggering animations
+ * on your own, they can be triggered by firing multiple calls to the same event on $animate. However, the restrictions surrounding this
+ * are that each of the elements must have the same CSS className value as well as the same parent element. A stagger operation
+ * will also be reset if one or more animation frames have passed since the multiple calls to `$animate` were fired.
+ *
+ * The following code will issue the **ng-leave-stagger** event on the element provided:
+ *
+ * ```js
+ * var kids = parent.children();
+ *
+ * $animate.leave(kids[0]); //stagger index=0
+ * $animate.leave(kids[1]); //stagger index=1
+ * $animate.leave(kids[2]); //stagger index=2
+ * $animate.leave(kids[3]); //stagger index=3
+ * $animate.leave(kids[4]); //stagger index=4
+ *
+ * window.requestAnimationFrame(function() {
+ *   //stagger has reset itself
+ *   $animate.leave(kids[5]); //stagger index=0
+ *   $animate.leave(kids[6]); //stagger index=1
+ *
+ *   $scope.$digest();
+ * });
+ * ```
+ *
+ * Stagger animations are currently only supported within CSS-defined animations.
+ *
+ * ### The `ng-animate` CSS class
+ *
+ * When ngAnimate is animating an element it will apply the `ng-animate` CSS class to the element for the duration of the animation.
+ * This is a temporary CSS class and it will be removed once the animation is over (for both JavaScript and CSS-based animations).
+ *
+ * Therefore, animations can be applied to an element using this temporary class directly via CSS.
+ *
+ * ```css
+ * .zipper.ng-animate {
+ *   transition:0.5s linear all;
+ * }
+ * .zipper.ng-enter {
+ *   opacity:0;
+ * }
+ * .zipper.ng-enter.ng-enter-active {
+ *   opacity:1;
+ * }
+ * .zipper.ng-leave {
+ *   opacity:1;
+ * }
+ * .zipper.ng-leave.ng-leave-active {
+ *   opacity:0;
+ * }
+ * ```
+ *
+ * (Note that the `ng-animate` CSS class is reserved and it cannot be applied on an element directly since ngAnimate will always remove
+ * the CSS class once an animation has completed.)
+ *
+ *
+ * ### The `ng-[event]-prepare` class
+ *
+ * This is a special class that can be used to prevent unwanted flickering / flash of content before
+ * the actual animation starts. The class is added as soon as an animation is initialized, but removed
+ * before the actual animation starts (after waiting for a $digest).
+ * It is also only added for *structural* animations (`enter`, `move`, and `leave`).
+ *
+ * In practice, flickering can appear when nesting elements with structural animations such as `ngIf`
+ * into elements that have class-based animations such as `ngClass`.
+ *
+ * ```html
+ * <div ng-class="{red: myProp}">
+ *   <div ng-class="{blue: myProp}">
+ *     <div class="message" ng-if="myProp"></div>
+ *   </div>
+ * </div>
+ * ```
+ *
+ * It is possible that during the `enter` animation, the `.message` div will be briefly visible before it starts animating.
+ * In that case, you can add styles to the CSS that make sure the element stays hidden before the animation starts:
+ *
+ * ```css
+ * .message.ng-enter-prepare {
+ *   opacity: 0;
+ * }
+ *
+ * ```
+ *
+ * ## JavaScript-based Animations
+ *
+ * ngAnimate also allows for animations to be consumed by JavaScript code. The approach is similar to CSS-based animations (where there is a shared
+ * CSS class that is referenced in our HTML code) but in addition we need to register the JavaScript animation on the module. By making use of the
+ * `module.animation()` module function we can register the animation.
+ *
+ * Let's see an example of a enter/leave animation using `ngRepeat`:
+ *
+ * ```html
+ * <div ng-repeat="item in items" class="slide">
+ *   {{ item }}
+ * </div>
+ * ```
+ *
+ * See the **slide** CSS class? Let's use that class to define an animation that we'll structure in our module code by using `module.animation`:
+ *
+ * ```js
+ * myModule.animation('.slide', [function() {
+ *   return {
+ *     // make note that other events (like addClass/removeClass)
+ *     // have different function input parameters
+ *     enter: function(element, doneFn) {
+ *       jQuery(element).fadeIn(1000, doneFn);
+ *
+ *       // remember to call doneFn so that angular
+ *       // knows that the animation has concluded
+ *     },
+ *
+ *     move: function(element, doneFn) {
+ *       jQuery(element).fadeIn(1000, doneFn);
+ *     },
+ *
+ *     leave: function(element, doneFn) {
+ *       jQuery(element).fadeOut(1000, doneFn);
+ *     }
+ *   }
+ * }]);
+ * ```
+ *
+ * The nice thing about JS-based animations is that we can inject other services and make use of advanced animation libraries such as
+ * greensock.js and velocity.js.
+ *
+ * If our animation code class-based (meaning that something like `ngClass`, `ngHide` and `ngShow` triggers it) then we can still define
+ * our animations inside of the same registered animation, however, the function input arguments are a bit different:
+ *
+ * ```html
+ * <div ng-class="color" class="colorful">
+ *   this box is moody
+ * </div>
+ * <button ng-click="color='red'">Change to red</button>
+ * <button ng-click="color='blue'">Change to blue</button>
+ * <button ng-click="color='green'">Change to green</button>
+ * ```
+ *
+ * ```js
+ * myModule.animation('.colorful', [function() {
+ *   return {
+ *     addClass: function(element, className, doneFn) {
+ *       // do some cool animation and call the doneFn
+ *     },
+ *     removeClass: function(element, className, doneFn) {
+ *       // do some cool animation and call the doneFn
+ *     },
+ *     setClass: function(element, addedClass, removedClass, doneFn) {
+ *       // do some cool animation and call the doneFn
+ *     }
+ *   }
+ * }]);
+ * ```
+ *
+ * ## CSS + JS Animations Together
+ *
+ * AngularJS 1.4 and higher has taken steps to make the amalgamation of CSS and JS animations more flexible. However, unlike earlier versions of Angular,
+ * defining CSS and JS animations to work off of the same CSS class will not work anymore. Therefore the example below will only result in **JS animations taking
+ * charge of the animation**:
+ *
+ * ```html
+ * <div ng-if="bool" class="slide">
+ *   Slide in and out
+ * </div>
+ * ```
+ *
+ * ```js
+ * myModule.animation('.slide', [function() {
+ *   return {
+ *     enter: function(element, doneFn) {
+ *       jQuery(element).slideIn(1000, doneFn);
+ *     }
+ *   }
+ * }]);
+ * ```
+ *
+ * ```css
+ * .slide.ng-enter {
+ *   transition:0.5s linear all;
+ *   transform:translateY(-100px);
+ * }
+ * .slide.ng-enter.ng-enter-active {
+ *   transform:translateY(0);
+ * }
+ * ```
+ *
+ * Does this mean that CSS and JS animations cannot be used together? Do JS-based animations always have higher priority? We can make up for the
+ * lack of CSS animations by using the `$animateCss` service to trigger our own tweaked-out, CSS-based animations directly from
+ * our own JS-based animation code:
+ *
+ * ```js
+ * myModule.animation('.slide', ['$animateCss', function($animateCss) {
+ *   return {
+ *     enter: function(element) {
+*        // this will trigger `.slide.ng-enter` and `.slide.ng-enter-active`.
+ *       return $animateCss(element, {
+ *         event: 'enter',
+ *         structural: true
+ *       });
+ *     }
+ *   }
+ * }]);
+ * ```
+ *
+ * The nice thing here is that we can save bandwidth by sticking to our CSS-based animation code and we don't need to rely on a 3rd-party animation framework.
+ *
+ * The `$animateCss` service is very powerful since we can feed in all kinds of extra properties that will be evaluated and fed into a CSS transition or
+ * keyframe animation. For example if we wanted to animate the height of an element while adding and removing classes then we can do so by providing that
+ * data into `$animateCss` directly:
+ *
+ * ```js
+ * myModule.animation('.slide', ['$animateCss', function($animateCss) {
+ *   return {
+ *     enter: function(element) {
+ *       return $animateCss(element, {
+ *         event: 'enter',
+ *         structural: true,
+ *         addClass: 'maroon-setting',
+ *         from: { height:0 },
+ *         to: { height: 200 }
+ *       });
+ *     }
+ *   }
+ * }]);
+ * ```
+ *
+ * Now we can fill in the rest via our transition CSS code:
+ *
+ * ```css
+ * /&#42; the transition tells ngAnimate to make the animation happen &#42;/
+ * .slide.ng-enter { transition:0.5s linear all; }
+ *
+ * /&#42; this extra CSS class will be absorbed into the transition
+ * since the $animateCss code is adding the class &#42;/
+ * .maroon-setting { background:red; }
+ * ```
+ *
+ * And `$animateCss` will figure out the rest. Just make sure to have the `done()` callback fire the `doneFn` function to signal when the animation is over.
+ *
+ * To learn more about what's possible be sure to visit the {@link ngAnimate.$animateCss $animateCss service}.
+ *
+ * ## Animation Anchoring (via `ng-animate-ref`)
+ *
+ * ngAnimate in AngularJS 1.4 comes packed with the ability to cross-animate elements between
+ * structural areas of an application (like views) by pairing up elements using an attribute
+ * called `ng-animate-ref`.
+ *
+ * Let's say for example we have two views that are managed by `ng-view` and we want to show
+ * that there is a relationship between two components situated in within these views. By using the
+ * `ng-animate-ref` attribute we can identify that the two components are paired together and we
+ * can then attach an animation, which is triggered when the view changes.
+ *
+ * Say for example we have the following template code:
+ *
+ * ```html
+ * <!-- index.html -->
+ * <div ng-view class="view-animation">
+ * </div>
+ *
+ * <!-- home.html -->
+ * <a href="#/banner-page">
+ *   <img src="./banner.jpg" class="banner" ng-animate-ref="banner">
+ * </a>
+ *
+ * <!-- banner-page.html -->
+ * <img src="./banner.jpg" class="banner" ng-animate-ref="banner">
+ * ```
+ *
+ * Now, when the view changes (once the link is clicked), ngAnimate will examine the
+ * HTML contents to see if there is a match reference between any components in the view
+ * that is leaving and the view that is entering. It will scan both the view which is being
+ * removed (leave) and inserted (enter) to see if there are any paired DOM elements that
+ * contain a matching ref value.
+ *
+ * The two images match since they share the same ref value. ngAnimate will now create a
+ * transport element (which is a clone of the first image element) and it will then attempt
+ * to animate to the position of the second image element in the next view. For the animation to
+ * work a special CSS class called `ng-anchor` will be added to the transported element.
+ *
+ * We can now attach a transition onto the `.banner.ng-anchor` CSS class and then
+ * ngAnimate will handle the entire transition for us as well as the addition and removal of
+ * any changes of CSS classes between the elements:
+ *
+ * ```css
+ * .banner.ng-anchor {
+ *   /&#42; this animation will last for 1 second since there are
+ *          two phases to the animation (an `in` and an `out` phase) &#42;/
+ *   transition:0.5s linear all;
+ * }
+ * ```
+ *
+ * We also **must** include animations for the views that are being entered and removed
+ * (otherwise anchoring wouldn't be possible since the new view would be inserted right away).
+ *
+ * ```css
+ * .view-animation.ng-enter, .view-animation.ng-leave {
+ *   transition:0.5s linear all;
+ *   position:fixed;
+ *   left:0;
+ *   top:0;
+ *   width:100%;
+ * }
+ * .view-animation.ng-enter {
+ *   transform:translateX(100%);
+ * }
+ * .view-animation.ng-leave,
+ * .view-animation.ng-enter.ng-enter-active {
+ *   transform:translateX(0%);
+ * }
+ * .view-animation.ng-leave.ng-leave-active {
+ *   transform:translateX(-100%);
+ * }
+ * ```
+ *
+ * Now we can jump back to the anchor animation. When the animation happens, there are two stages that occur:
+ * an `out` and an `in` stage. The `out` stage happens first and that is when the element is animated away
+ * from its origin. Once that animation is over then the `in` stage occurs which animates the
+ * element to its destination. The reason why there are two animations is to give enough time
+ * for the enter animation on the new element to be ready.
+ *
+ * The example above sets up a transition for both the in and out phases, but we can also target the out or
+ * in phases directly via `ng-anchor-out` and `ng-anchor-in`.
+ *
+ * ```css
+ * .banner.ng-anchor-out {
+ *   transition: 0.5s linear all;
+ *
+ *   /&#42; the scale will be applied during the out animation,
+ *          but will be animated away when the in animation runs &#42;/
+ *   transform: scale(1.2);
+ * }
+ *
+ * .banner.ng-anchor-in {
+ *   transition: 1s linear all;
+ * }
+ * ```
+ *
+ *
+ *
+ *
+ * ### Anchoring Demo
+ *
+  <example module="anchoringExample"
+           name="anchoringExample"
+           id="anchoringExample"
+           deps="angular-animate.js;angular-route.js"
+           animations="true">
+    <file name="index.html">
+      <a href="#/">Home</a>
+      <hr />
+      <div class="view-container">
+        <div ng-view class="view"></div>
+      </div>
+    </file>
+    <file name="script.js">
+      angular.module('anchoringExample', ['ngAnimate', 'ngRoute'])
+        .config(['$routeProvider', function($routeProvider) {
+          $routeProvider.when('/', {
+            templateUrl: 'home.html',
+            controller: 'HomeController as home'
+          });
+          $routeProvider.when('/profile/:id', {
+            templateUrl: 'profile.html',
+            controller: 'ProfileController as profile'
+          });
+        }])
+        .run(['$rootScope', function($rootScope) {
+          $rootScope.records = [
+            { id:1, title: "Miss Beulah Roob" },
+            { id:2, title: "Trent Morissette" },
+            { id:3, title: "Miss Ava Pouros" },
+            { id:4, title: "Rod Pouros" },
+            { id:5, title: "Abdul Rice" },
+            { id:6, title: "Laurie Rutherford Sr." },
+            { id:7, title: "Nakia McLaughlin" },
+            { id:8, title: "Jordon Blanda DVM" },
+            { id:9, title: "Rhoda Hand" },
+            { id:10, title: "Alexandrea Sauer" }
+          ];
+        }])
+        .controller('HomeController', [function() {
+          //empty
+        }])
+        .controller('ProfileController', ['$rootScope', '$routeParams', function($rootScope, $routeParams) {
+          var index = parseInt($routeParams.id, 10);
+          var record = $rootScope.records[index - 1];
+
+          this.title = record.title;
+          this.id = record.id;
+        }]);
+    </file>
+    <file name="home.html">
+      <h2>Welcome to the home page</h1>
+      <p>Please click on an element</p>
+      <a class="record"
+         ng-href="#/profile/{{ record.id }}"
+         ng-animate-ref="{{ record.id }}"
+         ng-repeat="record in records">
+        {{ record.title }}
+      </a>
+    </file>
+    <file name="profile.html">
+      <div class="profile record" ng-animate-ref="{{ profile.id }}">
+        {{ profile.title }}
+      </div>
+    </file>
+    <file name="animations.css">
+      .record {
+        display:block;
+        font-size:20px;
+      }
+      .profile {
+        background:black;
+        color:white;
+        font-size:100px;
+      }
+      .view-container {
+        position:relative;
+      }
+      .view-container > .view.ng-animate {
+        position:absolute;
+        top:0;
+        left:0;
+        width:100%;
+        min-height:500px;
+      }
+      .view.ng-enter, .view.ng-leave,
+      .record.ng-anchor {
+        transition:0.5s linear all;
+      }
+      .view.ng-enter {
+        transform:translateX(100%);
+      }
+      .view.ng-enter.ng-enter-active, .view.ng-leave {
+        transform:translateX(0%);
+      }
+      .view.ng-leave.ng-leave-active {
+        transform:translateX(-100%);
+      }
+      .record.ng-anchor-out {
+        background:red;
+      }
+    </file>
+  </example>
+ *
+ * ### How is the element transported?
+ *
+ * When an anchor animation occurs, ngAnimate will clone the starting element and position it exactly where the starting
+ * element is located on screen via absolute positioning. The cloned element will be placed inside of the root element
+ * of the application (where ng-app was defined) and all of the CSS classes of the starting element will be applied. The
+ * element will then animate into the `out` and `in` animations and will eventually reach the coordinates and match
+ * the dimensions of the destination element. During the entire animation a CSS class of `.ng-animate-shim` will be applied
+ * to both the starting and destination elements in order to hide them from being visible (the CSS styling for the class
+ * is: `visibility:hidden`). Once the anchor reaches its destination then it will be removed and the destination element
+ * will become visible since the shim class will be removed.
+ *
+ * ### How is the morphing handled?
+ *
+ * CSS Anchoring relies on transitions and keyframes and the internal code is intelligent enough to figure out
+ * what CSS classes differ between the starting element and the destination element. These different CSS classes
+ * will be added/removed on the anchor element and a transition will be applied (the transition that is provided
+ * in the anchor class). Long story short, ngAnimate will figure out what classes to add and remove which will
+ * make the transition of the element as smooth and automatic as possible. Be sure to use simple CSS classes that
+ * do not rely on DOM nesting structure so that the anchor element appears the same as the starting element (since
+ * the cloned element is placed inside of root element which is likely close to the body element).
+ *
+ * Note that if the root element is on the `<html>` element then the cloned node will be placed inside of body.
+ *
+ *
+ * ## Using $animate in your directive code
+ *
+ * So far we've explored how to feed in animations into an Angular application, but how do we trigger animations within our own directives in our application?
+ * By injecting the `$animate` service into our directive code, we can trigger structural and class-based hooks which can then be consumed by animations. Let's
+ * imagine we have a greeting box that shows and hides itself when the data changes
+ *
+ * ```html
+ * <greeting-box active="onOrOff">Hi there</greeting-box>
+ * ```
+ *
+ * ```js
+ * ngModule.directive('greetingBox', ['$animate', function($animate) {
+ *   return function(scope, element, attrs) {
+ *     attrs.$observe('active', function(value) {
+ *       value ? $animate.addClass(element, 'on') : $animate.removeClass(element, 'on');
+ *     });
+ *   });
+ * }]);
+ * ```
+ *
+ * Now the `on` CSS class is added and removed on the greeting box component. Now if we add a CSS class on top of the greeting box element
+ * in our HTML code then we can trigger a CSS or JS animation to happen.
+ *
+ * ```css
+ * /&#42; normally we would create a CSS class to reference on the element &#42;/
+ * greeting-box.on { transition:0.5s linear all; background:green; color:white; }
+ * ```
+ *
+ * The `$animate` service contains a variety of other methods like `enter`, `leave`, `animate` and `setClass`. To learn more about what's
+ * possible be sure to visit the {@link ng.$animate $animate service API page}.
+ *
+ *
+ * ## Callbacks and Promises
+ *
+ * When `$animate` is called it returns a promise that can be used to capture when the animation has ended. Therefore if we were to trigger
+ * an animation (within our directive code) then we can continue performing directive and scope related activities after the animation has
+ * ended by chaining onto the returned promise that animation method returns.
+ *
+ * ```js
+ * // somewhere within the depths of the directive
+ * $animate.enter(element, parent).then(function() {
+ *   //the animation has completed
+ * });
+ * ```
+ *
+ * (Note that earlier versions of Angular prior to v1.4 required the promise code to be wrapped using `$scope.$apply(...)`. This is not the case
+ * anymore.)
+ *
+ * In addition to the animation promise, we can also make use of animation-related callbacks within our directives and controller code by registering
+ * an event listener using the `$animate` service. Let's say for example that an animation was triggered on our view
+ * routing controller to hook into that:
+ *
+ * ```js
+ * ngModule.controller('HomePageController', ['$animate', function($animate) {
+ *   $animate.on('enter', ngViewElement, function(element) {
+ *     // the animation for this route has completed
+ *   }]);
+ * }])
+ * ```
+ *
+ * (Note that you will need to trigger a digest within the callback to get angular to notice any scope-related changes.)
+ */
+
+var copy;
+var extend;
+var forEach;
+var isArray;
+var isDefined;
+var isElement;
+var isFunction;
+var isObject;
+var isString;
+var isUndefined;
+var jqLite;
+var noop;
+
+/**
+ * @ngdoc service
+ * @name $animate
+ * @kind object
+ *
+ * @description
+ * The ngAnimate `$animate` service documentation is the same for the core `$animate` service.
+ *
+ * Click here {@link ng.$animate to learn more about animations with `$animate`}.
+ */
+angular.module('ngAnimate', [], function initAngularHelpers() {
+  // Access helpers from angular core.
+  // Do it inside a `config` block to ensure `window.angular` is available.
+  noop        = angular.noop;
+  copy        = angular.copy;
+  extend      = angular.extend;
+  jqLite      = angular.element;
+  forEach     = angular.forEach;
+  isArray     = angular.isArray;
+  isString    = angular.isString;
+  isObject    = angular.isObject;
+  isUndefined = angular.isUndefined;
+  isDefined   = angular.isDefined;
+  isFunction  = angular.isFunction;
+  isElement   = angular.isElement;
+})
+  .directive('ngAnimateSwap', ngAnimateSwapDirective)
+
+  .directive('ngAnimateChildren', $$AnimateChildrenDirective)
+  .factory('$$rAFScheduler', $$rAFSchedulerFactory)
+
+  .provider('$$animateQueue', $$AnimateQueueProvider)
+  .provider('$$animation', $$AnimationProvider)
+
+  .provider('$animateCss', $AnimateCssProvider)
+  .provider('$$animateCssDriver', $$AnimateCssDriverProvider)
+
+  .provider('$$animateJs', $$AnimateJsProvider)
+  .provider('$$animateJsDriver', $$AnimateJsDriverProvider);
+
+
+})(window, window.angular);
 /*!
    angular-block-ui v0.2.1
    (c) 2015 (null) McNull https://github.com/McNull/angular-block-ui
@@ -326,13 +4465,13 @@ PATTERNS:[{gSize:3,lgSize:3,maxFrac:3,minFrac:0,minInt:1,negPre:"-",negSuf:"",po
 //# sourceMappingURL=angular-block-ui.min.js.map
 /**
  * State-based routing for AngularJS
- * @version v0.3.1
+ * @version v0.4.2
  * @link http://angular-ui.github.com/
  * @license MIT License, http://www.opensource.org/licenses/MIT
  */
-"undefined"!=typeof module&&"undefined"!=typeof exports&&module.exports===exports&&(module.exports="ui.router"),function(a,b,c){"use strict";function d(a,b){return R(new(R(function(){},{prototype:a})),b)}function e(a){return Q(arguments,function(b){b!==a&&Q(b,function(b,c){a.hasOwnProperty(c)||(a[c]=b)})}),a}function f(a,b){var c=[];for(var d in a.path){if(a.path[d]!==b.path[d])break;c.push(a.path[d])}return c}function g(a){if(Object.keys)return Object.keys(a);var b=[];return Q(a,function(a,c){b.push(c)}),b}function h(a,b){if(Array.prototype.indexOf)return a.indexOf(b,Number(arguments[2])||0);var c=a.length>>>0,d=Number(arguments[2])||0;for(d=0>d?Math.ceil(d):Math.floor(d),0>d&&(d+=c);c>d;d++)if(d in a&&a[d]===b)return d;return-1}function i(a,b,c,d){var e,i=f(c,d),j={},k=[];for(var l in i)if(i[l]&&i[l].params&&(e=g(i[l].params),e.length))for(var m in e)h(k,e[m])>=0||(k.push(e[m]),j[e[m]]=a[e[m]]);return R({},j,b)}function j(a,b,c){if(!c){c=[];for(var d in a)c.push(d)}for(var e=0;e<c.length;e++){var f=c[e];if(a[f]!=b[f])return!1}return!0}function k(a,b){var c={};return Q(a,function(a){c[a]=b[a]}),c}function l(a){var b={},c=Array.prototype.concat.apply(Array.prototype,Array.prototype.slice.call(arguments,1));return Q(c,function(c){c in a&&(b[c]=a[c])}),b}function m(a){var b={},c=Array.prototype.concat.apply(Array.prototype,Array.prototype.slice.call(arguments,1));for(var d in a)-1==h(c,d)&&(b[d]=a[d]);return b}function n(a,b){var c=P(a),d=c?[]:{};return Q(a,function(a,e){b(a,e)&&(d[c?d.length:e]=a)}),d}function o(a,b){var c=P(a)?[]:{};return Q(a,function(a,d){c[d]=b(a,d)}),c}function p(a,b){var d=1,f=2,i={},j=[],k=i,l=R(a.when(i),{$$promises:i,$$values:i});this.study=function(i){function n(a,c){if(s[c]!==f){if(r.push(c),s[c]===d)throw r.splice(0,h(r,c)),new Error("Cyclic dependency: "+r.join(" -> "));if(s[c]=d,N(a))q.push(c,[function(){return b.get(a)}],j);else{var e=b.annotate(a);Q(e,function(a){a!==c&&i.hasOwnProperty(a)&&n(i[a],a)}),q.push(c,a,e)}r.pop(),s[c]=f}}function o(a){return O(a)&&a.then&&a.$$promises}if(!O(i))throw new Error("'invocables' must be an object");var p=g(i||{}),q=[],r=[],s={};return Q(i,n),i=r=s=null,function(d,f,g){function h(){--u||(v||e(t,f.$$values),r.$$values=t,r.$$promises=r.$$promises||!0,delete r.$$inheritedValues,n.resolve(t))}function i(a){r.$$failure=a,n.reject(a)}function j(c,e,f){function j(a){l.reject(a),i(a)}function k(){if(!L(r.$$failure))try{l.resolve(b.invoke(e,g,t)),l.promise.then(function(a){t[c]=a,h()},j)}catch(a){j(a)}}var l=a.defer(),m=0;Q(f,function(a){s.hasOwnProperty(a)&&!d.hasOwnProperty(a)&&(m++,s[a].then(function(b){t[a]=b,--m||k()},j))}),m||k(),s[c]=l.promise}if(o(d)&&g===c&&(g=f,f=d,d=null),d){if(!O(d))throw new Error("'locals' must be an object")}else d=k;if(f){if(!o(f))throw new Error("'parent' must be a promise returned by $resolve.resolve()")}else f=l;var n=a.defer(),r=n.promise,s=r.$$promises={},t=R({},d),u=1+q.length/3,v=!1;if(L(f.$$failure))return i(f.$$failure),r;f.$$inheritedValues&&e(t,m(f.$$inheritedValues,p)),R(s,f.$$promises),f.$$values?(v=e(t,m(f.$$values,p)),r.$$inheritedValues=m(f.$$values,p),h()):(f.$$inheritedValues&&(r.$$inheritedValues=m(f.$$inheritedValues,p)),f.then(h,i));for(var w=0,x=q.length;x>w;w+=3)d.hasOwnProperty(q[w])?h():j(q[w],q[w+1],q[w+2]);return r}},this.resolve=function(a,b,c,d){return this.study(a)(b,c,d)}}function q(a,b,c){this.fromConfig=function(a,b,c){return L(a.template)?this.fromString(a.template,b):L(a.templateUrl)?this.fromUrl(a.templateUrl,b):L(a.templateProvider)?this.fromProvider(a.templateProvider,b,c):null},this.fromString=function(a,b){return M(a)?a(b):a},this.fromUrl=function(c,d){return M(c)&&(c=c(d)),null==c?null:a.get(c,{cache:b,headers:{Accept:"text/html"}}).then(function(a){return a.data})},this.fromProvider=function(a,b,d){return c.invoke(a,null,d||{params:b})}}function r(a,b,e){function f(b,c,d,e){if(q.push(b),o[b])return o[b];if(!/^\w+([-.]+\w+)*(?:\[\])?$/.test(b))throw new Error("Invalid parameter name '"+b+"' in pattern '"+a+"'");if(p[b])throw new Error("Duplicate parameter name '"+b+"' in pattern '"+a+"'");return p[b]=new U.Param(b,c,d,e),p[b]}function g(a,b,c,d){var e=["",""],f=a.replace(/[\\\[\]\^$*+?.()|{}]/g,"\\$&");if(!b)return f;switch(c){case!1:e=["(",")"+(d?"?":"")];break;case!0:f=f.replace(/\/$/,""),e=["(?:/(",")|/)?"];break;default:e=["("+c+"|",")?"]}return f+e[0]+b+e[1]}function h(e,f){var g,h,i,j,k;return g=e[2]||e[3],k=b.params[g],i=a.substring(m,e.index),h=f?e[4]:e[4]||("*"==e[1]?".*":null),h&&(j=U.type(h)||d(U.type("string"),{pattern:new RegExp(h,b.caseInsensitive?"i":c)})),{id:g,regexp:h,segment:i,type:j,cfg:k}}b=R({params:{}},O(b)?b:{});var i,j=/([:*])([\w\[\]]+)|\{([\w\[\]]+)(?:\:\s*((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g,k=/([:]?)([\w\[\].-]+)|\{([\w\[\].-]+)(?:\:\s*((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g,l="^",m=0,n=this.segments=[],o=e?e.params:{},p=this.params=e?e.params.$$new():new U.ParamSet,q=[];this.source=a;for(var r,s,t;(i=j.exec(a))&&(r=h(i,!1),!(r.segment.indexOf("?")>=0));)s=f(r.id,r.type,r.cfg,"path"),l+=g(r.segment,s.type.pattern.source,s.squash,s.isOptional),n.push(r.segment),m=j.lastIndex;t=a.substring(m);var u=t.indexOf("?");if(u>=0){var v=this.sourceSearch=t.substring(u);if(t=t.substring(0,u),this.sourcePath=a.substring(0,m+u),v.length>0)for(m=0;i=k.exec(v);)r=h(i,!0),s=f(r.id,r.type,r.cfg,"search"),m=j.lastIndex}else this.sourcePath=a,this.sourceSearch="";l+=g(t)+(b.strict===!1?"/?":"")+"$",n.push(t),this.regexp=new RegExp(l,b.caseInsensitive?"i":c),this.prefix=n[0],this.$$paramNames=q}function s(a){R(this,a)}function t(){function a(a){return null!=a?a.toString().replace(/~/g,"~~").replace(/\//g,"~2F"):a}function e(a){return null!=a?a.toString().replace(/~2F/g,"/").replace(/~~/g,"~"):a}function f(){return{strict:p,caseInsensitive:m}}function i(a){return M(a)||P(a)&&M(a[a.length-1])}function j(){for(;w.length;){var a=w.shift();if(a.pattern)throw new Error("You cannot override a type's .pattern at runtime.");b.extend(u[a.name],l.invoke(a.def))}}function k(a){R(this,a||{})}U=this;var l,m=!1,p=!0,q=!1,u={},v=!0,w=[],x={string:{encode:a,decode:e,is:function(a){return null==a||!L(a)||"string"==typeof a},pattern:/[^\/]*/},"int":{encode:a,decode:function(a){return parseInt(a,10)},is:function(a){return L(a)&&this.decode(a.toString())===a},pattern:/\d+/},bool:{encode:function(a){return a?1:0},decode:function(a){return 0!==parseInt(a,10)},is:function(a){return a===!0||a===!1},pattern:/0|1/},date:{encode:function(a){return this.is(a)?[a.getFullYear(),("0"+(a.getMonth()+1)).slice(-2),("0"+a.getDate()).slice(-2)].join("-"):c},decode:function(a){if(this.is(a))return a;var b=this.capture.exec(a);return b?new Date(b[1],b[2]-1,b[3]):c},is:function(a){return a instanceof Date&&!isNaN(a.valueOf())},equals:function(a,b){return this.is(a)&&this.is(b)&&a.toISOString()===b.toISOString()},pattern:/[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2][0-9]|3[0-1])/,capture:/([0-9]{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])/},json:{encode:b.toJson,decode:b.fromJson,is:b.isObject,equals:b.equals,pattern:/[^\/]*/},any:{encode:b.identity,decode:b.identity,equals:b.equals,pattern:/.*/}};t.$$getDefaultValue=function(a){if(!i(a.value))return a.value;if(!l)throw new Error("Injectable functions cannot be called at configuration time");return l.invoke(a.value)},this.caseInsensitive=function(a){return L(a)&&(m=a),m},this.strictMode=function(a){return L(a)&&(p=a),p},this.defaultSquashPolicy=function(a){if(!L(a))return q;if(a!==!0&&a!==!1&&!N(a))throw new Error("Invalid squash policy: "+a+". Valid policies: false, true, arbitrary-string");return q=a,a},this.compile=function(a,b){return new r(a,R(f(),b))},this.isMatcher=function(a){if(!O(a))return!1;var b=!0;return Q(r.prototype,function(c,d){M(c)&&(b=b&&L(a[d])&&M(a[d]))}),b},this.type=function(a,b,c){if(!L(b))return u[a];if(u.hasOwnProperty(a))throw new Error("A type named '"+a+"' has already been defined.");return u[a]=new s(R({name:a},b)),c&&(w.push({name:a,def:c}),v||j()),this},Q(x,function(a,b){u[b]=new s(R({name:b},a))}),u=d(u,{}),this.$get=["$injector",function(a){return l=a,v=!1,j(),Q(x,function(a,b){u[b]||(u[b]=new s(a))}),this}],this.Param=function(a,d,e,f){function j(a){var b=O(a)?g(a):[],c=-1===h(b,"value")&&-1===h(b,"type")&&-1===h(b,"squash")&&-1===h(b,"array");return c&&(a={value:a}),a.$$fn=i(a.value)?a.value:function(){return a.value},a}function k(c,d,e){if(c.type&&d)throw new Error("Param '"+a+"' has two type configurations.");return d?d:c.type?b.isString(c.type)?u[c.type]:c.type instanceof s?c.type:new s(c.type):"config"===e?u.any:u.string}function m(){var b={array:"search"===f?"auto":!1},c=a.match(/\[\]$/)?{array:!0}:{};return R(b,c,e).array}function p(a,b){var c=a.squash;if(!b||c===!1)return!1;if(!L(c)||null==c)return q;if(c===!0||N(c))return c;throw new Error("Invalid squash policy: '"+c+"'. Valid policies: false, true, or arbitrary string")}function r(a,b,d,e){var f,g,i=[{from:"",to:d||b?c:""},{from:null,to:d||b?c:""}];return f=P(a.replace)?a.replace:[],N(e)&&f.push({from:e,to:c}),g=o(f,function(a){return a.from}),n(i,function(a){return-1===h(g,a.from)}).concat(f)}function t(){if(!l)throw new Error("Injectable functions cannot be called at configuration time");var a=l.invoke(e.$$fn);if(null!==a&&a!==c&&!x.type.is(a))throw new Error("Default value ("+a+") for parameter '"+x.id+"' is not an instance of Type ("+x.type.name+")");return a}function v(a){function b(a){return function(b){return b.from===a}}function c(a){var c=o(n(x.replace,b(a)),function(a){return a.to});return c.length?c[0]:a}return a=c(a),L(a)?x.type.$normalize(a):t()}function w(){return"{Param:"+a+" "+d+" squash: '"+A+"' optional: "+z+"}"}var x=this;e=j(e),d=k(e,d,f);var y=m();d=y?d.$asArray(y,"search"===f):d,"string"!==d.name||y||"path"!==f||e.value!==c||(e.value="");var z=e.value!==c,A=p(e,z),B=r(e,y,z,A);R(this,{id:a,type:d,location:f,array:y,squash:A,replace:B,isOptional:z,value:v,dynamic:c,config:e,toString:w})},k.prototype={$$new:function(){return d(this,R(new k,{$$parent:this}))},$$keys:function(){for(var a=[],b=[],c=this,d=g(k.prototype);c;)b.push(c),c=c.$$parent;return b.reverse(),Q(b,function(b){Q(g(b),function(b){-1===h(a,b)&&-1===h(d,b)&&a.push(b)})}),a},$$values:function(a){var b={},c=this;return Q(c.$$keys(),function(d){b[d]=c[d].value(a&&a[d])}),b},$$equals:function(a,b){var c=!0,d=this;return Q(d.$$keys(),function(e){var f=a&&a[e],g=b&&b[e];d[e].type.equals(f,g)||(c=!1)}),c},$$validates:function(a){var d,e,f,g,h,i=this.$$keys();for(d=0;d<i.length&&(e=this[i[d]],f=a[i[d]],f!==c&&null!==f||!e.isOptional);d++){if(g=e.type.$normalize(f),!e.type.is(g))return!1;if(h=e.type.encode(g),b.isString(h)&&!e.type.pattern.exec(h))return!1}return!0},$$parent:c},this.ParamSet=k}function u(a,d){function e(a){var b=/^\^((?:\\[^a-zA-Z0-9]|[^\\\[\]\^$*+?.()|{}]+)*)/.exec(a.source);return null!=b?b[1].replace(/\\(.)/g,"$1"):""}function f(a,b){return a.replace(/\$(\$|\d{1,2})/,function(a,c){return b["$"===c?0:Number(c)]})}function g(a,b,c){if(!c)return!1;var d=a.invoke(b,b,{$match:c});return L(d)?d:!0}function h(d,e,f,g,h){function m(a,b,c){return"/"===q?a:b?q.slice(0,-1)+a:c?q.slice(1)+a:a}function n(a){function b(a){var b=a(f,d);return b?(N(b)&&d.replace().url(b),!0):!1}if(!a||!a.defaultPrevented){p&&d.url()===p;p=c;var e,g=j.length;for(e=0;g>e;e++)if(b(j[e]))return;k&&b(k)}}function o(){return i=i||e.$on("$locationChangeSuccess",n)}var p,q=g.baseHref(),r=d.url();return l||o(),{sync:function(){n()},listen:function(){return o()},update:function(a){return a?void(r=d.url()):void(d.url()!==r&&(d.url(r),d.replace()))},push:function(a,b,e){var f=a.format(b||{});null!==f&&b&&b["#"]&&(f+="#"+b["#"]),d.url(f),p=e&&e.$$avoidResync?d.url():c,e&&e.replace&&d.replace()},href:function(c,e,f){if(!c.validates(e))return null;var g=a.html5Mode();b.isObject(g)&&(g=g.enabled),g=g&&h.history;var i=c.format(e);if(f=f||{},g||null===i||(i="#"+a.hashPrefix()+i),null!==i&&e&&e["#"]&&(i+="#"+e["#"]),i=m(i,g,f.absolute),!f.absolute||!i)return i;var j=!g&&i?"/":"",k=d.port();return k=80===k||443===k?"":":"+k,[d.protocol(),"://",d.host(),k,j,i].join("")}}}var i,j=[],k=null,l=!1;this.rule=function(a){if(!M(a))throw new Error("'rule' must be a function");return j.push(a),this},this.otherwise=function(a){if(N(a)){var b=a;a=function(){return b}}else if(!M(a))throw new Error("'rule' must be a function");return k=a,this},this.when=function(a,b){var c,h=N(b);if(N(a)&&(a=d.compile(a)),!h&&!M(b)&&!P(b))throw new Error("invalid 'handler' in when()");var i={matcher:function(a,b){return h&&(c=d.compile(b),b=["$match",function(a){return c.format(a)}]),R(function(c,d){return g(c,b,a.exec(d.path(),d.search()))},{prefix:N(a.prefix)?a.prefix:""})},regex:function(a,b){if(a.global||a.sticky)throw new Error("when() RegExp must not be global or sticky");return h&&(c=b,b=["$match",function(a){return f(c,a)}]),R(function(c,d){return g(c,b,a.exec(d.path()))},{prefix:e(a)})}},j={matcher:d.isMatcher(a),regex:a instanceof RegExp};for(var k in j)if(j[k])return this.rule(i[k](a,b));throw new Error("invalid 'what' in when()")},this.deferIntercept=function(a){a===c&&(a=!0),l=a},this.$get=h,h.$inject=["$location","$rootScope","$injector","$browser","$sniffer"]}function v(a,e){function f(a){return 0===a.indexOf(".")||0===a.indexOf("^")}function m(a,b){if(!a)return c;var d=N(a),e=d?a:a.name,g=f(e);if(g){if(!b)throw new Error("No reference point given for path '"+e+"'");b=m(b);for(var h=e.split("."),i=0,j=h.length,k=b;j>i;i++)if(""!==h[i]||0!==i){if("^"!==h[i])break;if(!k.parent)throw new Error("Path '"+e+"' not valid for state '"+b.name+"'");k=k.parent}else k=b;h=h.slice(i).join("."),e=k.name+(k.name&&h?".":"")+h}var l=z[e];return!l||!d&&(d||l!==a&&l.self!==a)?c:l}function n(a,b){A[a]||(A[a]=[]),A[a].push(b)}function p(a){for(var b=A[a]||[];b.length;)q(b.shift())}function q(b){b=d(b,{self:b,resolve:b.resolve||{},toString:function(){return this.name}});var c=b.name;if(!N(c)||c.indexOf("@")>=0)throw new Error("State must have a valid name");if(z.hasOwnProperty(c))throw new Error("State '"+c+"' is already defined");var e=-1!==c.indexOf(".")?c.substring(0,c.lastIndexOf(".")):N(b.parent)?b.parent:O(b.parent)&&N(b.parent.name)?b.parent.name:"";if(e&&!z[e])return n(e,b.self);for(var f in C)M(C[f])&&(b[f]=C[f](b,C.$delegates[f]));return z[c]=b,!b[B]&&b.url&&a.when(b.url,["$match","$stateParams",function(a,c){y.$current.navigable==b&&j(a,c)||y.transitionTo(b,a,{inherit:!0,location:!1})}]),p(c),b}function r(a){return a.indexOf("*")>-1}function s(a){for(var b=a.split("."),c=y.$current.name.split("."),d=0,e=b.length;e>d;d++)"*"===b[d]&&(c[d]="*");return"**"===b[0]&&(c=c.slice(h(c,b[1])),c.unshift("**")),"**"===b[b.length-1]&&(c.splice(h(c,b[b.length-2])+1,Number.MAX_VALUE),c.push("**")),b.length!=c.length?!1:c.join("")===b.join("")}function t(a,b){return N(a)&&!L(b)?C[a]:M(b)&&N(a)?(C[a]&&!C.$delegates[a]&&(C.$delegates[a]=C[a]),C[a]=b,this):this}function u(a,b){return O(a)?b=a:b.name=a,q(b),this}function v(a,e,f,h,l,n,p,q,t){function u(b,c,d,f){var g=a.$broadcast("$stateNotFound",b,c,d);if(g.defaultPrevented)return p.update(),D;if(!g.retry)return null;if(f.$retry)return p.update(),E;var h=y.transition=e.when(g.retry);return h.then(function(){return h!==y.transition?A:(b.options.$retry=!0,y.transitionTo(b.to,b.toParams,b.options))},function(){return D}),p.update(),h}function v(a,c,d,g,i,j){function m(){var c=[];return Q(a.views,function(d,e){var g=d.resolve&&d.resolve!==a.resolve?d.resolve:{};g.$template=[function(){return f.load(e,{view:d,locals:i.globals,params:n,notify:j.notify})||""}],c.push(l.resolve(g,i.globals,i.resolve,a).then(function(c){if(M(d.controllerProvider)||P(d.controllerProvider)){var f=b.extend({},g,i.globals);c.$$controller=h.invoke(d.controllerProvider,null,f)}else c.$$controller=d.controller;c.$$state=a,c.$$controllerAs=d.controllerAs,c.$$resolveAs=d.resolveAs,i[e]=c}))}),e.all(c).then(function(){return i.globals})}var n=d?c:k(a.params.$$keys(),c),o={$stateParams:n};i.resolve=l.resolve(a.resolve,o,i.resolve,a);var p=[i.resolve.then(function(a){i.globals=a})];return g&&p.push(g),e.all(p).then(m).then(function(a){return i})}var A=e.reject(new Error("transition superseded")),C=e.reject(new Error("transition prevented")),D=e.reject(new Error("transition aborted")),E=e.reject(new Error("transition failed"));return x.locals={resolve:null,globals:{$stateParams:{}}},y={params:{},current:x.self,$current:x,transition:null},y.reload=function(a){return y.transitionTo(y.current,n,{reload:a||!0,inherit:!1,notify:!0})},y.go=function(a,b,c){return y.transitionTo(a,b,R({inherit:!0,relative:y.$current},c))},y.transitionTo=function(b,c,f){c=c||{},f=R({location:!0,inherit:!1,relative:null,notify:!0,reload:!1,$retry:!1},f||{});var g,j=y.$current,l=y.params,o=j.path,q=m(b,f.relative),r=c["#"];if(!L(q)){var s={to:b,toParams:c,options:f},t=u(s,j.self,l,f);if(t)return t;if(b=s.to,c=s.toParams,f=s.options,q=m(b,f.relative),!L(q)){if(!f.relative)throw new Error("No such state '"+b+"'");throw new Error("Could not resolve '"+b+"' from state '"+f.relative+"'")}}if(q[B])throw new Error("Cannot transition to abstract state '"+b+"'");if(f.inherit&&(c=i(n,c||{},y.$current,q)),!q.params.$$validates(c))return E;c=q.params.$$values(c),b=q;var z=b.path,D=0,F=z[D],G=x.locals,H=[];if(f.reload){if(N(f.reload)||O(f.reload)){if(O(f.reload)&&!f.reload.name)throw new Error("Invalid reload state object");var I=f.reload===!0?o[0]:m(f.reload);if(f.reload&&!I)throw new Error("No such reload state '"+(N(f.reload)?f.reload:f.reload.name)+"'");for(;F&&F===o[D]&&F!==I;)G=H[D]=F.locals,D++,F=z[D]}}else for(;F&&F===o[D]&&F.ownParams.$$equals(c,l);)G=H[D]=F.locals,D++,F=z[D];if(w(b,c,j,l,G,f))return r&&(c["#"]=r),y.params=c,S(y.params,n),S(k(b.params.$$keys(),n),b.locals.globals.$stateParams),f.location&&b.navigable&&b.navigable.url&&(p.push(b.navigable.url,c,{$$avoidResync:!0,replace:"replace"===f.location}),p.update(!0)),y.transition=null,e.when(y.current);if(c=k(b.params.$$keys(),c||{}),r&&(c["#"]=r),f.notify&&a.$broadcast("$stateChangeStart",b.self,c,j.self,l,f).defaultPrevented)return a.$broadcast("$stateChangeCancel",b.self,c,j.self,l),null==y.transition&&p.update(),C;for(var J=e.when(G),K=D;K<z.length;K++,F=z[K])G=H[K]=d(G),J=v(F,c,F===b,J,G,f);var M=y.transition=J.then(function(){var d,e,g;if(y.transition!==M)return A;for(d=o.length-1;d>=D;d--)g=o[d],g.self.onExit&&h.invoke(g.self.onExit,g.self,g.locals.globals),g.locals=null;for(d=D;d<z.length;d++)e=z[d],e.locals=H[d],e.self.onEnter&&h.invoke(e.self.onEnter,e.self,e.locals.globals);return y.transition!==M?A:(y.$current=b,y.current=b.self,y.params=c,S(y.params,n),y.transition=null,f.location&&b.navigable&&p.push(b.navigable.url,b.navigable.locals.globals.$stateParams,{$$avoidResync:!0,replace:"replace"===f.location}),f.notify&&a.$broadcast("$stateChangeSuccess",b.self,c,j.self,l),p.update(!0),y.current)}).then(null,function(d){return y.transition!==M?A:(y.transition=null,g=a.$broadcast("$stateChangeError",b.self,c,j.self,l,d),g.defaultPrevented||p.update(),e.reject(d))});return M},y.is=function(a,b,d){d=R({relative:y.$current},d||{});var e=m(a,d.relative);return L(e)?y.$current!==e?!1:b?j(e.params.$$values(b),n):!0:c},y.includes=function(a,b,d){if(d=R({relative:y.$current},d||{}),N(a)&&r(a)){if(!s(a))return!1;a=y.$current.name}var e=m(a,d.relative);return L(e)?L(y.$current.includes[e.name])?b?j(e.params.$$values(b),n,g(b)):!0:!1:c},y.href=function(a,b,d){d=R({lossy:!0,inherit:!0,absolute:!1,relative:y.$current},d||{});var e=m(a,d.relative);if(!L(e))return null;d.inherit&&(b=i(n,b||{},y.$current,e));var f=e&&d.lossy?e.navigable:e;return f&&f.url!==c&&null!==f.url?p.href(f.url,k(e.params.$$keys().concat("#"),b||{}),{absolute:d.absolute}):null},y.get=function(a,b){if(0===arguments.length)return o(g(z),function(a){return z[a].self});var c=m(a,b||y.$current);return c&&c.self?c.self:null},y}function w(a,b,c,d,e,f){function g(a,b,c){function d(b){return"search"!=a.params[b].location}var e=a.params.$$keys().filter(d),f=l.apply({},[a.params].concat(e)),g=new U.ParamSet(f);return g.$$equals(b,c)}return!f.reload&&a===c&&(e===c.locals||a.self.reloadOnSearch===!1&&g(c,d,b))?!0:void 0}var x,y,z={},A={},B="abstract",C={parent:function(a){if(L(a.parent)&&a.parent)return m(a.parent);var b=/^(.+)\.[^.]+$/.exec(a.name);return b?m(b[1]):x},data:function(a){return a.parent&&a.parent.data&&(a.data=a.self.data=d(a.parent.data,a.data)),a.data},url:function(a){var b=a.url,c={params:a.params||{}};if(N(b))return"^"==b.charAt(0)?e.compile(b.substring(1),c):(a.parent.navigable||x).url.concat(b,c);if(!b||e.isMatcher(b))return b;throw new Error("Invalid url '"+b+"' in state '"+a+"'")},navigable:function(a){return a.url?a:a.parent?a.parent.navigable:null},ownParams:function(a){var b=a.url&&a.url.params||new U.ParamSet;return Q(a.params||{},function(a,c){b[c]||(b[c]=new U.Param(c,null,a,"config"))}),b},params:function(a){var b=l(a.ownParams,a.ownParams.$$keys());return a.parent&&a.parent.params?R(a.parent.params.$$new(),b):new U.ParamSet},views:function(a){var b={};return Q(L(a.views)?a.views:{"":a},function(c,d){d.indexOf("@")<0&&(d+="@"+a.parent.name),c.resolveAs=c.resolveAs||a.resolveAs||"$resolve",b[d]=c}),b},path:function(a){return a.parent?a.parent.path.concat(a):[]},includes:function(a){var b=a.parent?R({},a.parent.includes):{};return b[a.name]=!0,b},$delegates:{}};x=q({name:"",url:"^",views:null,"abstract":!0}),x.navigable=null,this.decorator=t,this.state=u,this.$get=v,v.$inject=["$rootScope","$q","$view","$injector","$resolve","$stateParams","$urlRouter","$location","$urlMatcherFactory"]}function w(){function a(a,b){return{load:function(a,c){var d,e={template:null,controller:null,view:null,locals:null,notify:!0,async:!0,params:{}};return c=R(e,c),c.view&&(d=b.fromConfig(c.view,c.params,c.locals)),d}}}this.$get=a,a.$inject=["$rootScope","$templateFactory"]}function x(){var a=!1;this.useAnchorScroll=function(){a=!0},this.$get=["$anchorScroll","$timeout",function(b,c){return a?b:function(a){return c(function(){a[0].scrollIntoView()},0,!1)}}]}function y(a,c,d,e,f){function g(){return c.has?function(a){return c.has(a)?c.get(a):null}:function(a){try{return c.get(a)}catch(b){return null}}}function h(a,c){var d=function(){return{enter:function(a,b,c){b.after(a),c()},leave:function(a,b){a.remove(),b()}}};if(k)return{enter:function(a,c,d){b.version.minor>2?k.enter(a,null,c).then(d):k.enter(a,null,c,d)},leave:function(a,c){b.version.minor>2?k.leave(a).then(c):k.leave(a,c)}};if(j){var e=j&&j(c,a);return{enter:function(a,b,c){e.enter(a,null,b),c()},leave:function(a,b){e.leave(a),b()}}}return d()}var i=g(),j=i("$animator"),k=i("$animate"),l={restrict:"ECA",terminal:!0,priority:400,transclude:"element",compile:function(c,g,i){return function(c,g,j){function k(){if(m&&(m.remove(),m=null),o&&(o.$destroy(),o=null),n){var a=n.data("$uiViewAnim");s.leave(n,function(){a.$$animLeave.resolve(),m=null}),m=n,n=null}}function l(h){var l,m=A(c,j,g,e),t=m&&a.$current&&a.$current.locals[m];if(h||t!==p){l=c.$new(),p=a.$current.locals[m],l.$emit("$viewContentLoading",m);var u=i(l,function(a){var e=f.defer(),h=f.defer(),i={$animEnter:e.promise,$animLeave:h.promise,$$animLeave:h};a.data("$uiViewAnim",i),s.enter(a,g,function(){e.resolve(),o&&o.$emit("$viewContentAnimationEnded"),(b.isDefined(r)&&!r||c.$eval(r))&&d(a)}),k()});n=u,o=l,o.$emit("$viewContentLoaded",m),o.$eval(q)}}var m,n,o,p,q=j.onload||"",r=j.autoscroll,s=h(j,c);g.inheritedData("$uiView");c.$on("$stateChangeSuccess",function(){l(!1)}),l(!0)}}};return l}function z(a,c,d,e){return{restrict:"ECA",priority:-400,compile:function(f){var g=f.html();return function(f,h,i){var j=d.$current,k=A(f,i,h,e),l=j&&j.locals[k];if(l){h.data("$uiView",{name:k,state:l.$$state}),h.html(l.$template?l.$template:g);var m=b.extend({},l);f[l.$$resolveAs]=m;var n=a(h.contents());if(l.$$controller){l.$scope=f,l.$element=h;var o=c(l.$$controller,l);l.$$controllerAs&&(f[l.$$controllerAs]=o,f[l.$$controllerAs][l.$$resolveAs]=m),M(o.$onInit)&&o.$onInit(),h.data("$ngControllerController",o),h.children().data("$ngControllerController",o)}n(f)}}}}}function A(a,b,c,d){var e=d(b.uiView||b.name||"")(a),f=c.inheritedData("$uiView");return e.indexOf("@")>=0?e:e+"@"+(f?f.state.name:"")}function B(a,b){var c,d=a.match(/^\s*({[^}]*})\s*$/);if(d&&(a=b+"("+d[1]+")"),c=a.replace(/\n/g," ").match(/^([^(]+?)\s*(\((.*)\))?$/),!c||4!==c.length)throw new Error("Invalid state ref '"+a+"'");return{state:c[1],paramExpr:c[3]||null}}function C(a){var b=a.parent().inheritedData("$uiView");return b&&b.state&&b.state.name?b.state:void 0}function D(a){var b="[object SVGAnimatedString]"===Object.prototype.toString.call(a.prop("href")),c="FORM"===a[0].nodeName;return{attr:c?"action":b?"xlink:href":"href",isAnchor:"A"===a.prop("tagName").toUpperCase(),clickable:!c}}function E(a,b,c,d,e){return function(f){var g=f.which||f.button,h=e();if(!(g>1||f.ctrlKey||f.metaKey||f.shiftKey||a.attr("target"))){var i=c(function(){b.go(h.state,h.params,h.options)});f.preventDefault();var j=d.isAnchor&&!h.href?1:0;f.preventDefault=function(){j--<=0&&c.cancel(i)}}}}function F(a,b){return{relative:C(a)||b.$current,inherit:!0}}function G(a,c){return{restrict:"A",require:["?^uiSrefActive","?^uiSrefActiveEq"],link:function(d,e,f,g){var h,i=B(f.uiSref,a.current.name),j={state:i.state,href:null,params:null},k=D(e),l=g[1]||g[0],m=null;j.options=R(F(e,a),f.uiSrefOpts?d.$eval(f.uiSrefOpts):{});var n=function(c){c&&(j.params=b.copy(c)),j.href=a.href(i.state,j.params,j.options),m&&m(),l&&(m=l.$$addStateInfo(i.state,j.params)),null!==j.href&&f.$set(k.attr,j.href)};i.paramExpr&&(d.$watch(i.paramExpr,function(a){a!==j.params&&n(a)},!0),j.params=b.copy(d.$eval(i.paramExpr))),n(),k.clickable&&(h=E(e,a,c,k,function(){return j}),e.bind("click",h),d.$on("$destroy",function(){e.unbind("click",h)}))}}}function H(a,b){return{restrict:"A",require:["?^uiSrefActive","?^uiSrefActiveEq"],link:function(c,d,e,f){function g(b){m.state=b[0],m.params=b[1],m.options=b[2],m.href=a.href(m.state,m.params,m.options),n&&n(),j&&(n=j.$$addStateInfo(m.state,m.params)),m.href&&e.$set(i.attr,m.href)}var h,i=D(d),j=f[1]||f[0],k=[e.uiState,e.uiStateParams||null,e.uiStateOpts||null],l="["+k.map(function(a){return a||"null"}).join(", ")+"]",m={state:null,params:null,options:null,href:null},n=null;c.$watch(l,g,!0),g(c.$eval(l)),i.clickable&&(h=E(d,a,b,i,function(){return m}),d.bind("click",h),c.$on("$destroy",function(){d.unbind("click",h)}))}}}function I(a,b,c){return{restrict:"A",controller:["$scope","$element","$attrs","$timeout",function(b,d,e,f){function g(b,c,e){var f=a.get(b,C(d)),g=h(b,c),i={state:f||{name:b},params:c,hash:g};return p.push(i),q[g]=e,function(){var a=p.indexOf(i);-1!==a&&p.splice(a,1)}}function h(a,c){if(!N(a))throw new Error("state should be a string");return O(c)?a+T(c):(c=b.$eval(c),O(c)?a+T(c):a)}function i(){for(var a=0;a<p.length;a++)l(p[a].state,p[a].params)?j(d,q[p[a].hash]):k(d,q[p[a].hash]),m(p[a].state,p[a].params)?j(d,n):k(d,n)}function j(a,b){f(function(){a.addClass(b)})}function k(a,b){a.removeClass(b)}function l(b,c){return a.includes(b.name,c)}function m(b,c){return a.is(b.name,c)}var n,o,p=[],q={};n=c(e.uiSrefActiveEq||"",!1)(b);try{o=b.$eval(e.uiSrefActive)}catch(r){}o=o||c(e.uiSrefActive||"",!1)(b),O(o)&&Q(o,function(c,d){if(N(c)){var e=B(c,a.current.name);g(e.state,b.$eval(e.paramExpr),d)}}),this.$$addStateInfo=function(a,b){if(!(O(o)&&p.length>0)){var c=g(a,b,o);return i(),c}},b.$on("$stateChangeSuccess",i),i()}]}}function J(a){var b=function(b,c){return a.is(b,c)};return b.$stateful=!0,b}function K(a){var b=function(b,c,d){return a.includes(b,c,d)};return b.$stateful=!0,b}var L=b.isDefined,M=b.isFunction,N=b.isString,O=b.isObject,P=b.isArray,Q=b.forEach,R=b.extend,S=b.copy,T=b.toJson;b.module("ui.router.util",["ng"]),b.module("ui.router.router",["ui.router.util"]),b.module("ui.router.state",["ui.router.router","ui.router.util"]),b.module("ui.router",["ui.router.state"]),b.module("ui.router.compat",["ui.router"]),p.$inject=["$q","$injector"],b.module("ui.router.util").service("$resolve",p),q.$inject=["$http","$templateCache","$injector"],b.module("ui.router.util").service("$templateFactory",q);var U;r.prototype.concat=function(a,b){var c={caseInsensitive:U.caseInsensitive(),strict:U.strictMode(),squash:U.defaultSquashPolicy()};return new r(this.sourcePath+a+this.sourceSearch,R(c,b),this)},r.prototype.toString=function(){return this.source},r.prototype.exec=function(a,b){function c(a){function b(a){return a.split("").reverse().join("")}function c(a){return a.replace(/\\-/g,"-")}var d=b(a).split(/-(?!\\)/),e=o(d,b);return o(e,c).reverse()}var d=this.regexp.exec(a);if(!d)return null;b=b||{};var e,f,g,h=this.parameters(),i=h.length,j=this.segments.length-1,k={};if(j!==d.length-1)throw new Error("Unbalanced capture group in route '"+this.source+"'");var l,m;for(e=0;j>e;e++){for(g=h[e],l=this.params[g],m=d[e+1],f=0;f<l.replace.length;f++)l.replace[f].from===m&&(m=l.replace[f].to);m&&l.array===!0&&(m=c(m)),L(m)&&(m=l.type.decode(m)),k[g]=l.value(m)}for(;i>e;e++){for(g=h[e],k[g]=this.params[g].value(b[g]),l=this.params[g],m=b[g],f=0;f<l.replace.length;f++)l.replace[f].from===m&&(m=l.replace[f].to);L(m)&&(m=l.type.decode(m)),k[g]=l.value(m)}return k},r.prototype.parameters=function(a){return L(a)?this.params[a]||null:this.$$paramNames},r.prototype.validates=function(a){return this.params.$$validates(a)},r.prototype.format=function(a){function b(a){return encodeURIComponent(a).replace(/-/g,function(a){return"%5C%"+a.charCodeAt(0).toString(16).toUpperCase()})}a=a||{};var c=this.segments,d=this.parameters(),e=this.params;if(!this.validates(a))return null;var f,g=!1,h=c.length-1,i=d.length,j=c[0];for(f=0;i>f;f++){var k=h>f,l=d[f],m=e[l],n=m.value(a[l]),p=m.isOptional&&m.type.equals(m.value(),n),q=p?m.squash:!1,r=m.type.encode(n);if(k){var s=c[f+1],t=f+1===h;if(q===!1)null!=r&&(j+=P(r)?o(r,b).join("-"):encodeURIComponent(r)),j+=s;else if(q===!0){var u=j.match(/\/$/)?/\/?(.*)/:/(.*)/;j+=s.match(u)[1]}else N(q)&&(j+=q+s);t&&m.squash===!0&&"/"===j.slice(-1)&&(j=j.slice(0,-1))}else{if(null==r||p&&q!==!1)continue;if(P(r)||(r=[r]),0===r.length)continue;r=o(r,encodeURIComponent).join("&"+l+"="),j+=(g?"&":"?")+(l+"="+r),g=!0}}return j},s.prototype.is=function(a,b){return!0},s.prototype.encode=function(a,b){return a},s.prototype.decode=function(a,b){return a},s.prototype.equals=function(a,b){return a==b},s.prototype.$subPattern=function(){var a=this.pattern.toString();return a.substr(1,a.length-2)},s.prototype.pattern=/.*/,s.prototype.toString=function(){return"{Type:"+this.name+"}"},s.prototype.$normalize=function(a){return this.is(a)?a:this.decode(a)},s.prototype.$asArray=function(a,b){function d(a,b){function d(a,b){return function(){return a[b].apply(a,arguments)}}function e(a){return P(a)?a:L(a)?[a]:[]}function f(a){switch(a.length){case 0:return c;case 1:return"auto"===b?a[0]:a;default:return a}}function g(a){return!a}function h(a,b){return function(c){if(P(c)&&0===c.length)return c;c=e(c);var d=o(c,a);return b===!0?0===n(d,g).length:f(d)}}function i(a){return function(b,c){var d=e(b),f=e(c);if(d.length!==f.length)return!1;for(var g=0;g<d.length;g++)if(!a(d[g],f[g]))return!1;return!0}}this.encode=h(d(a,"encode")),this.decode=h(d(a,"decode")),this.is=h(d(a,"is"),!0),this.equals=i(d(a,"equals")),this.pattern=a.pattern,this.$normalize=h(d(a,"$normalize")),this.name=a.name,this.$arrayMode=b}if(!a)return this;if("auto"===a&&!b)throw new Error("'auto' array mode is for query parameters only");return new d(this,a)},b.module("ui.router.util").provider("$urlMatcherFactory",t),b.module("ui.router.util").run(["$urlMatcherFactory",function(a){}]),u.$inject=["$locationProvider","$urlMatcherFactoryProvider"],b.module("ui.router.router").provider("$urlRouter",u),v.$inject=["$urlRouterProvider","$urlMatcherFactoryProvider"],b.module("ui.router.state").factory("$stateParams",function(){return{}}).constant("$state.runtime",{autoinject:!0}).provider("$state",v).run(["$injector",function(a){
-a.get("$state.runtime").autoinject&&a.get("$state")}]),w.$inject=[],b.module("ui.router.state").provider("$view",w),b.module("ui.router.state").provider("$uiViewScroll",x),y.$inject=["$state","$injector","$uiViewScroll","$interpolate","$q"],z.$inject=["$compile","$controller","$state","$interpolate"],b.module("ui.router.state").directive("uiView",y),b.module("ui.router.state").directive("uiView",z),G.$inject=["$state","$timeout"],H.$inject=["$state","$timeout"],I.$inject=["$state","$stateParams","$interpolate"],b.module("ui.router.state").directive("uiSref",G).directive("uiSrefActive",I).directive("uiSrefActiveEq",I).directive("uiState",H),J.$inject=["$state"],K.$inject=["$state"],b.module("ui.router.state").filter("isState",J).filter("includedByState",K)}(window,window.angular);
-!function(){angular.module("angular-jwt",["angular-jwt.options","angular-jwt.interceptor","angular-jwt.jwt","angular-jwt.authManager"]),angular.module("angular-jwt.authManager",[]).provider("authManager",function(){this.$get=["$rootScope","$injector","$location","jwtHelper","jwtInterceptor","jwtOptions",function(t,e,r,n,a,i){function o(t){var r=null;return r=Array.isArray(t)?e.invoke(t,this,{options:null}):t()}function u(t){if(Array.isArray(t)||angular.isFunction(t))return e.invoke(t,p,{});throw new Error("unauthenticatedRedirector must be a function")}function s(){var t=o(p.tokenGetter);return t?!n.isTokenExpired(t):void 0}function h(){t.isAuthenticated=!0}function c(){t.isAuthenticated=!1}function l(){t.$on("$locationChangeStart",function(){var e=o(p.tokenGetter);e&&(n.isTokenExpired(e)?t.$broadcast("tokenHasExpired",e):h())})}function d(){t.$on("unauthenticated",function(){u(p.unauthenticatedRedirector),c()})}function f(t,e){if(!e)return!1;var r=e.$$route?e.$$route:e.data;if(r&&r.requiresLogin===!0){var a=o(p.tokenGetter);(!a||n.isTokenExpired(a))&&(t.preventDefault(),u(p.unauthenticatedRedirector))}}var p=i.getConfig();t.isAuthenticated=!1;var g=e.has("$state")?"$stateChangeStart":"$routeChangeStart";return t.$on(g,f),{authenticate:h,unauthenticate:c,getToken:function(){return o(p.tokenGetter)},redirect:function(){return u(p.unauthenticatedRedirector)},checkAuthOnRefresh:l,redirectWhenUnauthenticated:d,isAuthenticated:s}}]}),angular.module("angular-jwt.interceptor",[]).provider("jwtInterceptor",function(){this.urlParam,this.authHeader,this.authPrefix,this.whiteListedDomains,this.tokenGetter;var t=this;this.$get=["$q","$injector","$rootScope","urlUtils","jwtOptions",function(e,r,n,a,i){function o(t){if(!a.isSameOrigin(t)&&!u.whiteListedDomains.length)throw new Error("As of v0.1.0, requests to domains other than the application's origin must be white listed. Use jwtOptionsProvider.config({ whiteListedDomains: [<domain>] }); to whitelist.");for(var e=a.urlResolve(t).hostname.toLowerCase(),r=0;r<u.whiteListedDomains.length;r++){var n=u.whiteListedDomains[r],i=n instanceof RegExp?n:new RegExp(n,"i");if(e.match(i))return!0}return a.isSameOrigin(t)?!0:!1}var u=angular.extend({},i.getConfig(),t);return{request:function(t){if(t.skipAuthorization||!o(t.url))return t;if(u.urlParam){if(t.params=t.params||{},t.params[u.urlParam])return t}else if(t.headers=t.headers||{},t.headers[u.authHeader])return t;var n=e.when(r.invoke(u.tokenGetter,this,{options:t}));return n.then(function(e){return e&&(u.urlParam?t.params[u.urlParam]=e:t.headers[u.authHeader]=u.authPrefix+e),t})},responseError:function(t){return 401===t.status&&n.$broadcast("unauthenticated",t),e.reject(t)}}}]}),angular.module("angular-jwt.jwt",[]).service("jwtHelper",["$window",function(t){this.urlBase64Decode=function(e){var r=e.replace(/-/g,"+").replace(/_/g,"/");switch(r.length%4){case 0:break;case 2:r+="==";break;case 3:r+="=";break;default:throw"Illegal base64url string!"}return t.decodeURIComponent(escape(t.atob(r)))},this.decodeToken=function(t){var e=t.split(".");if(3!==e.length)throw new Error("JWT must have 3 parts");var r=this.urlBase64Decode(e[1]);if(!r)throw new Error("Cannot decode the token");return angular.fromJson(r)},this.getTokenExpirationDate=function(t){var e=this.decodeToken(t);if("undefined"==typeof e.exp)return null;var r=new Date(0);return r.setUTCSeconds(e.exp),r},this.isTokenExpired=function(t,e){var r=this.getTokenExpirationDate(t);return e=e||0,null===r?!1:!(r.valueOf()>(new Date).valueOf()+1e3*e)}}]),angular.module("angular-jwt.options",[]).provider("jwtOptions",function(){var t={};this.config=function(e){t=e},this.$get=function(){function e(){this.config=angular.extend({},r,t)}var r={urlParam:null,authHeader:"Authorization",authPrefix:"Bearer ",whiteListedDomains:[],tokenGetter:function(){return null},loginPath:"/",unauthenticatedRedirectPath:"/",unauthenticatedRedirector:["$location",function(t){t.path(this.unauthenticatedRedirectPath)}]};return e.prototype.getConfig=function(){return this.config},new e}}),angular.module("angular-jwt.interceptor").service("urlUtils",function(){function t(t){var e=t;return r.setAttribute("href",e),e=r.href,r.setAttribute("href",e),{href:r.href,protocol:r.protocol?r.protocol.replace(/:$/,""):"",host:r.host,search:r.search?r.search.replace(/^\?/,""):"",hash:r.hash?r.hash.replace(/^#/,""):"",hostname:r.hostname,port:r.port,pathname:"/"===r.pathname.charAt(0)?r.pathname:"/"+r.pathname}}function e(e){var r=angular.isString(e)?t(e):e;return r.protocol===n.protocol&&r.host===n.host}var r=document.createElement("a"),n=t(window.location.href);return{urlResolve:t,isSameOrigin:e}})}();
+"undefined"!=typeof module&&"undefined"!=typeof exports&&module.exports===exports&&(module.exports="ui.router"),function(a,b,c){"use strict";function d(a,b){return T(new(T(function(){},{prototype:a})),b)}function e(a){return S(arguments,function(b){b!==a&&S(b,function(b,c){a.hasOwnProperty(c)||(a[c]=b)})}),a}function f(a,b){var c=[];for(var d in a.path){if(a.path[d]!==b.path[d])break;c.push(a.path[d])}return c}function g(a){if(Object.keys)return Object.keys(a);var b=[];return S(a,function(a,c){b.push(c)}),b}function h(a,b){if(Array.prototype.indexOf)return a.indexOf(b,Number(arguments[2])||0);var c=a.length>>>0,d=Number(arguments[2])||0;for(d=d<0?Math.ceil(d):Math.floor(d),d<0&&(d+=c);d<c;d++)if(d in a&&a[d]===b)return d;return-1}function i(a,b,c,d){var e,i=f(c,d),j={},k=[];for(var l in i)if(i[l]&&i[l].params&&(e=g(i[l].params),e.length))for(var m in e)h(k,e[m])>=0||(k.push(e[m]),j[e[m]]=a[e[m]]);return T({},j,b)}function j(a,b,c){if(!c){c=[];for(var d in a)c.push(d)}for(var e=0;e<c.length;e++){var f=c[e];if(a[f]!=b[f])return!1}return!0}function k(a,b){var c={};return S(a,function(a){c[a]=b[a]}),c}function l(a){var b={},c=Array.prototype.concat.apply(Array.prototype,Array.prototype.slice.call(arguments,1));return S(c,function(c){c in a&&(b[c]=a[c])}),b}function m(a){var b={},c=Array.prototype.concat.apply(Array.prototype,Array.prototype.slice.call(arguments,1));for(var d in a)h(c,d)==-1&&(b[d]=a[d]);return b}function n(a,b){var c=R(a),d=c?[]:{};return S(a,function(a,e){b(a,e)&&(d[c?d.length:e]=a)}),d}function o(a,b){var c=R(a)?[]:{};return S(a,function(a,d){c[d]=b(a,d)}),c}function p(a){return a.then(c,function(){})&&a}function q(a,b){var d=1,f=2,i={},j=[],k=i,l=T(a.when(i),{$$promises:i,$$values:i});this.study=function(i){function n(a,c){if(t[c]!==f){if(s.push(c),t[c]===d)throw s.splice(0,h(s,c)),new Error("Cyclic dependency: "+s.join(" -> "));if(t[c]=d,P(a))r.push(c,[function(){return b.get(a)}],j);else{var e=b.annotate(a);S(e,function(a){a!==c&&i.hasOwnProperty(a)&&n(i[a],a)}),r.push(c,a,e)}s.pop(),t[c]=f}}function o(a){return Q(a)&&a.then&&a.$$promises}if(!Q(i))throw new Error("'invocables' must be an object");var q=g(i||{}),r=[],s=[],t={};return S(i,n),i=s=t=null,function(d,f,g){function h(){--v||(w||e(u,f.$$values),s.$$values=u,s.$$promises=s.$$promises||!0,delete s.$$inheritedValues,n.resolve(u))}function i(a){s.$$failure=a,n.reject(a)}function j(c,e,f){function j(a){l.reject(a),i(a)}function k(){if(!N(s.$$failure))try{l.resolve(b.invoke(e,g,u)),l.promise.then(function(a){u[c]=a,h()},j)}catch(a){j(a)}}var l=a.defer(),m=0;S(f,function(a){t.hasOwnProperty(a)&&!d.hasOwnProperty(a)&&(m++,t[a].then(function(b){u[a]=b,--m||k()},j))}),m||k(),t[c]=p(l.promise)}if(o(d)&&g===c&&(g=f,f=d,d=null),d){if(!Q(d))throw new Error("'locals' must be an object")}else d=k;if(f){if(!o(f))throw new Error("'parent' must be a promise returned by $resolve.resolve()")}else f=l;var n=a.defer(),s=p(n.promise),t=s.$$promises={},u=T({},d),v=1+r.length/3,w=!1;if(p(s),N(f.$$failure))return i(f.$$failure),s;f.$$inheritedValues&&e(u,m(f.$$inheritedValues,q)),T(t,f.$$promises),f.$$values?(w=e(u,m(f.$$values,q)),s.$$inheritedValues=m(f.$$values,q),h()):(f.$$inheritedValues&&(s.$$inheritedValues=m(f.$$inheritedValues,q)),f.then(h,i));for(var x=0,y=r.length;x<y;x+=3)d.hasOwnProperty(r[x])?h():j(r[x],r[x+1],r[x+2]);return s}},this.resolve=function(a,b,c,d){return this.study(a)(b,c,d)}}function r(){var a=b.version.minor<3;this.shouldUnsafelyUseHttp=function(b){a=!!b},this.$get=["$http","$templateCache","$injector",function(b,c,d){return new s(b,c,d,a)}]}function s(a,b,c,d){this.fromConfig=function(a,b,c){return N(a.template)?this.fromString(a.template,b):N(a.templateUrl)?this.fromUrl(a.templateUrl,b):N(a.templateProvider)?this.fromProvider(a.templateProvider,b,c):null},this.fromString=function(a,b){return O(a)?a(b):a},this.fromUrl=function(e,f){return O(e)&&(e=e(f)),null==e?null:d?a.get(e,{cache:b,headers:{Accept:"text/html"}}).then(function(a){return a.data}):c.get("$templateRequest")(e)},this.fromProvider=function(a,b,d){return c.invoke(a,null,d||{params:b})}}function t(a,b,e){function f(b,c,d,e){if(q.push(b),o[b])return o[b];if(!/^\w+([-.]+\w+)*(?:\[\])?$/.test(b))throw new Error("Invalid parameter name '"+b+"' in pattern '"+a+"'");if(p[b])throw new Error("Duplicate parameter name '"+b+"' in pattern '"+a+"'");return p[b]=new W.Param(b,c,d,e),p[b]}function g(a,b,c,d){var e=["",""],f=a.replace(/[\\\[\]\^$*+?.()|{}]/g,"\\$&");if(!b)return f;switch(c){case!1:e=["(",")"+(d?"?":"")];break;case!0:f=f.replace(/\/$/,""),e=["(?:/(",")|/)?"];break;default:e=["("+c+"|",")?"]}return f+e[0]+b+e[1]}function h(e,f){var g,h,i,j,k;return g=e[2]||e[3],k=b.params[g],i=a.substring(m,e.index),h=f?e[4]:e[4]||("*"==e[1]?".*":null),h&&(j=W.type(h)||d(W.type("string"),{pattern:new RegExp(h,b.caseInsensitive?"i":c)})),{id:g,regexp:h,segment:i,type:j,cfg:k}}b=T({params:{}},Q(b)?b:{});var i,j=/([:*])([\w\[\]]+)|\{([\w\[\]]+)(?:\:\s*((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g,k=/([:]?)([\w\[\].-]+)|\{([\w\[\].-]+)(?:\:\s*((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g,l="^",m=0,n=this.segments=[],o=e?e.params:{},p=this.params=e?e.params.$$new():new W.ParamSet,q=[];this.source=a;for(var r,s,t;(i=j.exec(a))&&(r=h(i,!1),!(r.segment.indexOf("?")>=0));)s=f(r.id,r.type,r.cfg,"path"),l+=g(r.segment,s.type.pattern.source,s.squash,s.isOptional),n.push(r.segment),m=j.lastIndex;t=a.substring(m);var u=t.indexOf("?");if(u>=0){var v=this.sourceSearch=t.substring(u);if(t=t.substring(0,u),this.sourcePath=a.substring(0,m+u),v.length>0)for(m=0;i=k.exec(v);)r=h(i,!0),s=f(r.id,r.type,r.cfg,"search"),m=j.lastIndex}else this.sourcePath=a,this.sourceSearch="";l+=g(t)+(b.strict===!1?"/?":"")+"$",n.push(t),this.regexp=new RegExp(l,b.caseInsensitive?"i":c),this.prefix=n[0],this.$$paramNames=q}function u(a){T(this,a)}function v(){function a(a){return null!=a?a.toString().replace(/(~|\/)/g,function(a){return{"~":"~~","/":"~2F"}[a]}):a}function e(a){return null!=a?a.toString().replace(/(~~|~2F)/g,function(a){return{"~~":"~","~2F":"/"}[a]}):a}function f(){return{strict:p,caseInsensitive:m}}function i(a){return O(a)||R(a)&&O(a[a.length-1])}function j(){for(;w.length;){var a=w.shift();if(a.pattern)throw new Error("You cannot override a type's .pattern at runtime.");b.extend(r[a.name],l.invoke(a.def))}}function k(a){T(this,a||{})}W=this;var l,m=!1,p=!0,q=!1,r={},s=!0,w=[],x={string:{encode:a,decode:e,is:function(a){return null==a||!N(a)||"string"==typeof a},pattern:/[^\/]*/},int:{encode:a,decode:function(a){return parseInt(a,10)},is:function(a){return a!==c&&null!==a&&this.decode(a.toString())===a},pattern:/\d+/},bool:{encode:function(a){return a?1:0},decode:function(a){return 0!==parseInt(a,10)},is:function(a){return a===!0||a===!1},pattern:/0|1/},date:{encode:function(a){return this.is(a)?[a.getFullYear(),("0"+(a.getMonth()+1)).slice(-2),("0"+a.getDate()).slice(-2)].join("-"):c},decode:function(a){if(this.is(a))return a;var b=this.capture.exec(a);return b?new Date(b[1],b[2]-1,b[3]):c},is:function(a){return a instanceof Date&&!isNaN(a.valueOf())},equals:function(a,b){return this.is(a)&&this.is(b)&&a.toISOString()===b.toISOString()},pattern:/[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2][0-9]|3[0-1])/,capture:/([0-9]{4})-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])/},json:{encode:b.toJson,decode:b.fromJson,is:b.isObject,equals:b.equals,pattern:/[^\/]*/},any:{encode:b.identity,decode:b.identity,equals:b.equals,pattern:/.*/}};v.$$getDefaultValue=function(a){if(!i(a.value))return a.value;if(!l)throw new Error("Injectable functions cannot be called at configuration time");return l.invoke(a.value)},this.caseInsensitive=function(a){return N(a)&&(m=a),m},this.strictMode=function(a){return N(a)&&(p=a),p},this.defaultSquashPolicy=function(a){if(!N(a))return q;if(a!==!0&&a!==!1&&!P(a))throw new Error("Invalid squash policy: "+a+". Valid policies: false, true, arbitrary-string");return q=a,a},this.compile=function(a,b){return new t(a,T(f(),b))},this.isMatcher=function(a){if(!Q(a))return!1;var b=!0;return S(t.prototype,function(c,d){O(c)&&(b=b&&N(a[d])&&O(a[d]))}),b},this.type=function(a,b,c){if(!N(b))return r[a];if(r.hasOwnProperty(a))throw new Error("A type named '"+a+"' has already been defined.");return r[a]=new u(T({name:a},b)),c&&(w.push({name:a,def:c}),s||j()),this},S(x,function(a,b){r[b]=new u(T({name:b},a))}),r=d(r,{}),this.$get=["$injector",function(a){return l=a,s=!1,j(),S(x,function(a,b){r[b]||(r[b]=new u(a))}),this}],this.Param=function(a,d,e,f){function j(a){var b=Q(a)?g(a):[],c=h(b,"value")===-1&&h(b,"type")===-1&&h(b,"squash")===-1&&h(b,"array")===-1;return c&&(a={value:a}),a.$$fn=i(a.value)?a.value:function(){return a.value},a}function k(c,d,e){if(c.type&&d)throw new Error("Param '"+a+"' has two type configurations.");return d?d:c.type?b.isString(c.type)?r[c.type]:c.type instanceof u?c.type:new u(c.type):"config"===e?r.any:r.string}function m(){var b={array:"search"===f&&"auto"},c=a.match(/\[\]$/)?{array:!0}:{};return T(b,c,e).array}function p(a,b){var c=a.squash;if(!b||c===!1)return!1;if(!N(c)||null==c)return q;if(c===!0||P(c))return c;throw new Error("Invalid squash policy: '"+c+"'. Valid policies: false, true, or arbitrary string")}function s(a,b,d,e){var f,g,i=[{from:"",to:d||b?c:""},{from:null,to:d||b?c:""}];return f=R(a.replace)?a.replace:[],P(e)&&f.push({from:e,to:c}),g=o(f,function(a){return a.from}),n(i,function(a){return h(g,a.from)===-1}).concat(f)}function t(){if(!l)throw new Error("Injectable functions cannot be called at configuration time");var a=l.invoke(e.$$fn);if(null!==a&&a!==c&&!x.type.is(a))throw new Error("Default value ("+a+") for parameter '"+x.id+"' is not an instance of Type ("+x.type.name+")");return a}function v(a){function b(a){return function(b){return b.from===a}}function c(a){var c=o(n(x.replace,b(a)),function(a){return a.to});return c.length?c[0]:a}return a=c(a),N(a)?x.type.$normalize(a):t()}function w(){return"{Param:"+a+" "+d+" squash: '"+A+"' optional: "+z+"}"}var x=this;e=j(e),d=k(e,d,f);var y=m();d=y?d.$asArray(y,"search"===f):d,"string"!==d.name||y||"path"!==f||e.value!==c||(e.value="");var z=e.value!==c,A=p(e,z),B=s(e,y,z,A);T(this,{id:a,type:d,location:f,array:y,squash:A,replace:B,isOptional:z,value:v,dynamic:c,config:e,toString:w})},k.prototype={$$new:function(){return d(this,T(new k,{$$parent:this}))},$$keys:function(){for(var a=[],b=[],c=this,d=g(k.prototype);c;)b.push(c),c=c.$$parent;return b.reverse(),S(b,function(b){S(g(b),function(b){h(a,b)===-1&&h(d,b)===-1&&a.push(b)})}),a},$$values:function(a){var b={},c=this;return S(c.$$keys(),function(d){b[d]=c[d].value(a&&a[d])}),b},$$equals:function(a,b){var c=!0,d=this;return S(d.$$keys(),function(e){var f=a&&a[e],g=b&&b[e];d[e].type.equals(f,g)||(c=!1)}),c},$$validates:function(a){var d,e,f,g,h,i=this.$$keys();for(d=0;d<i.length&&(e=this[i[d]],f=a[i[d]],f!==c&&null!==f||!e.isOptional);d++){if(g=e.type.$normalize(f),!e.type.is(g))return!1;if(h=e.type.encode(g),b.isString(h)&&!e.type.pattern.exec(h))return!1}return!0},$$parent:c},this.ParamSet=k}function w(a,d){function e(a){var b=/^\^((?:\\[^a-zA-Z0-9]|[^\\\[\]\^$*+?.()|{}]+)*)/.exec(a.source);return null!=b?b[1].replace(/\\(.)/g,"$1"):""}function f(a,b){return a.replace(/\$(\$|\d{1,2})/,function(a,c){return b["$"===c?0:Number(c)]})}function g(a,b,c){if(!c)return!1;var d=a.invoke(b,b,{$match:c});return!N(d)||d}function h(d,e,f,g,h){function m(a,b,c){return"/"===q?a:b?q.slice(0,-1)+a:c?q.slice(1)+a:a}function n(a){function b(a){var b=a(f,d);return!!b&&(P(b)&&d.replace().url(b),!0)}if(!a||!a.defaultPrevented){p&&d.url()===p;p=c;var e,g=j.length;for(e=0;e<g;e++)if(b(j[e]))return;k&&b(k)}}function o(){return i=i||e.$on("$locationChangeSuccess",n)}var p,q=g.baseHref(),r=d.url();return l||o(),{sync:function(){n()},listen:function(){return o()},update:function(a){return a?void(r=d.url()):void(d.url()!==r&&(d.url(r),d.replace()))},push:function(a,b,e){var f=a.format(b||{});null!==f&&b&&b["#"]&&(f+="#"+b["#"]),d.url(f),p=e&&e.$$avoidResync?d.url():c,e&&e.replace&&d.replace()},href:function(c,e,f){if(!c.validates(e))return null;var g=a.html5Mode();b.isObject(g)&&(g=g.enabled),g=g&&h.history;var i=c.format(e);if(f=f||{},g||null===i||(i="#"+a.hashPrefix()+i),null!==i&&e&&e["#"]&&(i+="#"+e["#"]),i=m(i,g,f.absolute),!f.absolute||!i)return i;var j=!g&&i?"/":"",k=d.port();return k=80===k||443===k?"":":"+k,[d.protocol(),"://",d.host(),k,j,i].join("")}}}var i,j=[],k=null,l=!1;this.rule=function(a){if(!O(a))throw new Error("'rule' must be a function");return j.push(a),this},this.otherwise=function(a){if(P(a)){var b=a;a=function(){return b}}else if(!O(a))throw new Error("'rule' must be a function");return k=a,this},this.when=function(a,b){var c,h=P(b);if(P(a)&&(a=d.compile(a)),!h&&!O(b)&&!R(b))throw new Error("invalid 'handler' in when()");var i={matcher:function(a,b){return h&&(c=d.compile(b),b=["$match",function(a){return c.format(a)}]),T(function(c,d){return g(c,b,a.exec(d.path(),d.search()))},{prefix:P(a.prefix)?a.prefix:""})},regex:function(a,b){if(a.global||a.sticky)throw new Error("when() RegExp must not be global or sticky");return h&&(c=b,b=["$match",function(a){return f(c,a)}]),T(function(c,d){return g(c,b,a.exec(d.path()))},{prefix:e(a)})}},j={matcher:d.isMatcher(a),regex:a instanceof RegExp};for(var k in j)if(j[k])return this.rule(i[k](a,b));throw new Error("invalid 'what' in when()")},this.deferIntercept=function(a){a===c&&(a=!0),l=a},this.$get=h,h.$inject=["$location","$rootScope","$injector","$browser","$sniffer"]}function x(a,e){function f(a){return 0===a.indexOf(".")||0===a.indexOf("^")}function m(a,b){if(!a)return c;var d=P(a),e=d?a:a.name,g=f(e);if(g){if(!b)throw new Error("No reference point given for path '"+e+"'");b=m(b);for(var h=e.split("."),i=0,j=h.length,k=b;i<j;i++)if(""!==h[i]||0!==i){if("^"!==h[i])break;if(!k.parent)throw new Error("Path '"+e+"' not valid for state '"+b.name+"'");k=k.parent}else k=b;h=h.slice(i).join("."),e=k.name+(k.name&&h?".":"")+h}var l=A[e];return!l||!d&&(d||l!==a&&l.self!==a)?c:l}function n(a,b){B[a]||(B[a]=[]),B[a].push(b)}function q(a){for(var b=B[a]||[];b.length;)r(b.shift())}function r(b){b=d(b,{self:b,resolve:b.resolve||{},toString:function(){return this.name}});var c=b.name;if(!P(c)||c.indexOf("@")>=0)throw new Error("State must have a valid name");if(A.hasOwnProperty(c))throw new Error("State '"+c+"' is already defined");var e=c.indexOf(".")!==-1?c.substring(0,c.lastIndexOf(".")):P(b.parent)?b.parent:Q(b.parent)&&P(b.parent.name)?b.parent.name:"";if(e&&!A[e])return n(e,b.self);for(var f in D)O(D[f])&&(b[f]=D[f](b,D.$delegates[f]));return A[c]=b,!b[C]&&b.url&&a.when(b.url,["$match","$stateParams",function(a,c){z.$current.navigable==b&&j(a,c)||z.transitionTo(b,a,{inherit:!0,location:!1})}]),q(c),b}function s(a){return a.indexOf("*")>-1}function t(a){for(var b=a.split("."),c=z.$current.name.split("."),d=0,e=b.length;d<e;d++)"*"===b[d]&&(c[d]="*");return"**"===b[0]&&(c=c.slice(h(c,b[1])),c.unshift("**")),"**"===b[b.length-1]&&(c.splice(h(c,b[b.length-2])+1,Number.MAX_VALUE),c.push("**")),b.length==c.length&&c.join("")===b.join("")}function u(a,b){return P(a)&&!N(b)?D[a]:O(b)&&P(a)?(D[a]&&!D.$delegates[a]&&(D.$delegates[a]=D[a]),D[a]=b,this):this}function v(a,b){return Q(a)?b=a:b.name=a,r(b),this}function w(a,e,f,h,j,l,n,q,r){function u(b,c,d,f){var g=a.$broadcast("$stateNotFound",b,c,d);if(g.defaultPrevented)return n.update(),E;if(!g.retry)return null;if(f.$retry)return n.update(),F;var h=z.transition=e.when(g.retry);return h.then(function(){return h!==z.transition?(a.$broadcast("$stateChangeCancel",b.to,b.toParams,c,d),B):(b.options.$retry=!0,z.transitionTo(b.to,b.toParams,b.options))},function(){return E}),n.update(),h}function v(a,c,d,g,i,l){function m(){var c=[];return S(a.views,function(d,e){var g=d.resolve&&d.resolve!==a.resolve?d.resolve:{};g.$template=[function(){return f.load(e,{view:d,locals:i.globals,params:n,notify:l.notify})||""}],c.push(j.resolve(g,i.globals,i.resolve,a).then(function(c){if(O(d.controllerProvider)||R(d.controllerProvider)){var f=b.extend({},g,i.globals);c.$$controller=h.invoke(d.controllerProvider,null,f)}else c.$$controller=d.controller;c.$$state=a,c.$$controllerAs=d.controllerAs,c.$$resolveAs=d.resolveAs,i[e]=c}))}),e.all(c).then(function(){return i.globals})}var n=d?c:k(a.params.$$keys(),c),o={$stateParams:n};i.resolve=j.resolve(a.resolve,o,i.resolve,a);var p=[i.resolve.then(function(a){i.globals=a})];return g&&p.push(g),e.all(p).then(m).then(function(a){return i})}var w=new Error("transition superseded"),B=p(e.reject(w)),D=p(e.reject(new Error("transition prevented"))),E=p(e.reject(new Error("transition aborted"))),F=p(e.reject(new Error("transition failed")));return y.locals={resolve:null,globals:{$stateParams:{}}},z={params:{},current:y.self,$current:y,transition:null},z.reload=function(a){return z.transitionTo(z.current,l,{reload:a||!0,inherit:!1,notify:!0})},z.go=function(a,b,c){return z.transitionTo(a,b,T({inherit:!0,relative:z.$current},c))},z.transitionTo=function(b,c,f){c=c||{},f=T({location:!0,inherit:!1,relative:null,notify:!0,reload:!1,$retry:!1},f||{});var g,j=z.$current,o=z.params,q=j.path,r=m(b,f.relative),s=c["#"];if(!N(r)){var t={to:b,toParams:c,options:f},A=u(t,j.self,o,f);if(A)return A;if(b=t.to,c=t.toParams,f=t.options,r=m(b,f.relative),!N(r)){if(!f.relative)throw new Error("No such state '"+b+"'");throw new Error("Could not resolve '"+b+"' from state '"+f.relative+"'")}}if(r[C])throw new Error("Cannot transition to abstract state '"+b+"'");if(f.inherit&&(c=i(l,c||{},z.$current,r)),!r.params.$$validates(c))return F;c=r.params.$$values(c),b=r;var E=b.path,G=0,H=E[G],I=y.locals,J=[];if(f.reload){if(P(f.reload)||Q(f.reload)){if(Q(f.reload)&&!f.reload.name)throw new Error("Invalid reload state object");var K=f.reload===!0?q[0]:m(f.reload);if(f.reload&&!K)throw new Error("No such reload state '"+(P(f.reload)?f.reload:f.reload.name)+"'");for(;H&&H===q[G]&&H!==K;)I=J[G]=H.locals,G++,H=E[G]}}else for(;H&&H===q[G]&&H.ownParams.$$equals(c,o);)I=J[G]=H.locals,G++,H=E[G];if(x(b,c,j,o,I,f))return s&&(c["#"]=s),z.params=c,U(z.params,l),U(k(b.params.$$keys(),l),b.locals.globals.$stateParams),f.location&&b.navigable&&b.navigable.url&&(n.push(b.navigable.url,c,{$$avoidResync:!0,replace:"replace"===f.location}),n.update(!0)),z.transition=null,e.when(z.current);if(c=k(b.params.$$keys(),c||{}),s&&(c["#"]=s),f.notify&&a.$broadcast("$stateChangeStart",b.self,c,j.self,o,f).defaultPrevented)return a.$broadcast("$stateChangeCancel",b.self,c,j.self,o),null==z.transition&&n.update(),D;for(var L=e.when(I),M=G;M<E.length;M++,H=E[M])I=J[M]=d(I),L=v(H,c,H===b,L,I,f);var O=z.transition=L.then(function(){var d,e,g;if(z.transition!==O)return a.$broadcast("$stateChangeCancel",b.self,c,j.self,o),B;for(d=q.length-1;d>=G;d--)g=q[d],g.self.onExit&&h.invoke(g.self.onExit,g.self,g.locals.globals),g.locals=null;for(d=G;d<E.length;d++)e=E[d],e.locals=J[d],e.self.onEnter&&h.invoke(e.self.onEnter,e.self,e.locals.globals);return z.transition!==O?(a.$broadcast("$stateChangeCancel",b.self,c,j.self,o),B):(z.$current=b,z.current=b.self,z.params=c,U(z.params,l),z.transition=null,f.location&&b.navigable&&n.push(b.navigable.url,b.navigable.locals.globals.$stateParams,{$$avoidResync:!0,replace:"replace"===f.location}),f.notify&&a.$broadcast("$stateChangeSuccess",b.self,c,j.self,o),n.update(!0),z.current)}).then(null,function(d){return d===w?B:z.transition!==O?(a.$broadcast("$stateChangeCancel",b.self,c,j.self,o),B):(z.transition=null,g=a.$broadcast("$stateChangeError",b.self,c,j.self,o,d),g.defaultPrevented||n.update(),e.reject(d))});return p(O),O},z.is=function(a,b,d){d=T({relative:z.$current},d||{});var e=m(a,d.relative);return N(e)?z.$current===e&&(!b||g(b).reduce(function(a,c){var d=e.params[c];return a&&!d||d.type.equals(l[c],b[c])},!0)):c},z.includes=function(a,b,d){if(d=T({relative:z.$current},d||{}),P(a)&&s(a)){if(!t(a))return!1;a=z.$current.name}var e=m(a,d.relative);if(!N(e))return c;if(!N(z.$current.includes[e.name]))return!1;if(!b)return!0;for(var f=g(b),h=0;h<f.length;h++){var i=f[h],j=e.params[i];if(j&&!j.type.equals(l[i],b[i]))return!1}return g(b).reduce(function(a,c){var d=e.params[c];return a&&!d||d.type.equals(l[c],b[c])},!0)},z.href=function(a,b,d){d=T({lossy:!0,inherit:!0,absolute:!1,relative:z.$current},d||{});var e=m(a,d.relative);if(!N(e))return null;d.inherit&&(b=i(l,b||{},z.$current,e));var f=e&&d.lossy?e.navigable:e;return f&&f.url!==c&&null!==f.url?n.href(f.url,k(e.params.$$keys().concat("#"),b||{}),{absolute:d.absolute}):null},z.get=function(a,b){if(0===arguments.length)return o(g(A),function(a){return A[a].self});var c=m(a,b||z.$current);return c&&c.self?c.self:null},z}function x(a,b,c,d,e,f){function g(a,b,c){function d(b){return"search"!=a.params[b].location}var e=a.params.$$keys().filter(d),f=l.apply({},[a.params].concat(e)),g=new W.ParamSet(f);return g.$$equals(b,c)}if(!f.reload&&a===c&&(e===c.locals||a.self.reloadOnSearch===!1&&g(c,d,b)))return!0}var y,z,A={},B={},C="abstract",D={parent:function(a){if(N(a.parent)&&a.parent)return m(a.parent);var b=/^(.+)\.[^.]+$/.exec(a.name);return b?m(b[1]):y},data:function(a){return a.parent&&a.parent.data&&(a.data=a.self.data=d(a.parent.data,a.data)),a.data},url:function(a){var b=a.url,c={params:a.params||{}};if(P(b))return"^"==b.charAt(0)?e.compile(b.substring(1),c):(a.parent.navigable||y).url.concat(b,c);if(!b||e.isMatcher(b))return b;throw new Error("Invalid url '"+b+"' in state '"+a+"'")},navigable:function(a){return a.url?a:a.parent?a.parent.navigable:null},ownParams:function(a){var b=a.url&&a.url.params||new W.ParamSet;return S(a.params||{},function(a,c){b[c]||(b[c]=new W.Param(c,null,a,"config"))}),b},params:function(a){var b=l(a.ownParams,a.ownParams.$$keys());return a.parent&&a.parent.params?T(a.parent.params.$$new(),b):new W.ParamSet},views:function(a){var b={};return S(N(a.views)?a.views:{"":a},function(c,d){d.indexOf("@")<0&&(d+="@"+a.parent.name),c.resolveAs=c.resolveAs||a.resolveAs||"$resolve",b[d]=c}),b},path:function(a){return a.parent?a.parent.path.concat(a):[]},includes:function(a){var b=a.parent?T({},a.parent.includes):{};return b[a.name]=!0,b},$delegates:{}};y=r({name:"",url:"^",views:null,abstract:!0}),y.navigable=null,this.decorator=u,this.state=v,this.$get=w,w.$inject=["$rootScope","$q","$view","$injector","$resolve","$stateParams","$urlRouter","$location","$urlMatcherFactory"]}function y(){function a(a,b){return{load:function(a,c){var d,e={template:null,controller:null,view:null,locals:null,notify:!0,async:!0,params:{}};return c=T(e,c),c.view&&(d=b.fromConfig(c.view,c.params,c.locals)),d}}}this.$get=a,a.$inject=["$rootScope","$templateFactory"]}function z(){var a=!1;this.useAnchorScroll=function(){a=!0},this.$get=["$anchorScroll","$timeout",function(b,c){return a?b:function(a){return c(function(){a[0].scrollIntoView()},0,!1)}}]}function A(a,c,d,e,f){function g(){return c.has?function(a){return c.has(a)?c.get(a):null}:function(a){try{return c.get(a)}catch(a){return null}}}function h(a,c){var d=function(){return{enter:function(a,b,c){b.after(a),c()},leave:function(a,b){a.remove(),b()}}};if(k)return{enter:function(a,c,d){b.version.minor>2?k.enter(a,null,c).then(d):k.enter(a,null,c,d)},leave:function(a,c){b.version.minor>2?k.leave(a).then(c):k.leave(a,c)}};if(j){var e=j&&j(c,a);return{enter:function(a,b,c){e.enter(a,null,b),c()},leave:function(a,b){e.leave(a),b()}}}return d()}var i=g(),j=i("$animator"),k=i("$animate"),l={restrict:"ECA",terminal:!0,priority:400,transclude:"element",compile:function(c,g,i){return function(c,g,j){function k(){if(m&&(m.remove(),m=null),o&&(o.$destroy(),o=null),n){var a=n.data("$uiViewAnim");s.leave(n,function(){a.$$animLeave.resolve(),m=null}),m=n,n=null}}function l(h){var l,m=C(c,j,g,e),t=m&&a.$current&&a.$current.locals[m];if(h||t!==p){l=c.$new(),p=a.$current.locals[m],l.$emit("$viewContentLoading",m);var u=i(l,function(a){var e=f.defer(),h=f.defer(),i={$animEnter:e.promise,$animLeave:h.promise,$$animLeave:h};a.data("$uiViewAnim",i),s.enter(a,g,function(){e.resolve(),o&&o.$emit("$viewContentAnimationEnded"),(b.isDefined(r)&&!r||c.$eval(r))&&d(a)}),k()});n=u,o=l,o.$emit("$viewContentLoaded",m),o.$eval(q)}}var m,n,o,p,q=j.onload||"",r=j.autoscroll,s=h(j,c);g.inheritedData("$uiView");c.$on("$stateChangeSuccess",function(){l(!1)}),l(!0)}}};return l}function B(a,c,d,e){return{restrict:"ECA",priority:-400,compile:function(f){var g=f.html();return f.empty?f.empty():f[0].innerHTML=null,function(f,h,i){var j=d.$current,k=C(f,i,h,e),l=j&&j.locals[k];if(!l)return h.html(g),void a(h.contents())(f);h.data("$uiView",{name:k,state:l.$$state}),h.html(l.$template?l.$template:g);var m=b.extend({},l);f[l.$$resolveAs]=m;var n=a(h.contents());if(l.$$controller){l.$scope=f,l.$element=h;var o=c(l.$$controller,l);l.$$controllerAs&&(f[l.$$controllerAs]=o,f[l.$$controllerAs][l.$$resolveAs]=m),O(o.$onInit)&&o.$onInit(),h.data("$ngControllerController",o),h.children().data("$ngControllerController",o)}n(f)}}}}function C(a,b,c,d){var e=d(b.uiView||b.name||"")(a),f=c.inheritedData("$uiView");return e.indexOf("@")>=0?e:e+"@"+(f?f.state.name:"")}function D(a,b){var c,d=a.match(/^\s*({[^}]*})\s*$/);if(d&&(a=b+"("+d[1]+")"),c=a.replace(/\n/g," ").match(/^([^(]+?)\s*(\((.*)\))?$/),!c||4!==c.length)throw new Error("Invalid state ref '"+a+"'");return{state:c[1],paramExpr:c[3]||null}}function E(a){var b=a.parent().inheritedData("$uiView");if(b&&b.state&&b.state.name)return b.state}function F(a){var b="[object SVGAnimatedString]"===Object.prototype.toString.call(a.prop("href")),c="FORM"===a[0].nodeName;return{attr:c?"action":b?"xlink:href":"href",isAnchor:"A"===a.prop("tagName").toUpperCase(),clickable:!c}}function G(a,b,c,d,e){return function(f){var g=f.which||f.button,h=e();if(!(g>1||f.ctrlKey||f.metaKey||f.shiftKey||a.attr("target"))){var i=c(function(){b.go(h.state,h.params,h.options)});f.preventDefault();var j=d.isAnchor&&!h.href?1:0;f.preventDefault=function(){j--<=0&&c.cancel(i)}}}}function H(a,b){return{relative:E(a)||b.$current,inherit:!0}}function I(a,c){return{restrict:"A",require:["?^uiSrefActive","?^uiSrefActiveEq"],link:function(d,e,f,g){var h,i=D(f.uiSref,a.current.name),j={state:i.state,href:null,params:null},k=F(e),l=g[1]||g[0],m=null;j.options=T(H(e,a),f.uiSrefOpts?d.$eval(f.uiSrefOpts):{});var n=function(c){c&&(j.params=b.copy(c)),j.href=a.href(i.state,j.params,j.options),m&&m(),l&&(m=l.$$addStateInfo(i.state,j.params)),null!==j.href&&f.$set(k.attr,j.href)};i.paramExpr&&(d.$watch(i.paramExpr,function(a){a!==j.params&&n(a)},!0),j.params=b.copy(d.$eval(i.paramExpr))),n(),k.clickable&&(h=G(e,a,c,k,function(){return j}),e[e.on?"on":"bind"]("click",h),d.$on("$destroy",function(){e[e.off?"off":"unbind"]("click",h)}))}}}function J(a,b){return{restrict:"A",require:["?^uiSrefActive","?^uiSrefActiveEq"],link:function(c,d,e,f){function g(b){m.state=b[0],m.params=b[1],m.options=b[2],m.href=a.href(m.state,m.params,m.options),n&&n(),j&&(n=j.$$addStateInfo(m.state,m.params)),m.href&&e.$set(i.attr,m.href)}var h,i=F(d),j=f[1]||f[0],k=[e.uiState,e.uiStateParams||null,e.uiStateOpts||null],l="["+k.map(function(a){return a||"null"}).join(", ")+"]",m={state:null,params:null,options:null,href:null},n=null;c.$watch(l,g,!0),g(c.$eval(l)),i.clickable&&(h=G(d,a,b,i,function(){return m}),d[d.on?"on":"bind"]("click",h),c.$on("$destroy",function(){d[d.off?"off":"unbind"]("click",h)}))}}}function K(a,b,c){return{restrict:"A",controller:["$scope","$element","$attrs","$timeout",function(b,d,e,f){function g(b,c,e){var f=a.get(b,E(d)),g=h(b,c),i={state:f||{name:b},params:c,hash:g};return p.push(i),q[g]=e,function(){var a=p.indexOf(i);a!==-1&&p.splice(a,1)}}function h(a,c){if(!P(a))throw new Error("state should be a string");return Q(c)?a+V(c):(c=b.$eval(c),Q(c)?a+V(c):a)}function i(){for(var a=0;a<p.length;a++)l(p[a].state,p[a].params)?j(d,q[p[a].hash]):k(d,q[p[a].hash]),m(p[a].state,p[a].params)?j(d,n):k(d,n)}function j(a,b){f(function(){a.addClass(b)})}function k(a,b){a.removeClass(b)}function l(b,c){return a.includes(b.name,c)}function m(b,c){return a.is(b.name,c)}var n,o,p=[],q={};n=c(e.uiSrefActiveEq||"",!1)(b);try{o=b.$eval(e.uiSrefActive)}catch(a){}o=o||c(e.uiSrefActive||"",!1)(b),Q(o)&&S(o,function(c,d){if(P(c)){var e=D(c,a.current.name);g(e.state,b.$eval(e.paramExpr),d)}}),this.$$addStateInfo=function(a,b){if(!(Q(o)&&p.length>0)){var c=g(a,b,o);return i(),c}},b.$on("$stateChangeSuccess",i),i()}]}}function L(a){var b=function(b,c){return a.is(b,c)};return b.$stateful=!0,b}function M(a){var b=function(b,c,d){return a.includes(b,c,d)};return b.$stateful=!0,b}var N=b.isDefined,O=b.isFunction,P=b.isString,Q=b.isObject,R=b.isArray,S=b.forEach,T=b.extend,U=b.copy,V=b.toJson;b.module("ui.router.util",["ng"]),b.module("ui.router.router",["ui.router.util"]),b.module("ui.router.state",["ui.router.router","ui.router.util"]),b.module("ui.router",["ui.router.state"]),b.module("ui.router.compat",["ui.router"]),q.$inject=["$q","$injector"],b.module("ui.router.util").service("$resolve",q),b.module("ui.router.util").provider("$templateFactory",r);var W;t.prototype.concat=function(a,b){var c={caseInsensitive:W.caseInsensitive(),strict:W.strictMode(),squash:W.defaultSquashPolicy()};return new t(this.sourcePath+a+this.sourceSearch,T(c,b),this)},t.prototype.toString=function(){return this.source},t.prototype.exec=function(a,b){function c(a){function b(a){return a.split("").reverse().join("")}function c(a){return a.replace(/\\-/g,"-")}var d=b(a).split(/-(?!\\)/),e=o(d,b);return o(e,c).reverse()}var d=this.regexp.exec(a);if(!d)return null;b=b||{};var e,f,g,h=this.parameters(),i=h.length,j=this.segments.length-1,k={};if(j!==d.length-1)throw new Error("Unbalanced capture group in route '"+this.source+"'");var l,m;for(e=0;e<j;e++){for(g=h[e],l=this.params[g],m=d[e+1],f=0;f<l.replace.length;f++)l.replace[f].from===m&&(m=l.replace[f].to);m&&l.array===!0&&(m=c(m)),N(m)&&(m=l.type.decode(m)),k[g]=l.value(m)}for(;e<i;e++){for(g=h[e],k[g]=this.params[g].value(b[g]),l=this.params[g],m=b[g],f=0;f<l.replace.length;f++)l.replace[f].from===m&&(m=l.replace[f].to);N(m)&&(m=l.type.decode(m)),k[g]=l.value(m)}return k},t.prototype.parameters=function(a){return N(a)?this.params[a]||null:this.$$paramNames},t.prototype.validates=function(a){return this.params.$$validates(a)},t.prototype.format=function(a){function b(a){return encodeURIComponent(a).replace(/-/g,function(a){return"%5C%"+a.charCodeAt(0).toString(16).toUpperCase()})}a=a||{};var c=this.segments,d=this.parameters(),e=this.params;if(!this.validates(a))return null;var f,g=!1,h=c.length-1,i=d.length,j=c[0];for(f=0;f<i;f++){var k=f<h,l=d[f],m=e[l],n=m.value(a[l]),p=m.isOptional&&m.type.equals(m.value(),n),q=!!p&&m.squash,r=m.type.encode(n);if(k){var s=c[f+1],t=f+1===h;if(q===!1)null!=r&&(j+=R(r)?o(r,b).join("-"):encodeURIComponent(r)),j+=s;else if(q===!0){var u=j.match(/\/$/)?/\/?(.*)/:/(.*)/;j+=s.match(u)[1]}else P(q)&&(j+=q+s);t&&m.squash===!0&&"/"===j.slice(-1)&&(j=j.slice(0,-1))}else{if(null==r||p&&q!==!1)continue;if(R(r)||(r=[r]),0===r.length)continue;r=o(r,encodeURIComponent).join("&"+l+"="),j+=(g?"&":"?")+(l+"="+r),g=!0}}return j},u.prototype.is=function(a,b){return!0},u.prototype.encode=function(a,b){return a},u.prototype.decode=function(a,b){return a},u.prototype.equals=function(a,b){return a==b},u.prototype.$subPattern=function(){var a=this.pattern.toString();return a.substr(1,a.length-2)},u.prototype.pattern=/.*/,u.prototype.toString=function(){return"{Type:"+this.name+"}"},u.prototype.$normalize=function(a){return this.is(a)?a:this.decode(a)},u.prototype.$asArray=function(a,b){function d(a,b){function d(a,b){return function(){return a[b].apply(a,arguments)}}function e(a){return R(a)?a:N(a)?[a]:[]}function f(a){switch(a.length){case 0:return c;case 1:return"auto"===b?a[0]:a;default:return a}}function g(a){return!a}function h(a,b){return function(c){if(R(c)&&0===c.length)return c;c=e(c);var d=o(c,a);return b===!0?0===n(d,g).length:f(d)}}function i(a){return function(b,c){var d=e(b),f=e(c);if(d.length!==f.length)return!1;
+for(var g=0;g<d.length;g++)if(!a(d[g],f[g]))return!1;return!0}}this.encode=h(d(a,"encode")),this.decode=h(d(a,"decode")),this.is=h(d(a,"is"),!0),this.equals=i(d(a,"equals")),this.pattern=a.pattern,this.$normalize=h(d(a,"$normalize")),this.name=a.name,this.$arrayMode=b}if(!a)return this;if("auto"===a&&!b)throw new Error("'auto' array mode is for query parameters only");return new d(this,a)},b.module("ui.router.util").provider("$urlMatcherFactory",v),b.module("ui.router.util").run(["$urlMatcherFactory",function(a){}]),w.$inject=["$locationProvider","$urlMatcherFactoryProvider"],b.module("ui.router.router").provider("$urlRouter",w),x.$inject=["$urlRouterProvider","$urlMatcherFactoryProvider"],b.module("ui.router.state").factory("$stateParams",function(){return{}}).constant("$state.runtime",{autoinject:!0}).provider("$state",x).run(["$injector",function(a){a.get("$state.runtime").autoinject&&a.get("$state")}]),y.$inject=[],b.module("ui.router.state").provider("$view",y),b.module("ui.router.state").provider("$uiViewScroll",z),A.$inject=["$state","$injector","$uiViewScroll","$interpolate","$q"],B.$inject=["$compile","$controller","$state","$interpolate"],b.module("ui.router.state").directive("uiView",A),b.module("ui.router.state").directive("uiView",B),I.$inject=["$state","$timeout"],J.$inject=["$state","$timeout"],K.$inject=["$state","$stateParams","$interpolate"],b.module("ui.router.state").directive("uiSref",I).directive("uiSrefActive",K).directive("uiSrefActiveEq",K).directive("uiState",J),L.$inject=["$state"],M.$inject=["$state"],b.module("ui.router.state").filter("isState",L).filter("includedByState",M)}(window,window.angular);
+!function(){angular.module("angular-jwt",["angular-jwt.options","angular-jwt.interceptor","angular-jwt.jwt","angular-jwt.authManager"]),angular.module("angular-jwt.authManager",[]).provider("authManager",function(){this.$get=["$rootScope","$injector","$location","jwtHelper","jwtInterceptor","jwtOptions",function(t,e,r,n,a,i){function o(t){var r=null;return r=Array.isArray(t)?e.invoke(t,this,{options:null}):t()}function u(t){if(Array.isArray(t)||angular.isFunction(t))return e.invoke(t,w,{});throw new Error("unauthenticatedRedirector must be a function")}function s(){var t=o(w.tokenGetter);return t?!n.isTokenExpired(t):void 0}function h(){t.isAuthenticated=!0}function c(){t.isAuthenticated=!1}function l(){var e=o(w.tokenGetter);e&&(n.isTokenExpired(e)?t.$broadcast("tokenHasExpired",e):h())}function d(){if(e.has("$transitions")){var r=e.get("$transitions");r.onStart({},l)}else t.$on("$locationChangeStart",l)}function f(){t.$on("unauthenticated",function(){u(w.unauthenticatedRedirector),c()})}function g(t,e){if(!e)return!1;var r=e.$$route?e.$$route:e.data;r&&r.requiresLogin===!0&&!s()&&(t.preventDefault(),u(w.unauthenticatedRedirector))}function p(t){var e=t.to(),r=t.router.stateService;return e&&e.data&&e.data.requiresLogin===!0&&!s()?r.target(w.loginPath):void 0}var w=i.getConfig();if(t.isAuthenticated=!1,e.has("$transitions")){var v=e.get("$transitions");v.onStart({},p)}else{var m=e.has("$state")?"$stateChangeStart":"$routeChangeStart";t.$on(m,g)}return{authenticate:h,unauthenticate:c,getToken:function(){return o(w.tokenGetter)},redirect:function(){return u(w.unauthenticatedRedirector)},checkAuthOnRefresh:d,redirectWhenUnauthenticated:f,isAuthenticated:s}}]}),angular.module("angular-jwt.interceptor",[]).provider("jwtInterceptor",function(){this.urlParam,this.authHeader,this.authPrefix,this.whiteListedDomains,this.tokenGetter;var t=this;this.$get=["$q","$injector","$rootScope","urlUtils","jwtOptions",function(e,r,n,a,i){function o(t){if(!a.isSameOrigin(t)&&!u.whiteListedDomains.length)throw new Error("As of v0.1.0, requests to domains other than the application's origin must be white listed. Use jwtOptionsProvider.config({ whiteListedDomains: [<domain>] }); to whitelist.");for(var e=a.urlResolve(t).hostname.toLowerCase(),r=0;r<u.whiteListedDomains.length;r++){var n=u.whiteListedDomains[r],i=n instanceof RegExp?n:new RegExp(n,"i");if(e.match(i))return!0}return a.isSameOrigin(t)?!0:!1}var u=angular.extend({},i.getConfig(),t);return{request:function(t){if(t.skipAuthorization||!o(t.url))return t;if(u.urlParam){if(t.params=t.params||{},t.params[u.urlParam])return t}else if(t.headers=t.headers||{},t.headers[u.authHeader])return t;var n=e.when(r.invoke(u.tokenGetter,this,{options:t}));return n.then(function(e){return e&&(u.urlParam?t.params[u.urlParam]=e:t.headers[u.authHeader]=u.authPrefix+e),t})},responseError:function(t){return 401===t.status&&n.$broadcast("unauthenticated",t),e.reject(t)}}}]}),angular.module("angular-jwt.jwt",[]).service("jwtHelper",["$window",function(t){this.urlBase64Decode=function(e){var r=e.replace(/-/g,"+").replace(/_/g,"/");switch(r.length%4){case 0:break;case 2:r+="==";break;case 3:r+="=";break;default:throw"Illegal base64url string!"}return t.decodeURIComponent(escape(t.atob(r)))},this.decodeToken=function(t){var e=t.split(".");if(3!==e.length)throw new Error("JWT must have 3 parts");var r=this.urlBase64Decode(e[1]);if(!r)throw new Error("Cannot decode the token");return angular.fromJson(r)},this.getTokenExpirationDate=function(t){var e=this.decodeToken(t);if("undefined"==typeof e.exp)return null;var r=new Date(0);return r.setUTCSeconds(e.exp),r},this.isTokenExpired=function(t,e){var r=this.getTokenExpirationDate(t);return e=e||0,null===r?!1:!(r.valueOf()>(new Date).valueOf()+1e3*e)}}]),angular.module("angular-jwt.options",[]).provider("jwtOptions",function(){var t={};this.config=function(e){t=e},this.$get=function(){function e(){this.config=angular.extend({},r,t)}var r={urlParam:null,authHeader:"Authorization",authPrefix:"Bearer ",whiteListedDomains:[],tokenGetter:function(){return null},loginPath:"/",unauthenticatedRedirectPath:"/",unauthenticatedRedirector:["$location",function(t){t.path(this.unauthenticatedRedirectPath)}]};return e.prototype.getConfig=function(){return this.config},new e}}),angular.module("angular-jwt.interceptor").service("urlUtils",function(){function t(t){var e=t;return r.setAttribute("href",e),e=r.href,r.setAttribute("href",e),{href:r.href,protocol:r.protocol?r.protocol.replace(/:$/,""):"",host:r.host,search:r.search?r.search.replace(/^\?/,""):"",hash:r.hash?r.hash.replace(/^#/,""):"",hostname:r.hostname,port:r.port,pathname:"/"===r.pathname.charAt(0)?r.pathname:"/"+r.pathname}}function e(e){var r=angular.isString(e)?t(e):e;return r.protocol===n.protocol&&r.host===n.host}var r=document.createElement("a"),n=t(window.location.href);return{urlResolve:t,isSameOrigin:e}})}();
 /**
  * angular-growl-v2 - v0.7.8 - 2015-10-25
  * http://janstevens.github.io/angular-growl-2
@@ -1047,3 +5186,17 @@ t&&p[t]?r.resolve(p[t].map):!t&&s&&s.map?r.resolve(s.map):n>i?r.reject("could no
 //! momentjs.com
 !function(a,b){"object"==typeof exports&&"undefined"!=typeof module?module.exports=b():"function"==typeof define&&define.amd?define(b):a.moment=b()}(this,function(){"use strict";function a(){return sd.apply(null,arguments)}function b(a){sd=a}function c(a){return a instanceof Array||"[object Array]"===Object.prototype.toString.call(a)}function d(a){return null!=a&&"[object Object]"===Object.prototype.toString.call(a)}function e(a){var b;for(b in a)return!1;return!0}function f(a){return void 0===a}function g(a){return"number"==typeof a||"[object Number]"===Object.prototype.toString.call(a)}function h(a){return a instanceof Date||"[object Date]"===Object.prototype.toString.call(a)}function i(a,b){var c,d=[];for(c=0;c<a.length;++c)d.push(b(a[c],c));return d}function j(a,b){return Object.prototype.hasOwnProperty.call(a,b)}function k(a,b){for(var c in b)j(b,c)&&(a[c]=b[c]);return j(b,"toString")&&(a.toString=b.toString),j(b,"valueOf")&&(a.valueOf=b.valueOf),a}function l(a,b,c,d){return sb(a,b,c,d,!0).utc()}function m(){return{empty:!1,unusedTokens:[],unusedInput:[],overflow:-2,charsLeftOver:0,nullInput:!1,invalidMonth:null,invalidFormat:!1,userInvalidated:!1,iso:!1,parsedDateParts:[],meridiem:null,rfc2822:!1,weekdayMismatch:!1}}function n(a){return null==a._pf&&(a._pf=m()),a._pf}function o(a){if(null==a._isValid){var b=n(a),c=ud.call(b.parsedDateParts,function(a){return null!=a}),d=!isNaN(a._d.getTime())&&b.overflow<0&&!b.empty&&!b.invalidMonth&&!b.invalidWeekday&&!b.nullInput&&!b.invalidFormat&&!b.userInvalidated&&(!b.meridiem||b.meridiem&&c);if(a._strict&&(d=d&&0===b.charsLeftOver&&0===b.unusedTokens.length&&void 0===b.bigHour),null!=Object.isFrozen&&Object.isFrozen(a))return d;a._isValid=d}return a._isValid}function p(a){var b=l(NaN);return null!=a?k(n(b),a):n(b).userInvalidated=!0,b}function q(a,b){var c,d,e;if(f(b._isAMomentObject)||(a._isAMomentObject=b._isAMomentObject),f(b._i)||(a._i=b._i),f(b._f)||(a._f=b._f),f(b._l)||(a._l=b._l),f(b._strict)||(a._strict=b._strict),f(b._tzm)||(a._tzm=b._tzm),f(b._isUTC)||(a._isUTC=b._isUTC),f(b._offset)||(a._offset=b._offset),f(b._pf)||(a._pf=n(b)),f(b._locale)||(a._locale=b._locale),vd.length>0)for(c=0;c<vd.length;c++)d=vd[c],e=b[d],f(e)||(a[d]=e);return a}function r(b){q(this,b),this._d=new Date(null!=b._d?b._d.getTime():NaN),this.isValid()||(this._d=new Date(NaN)),wd===!1&&(wd=!0,a.updateOffset(this),wd=!1)}function s(a){return a instanceof r||null!=a&&null!=a._isAMomentObject}function t(a){return a<0?Math.ceil(a)||0:Math.floor(a)}function u(a){var b=+a,c=0;return 0!==b&&isFinite(b)&&(c=t(b)),c}function v(a,b,c){var d,e=Math.min(a.length,b.length),f=Math.abs(a.length-b.length),g=0;for(d=0;d<e;d++)(c&&a[d]!==b[d]||!c&&u(a[d])!==u(b[d]))&&g++;return g+f}function w(b){a.suppressDeprecationWarnings===!1&&"undefined"!=typeof console&&console.warn&&console.warn("Deprecation warning: "+b)}function x(b,c){var d=!0;return k(function(){if(null!=a.deprecationHandler&&a.deprecationHandler(null,b),d){for(var e,f=[],g=0;g<arguments.length;g++){if(e="","object"==typeof arguments[g]){e+="\n["+g+"] ";for(var h in arguments[0])e+=h+": "+arguments[0][h]+", ";e=e.slice(0,-2)}else e=arguments[g];f.push(e)}w(b+"\nArguments: "+Array.prototype.slice.call(f).join("")+"\n"+(new Error).stack),d=!1}return c.apply(this,arguments)},c)}function y(b,c){null!=a.deprecationHandler&&a.deprecationHandler(b,c),xd[b]||(w(c),xd[b]=!0)}function z(a){return a instanceof Function||"[object Function]"===Object.prototype.toString.call(a)}function A(a){var b,c;for(c in a)b=a[c],z(b)?this[c]=b:this["_"+c]=b;this._config=a,this._dayOfMonthOrdinalParseLenient=new RegExp((this._dayOfMonthOrdinalParse.source||this._ordinalParse.source)+"|"+/\d{1,2}/.source)}function B(a,b){var c,e=k({},a);for(c in b)j(b,c)&&(d(a[c])&&d(b[c])?(e[c]={},k(e[c],a[c]),k(e[c],b[c])):null!=b[c]?e[c]=b[c]:delete e[c]);for(c in a)j(a,c)&&!j(b,c)&&d(a[c])&&(e[c]=k({},e[c]));return e}function C(a){null!=a&&this.set(a)}function D(a,b,c){var d=this._calendar[a]||this._calendar.sameElse;return z(d)?d.call(b,c):d}function E(a){var b=this._longDateFormat[a],c=this._longDateFormat[a.toUpperCase()];return b||!c?b:(this._longDateFormat[a]=c.replace(/MMMM|MM|DD|dddd/g,function(a){return a.slice(1)}),this._longDateFormat[a])}function F(){return this._invalidDate}function G(a){return this._ordinal.replace("%d",a)}function H(a,b,c,d){var e=this._relativeTime[c];return z(e)?e(a,b,c,d):e.replace(/%d/i,a)}function I(a,b){var c=this._relativeTime[a>0?"future":"past"];return z(c)?c(b):c.replace(/%s/i,b)}function J(a,b){var c=a.toLowerCase();Hd[c]=Hd[c+"s"]=Hd[b]=a}function K(a){return"string"==typeof a?Hd[a]||Hd[a.toLowerCase()]:void 0}function L(a){var b,c,d={};for(c in a)j(a,c)&&(b=K(c),b&&(d[b]=a[c]));return d}function M(a,b){Id[a]=b}function N(a){var b=[];for(var c in a)b.push({unit:c,priority:Id[c]});return b.sort(function(a,b){return a.priority-b.priority}),b}function O(b,c){return function(d){return null!=d?(Q(this,b,d),a.updateOffset(this,c),this):P(this,b)}}function P(a,b){return a.isValid()?a._d["get"+(a._isUTC?"UTC":"")+b]():NaN}function Q(a,b,c){a.isValid()&&a._d["set"+(a._isUTC?"UTC":"")+b](c)}function R(a){return a=K(a),z(this[a])?this[a]():this}function S(a,b){if("object"==typeof a){a=L(a);for(var c=N(a),d=0;d<c.length;d++)this[c[d].unit](a[c[d].unit])}else if(a=K(a),z(this[a]))return this[a](b);return this}function T(a,b,c){var d=""+Math.abs(a),e=b-d.length,f=a>=0;return(f?c?"+":"":"-")+Math.pow(10,Math.max(0,e)).toString().substr(1)+d}function U(a,b,c,d){var e=d;"string"==typeof d&&(e=function(){return this[d]()}),a&&(Md[a]=e),b&&(Md[b[0]]=function(){return T(e.apply(this,arguments),b[1],b[2])}),c&&(Md[c]=function(){return this.localeData().ordinal(e.apply(this,arguments),a)})}function V(a){return a.match(/\[[\s\S]/)?a.replace(/^\[|\]$/g,""):a.replace(/\\/g,"")}function W(a){var b,c,d=a.match(Jd);for(b=0,c=d.length;b<c;b++)Md[d[b]]?d[b]=Md[d[b]]:d[b]=V(d[b]);return function(b){var e,f="";for(e=0;e<c;e++)f+=z(d[e])?d[e].call(b,a):d[e];return f}}function X(a,b){return a.isValid()?(b=Y(b,a.localeData()),Ld[b]=Ld[b]||W(b),Ld[b](a)):a.localeData().invalidDate()}function Y(a,b){function c(a){return b.longDateFormat(a)||a}var d=5;for(Kd.lastIndex=0;d>=0&&Kd.test(a);)a=a.replace(Kd,c),Kd.lastIndex=0,d-=1;return a}function Z(a,b,c){ce[a]=z(b)?b:function(a,d){return a&&c?c:b}}function $(a,b){return j(ce,a)?ce[a](b._strict,b._locale):new RegExp(_(a))}function _(a){return aa(a.replace("\\","").replace(/\\(\[)|\\(\])|\[([^\]\[]*)\]|\\(.)/g,function(a,b,c,d,e){return b||c||d||e}))}function aa(a){return a.replace(/[-\/\\^$*+?.()|[\]{}]/g,"\\$&")}function ba(a,b){var c,d=b;for("string"==typeof a&&(a=[a]),g(b)&&(d=function(a,c){c[b]=u(a)}),c=0;c<a.length;c++)de[a[c]]=d}function ca(a,b){ba(a,function(a,c,d,e){d._w=d._w||{},b(a,d._w,d,e)})}function da(a,b,c){null!=b&&j(de,a)&&de[a](b,c._a,c,a)}function ea(a,b){return new Date(Date.UTC(a,b+1,0)).getUTCDate()}function fa(a,b){return a?c(this._months)?this._months[a.month()]:this._months[(this._months.isFormat||oe).test(b)?"format":"standalone"][a.month()]:c(this._months)?this._months:this._months.standalone}function ga(a,b){return a?c(this._monthsShort)?this._monthsShort[a.month()]:this._monthsShort[oe.test(b)?"format":"standalone"][a.month()]:c(this._monthsShort)?this._monthsShort:this._monthsShort.standalone}function ha(a,b,c){var d,e,f,g=a.toLocaleLowerCase();if(!this._monthsParse)for(this._monthsParse=[],this._longMonthsParse=[],this._shortMonthsParse=[],d=0;d<12;++d)f=l([2e3,d]),this._shortMonthsParse[d]=this.monthsShort(f,"").toLocaleLowerCase(),this._longMonthsParse[d]=this.months(f,"").toLocaleLowerCase();return c?"MMM"===b?(e=ne.call(this._shortMonthsParse,g),e!==-1?e:null):(e=ne.call(this._longMonthsParse,g),e!==-1?e:null):"MMM"===b?(e=ne.call(this._shortMonthsParse,g),e!==-1?e:(e=ne.call(this._longMonthsParse,g),e!==-1?e:null)):(e=ne.call(this._longMonthsParse,g),e!==-1?e:(e=ne.call(this._shortMonthsParse,g),e!==-1?e:null))}function ia(a,b,c){var d,e,f;if(this._monthsParseExact)return ha.call(this,a,b,c);for(this._monthsParse||(this._monthsParse=[],this._longMonthsParse=[],this._shortMonthsParse=[]),d=0;d<12;d++){if(e=l([2e3,d]),c&&!this._longMonthsParse[d]&&(this._longMonthsParse[d]=new RegExp("^"+this.months(e,"").replace(".","")+"$","i"),this._shortMonthsParse[d]=new RegExp("^"+this.monthsShort(e,"").replace(".","")+"$","i")),c||this._monthsParse[d]||(f="^"+this.months(e,"")+"|^"+this.monthsShort(e,""),this._monthsParse[d]=new RegExp(f.replace(".",""),"i")),c&&"MMMM"===b&&this._longMonthsParse[d].test(a))return d;if(c&&"MMM"===b&&this._shortMonthsParse[d].test(a))return d;if(!c&&this._monthsParse[d].test(a))return d}}function ja(a,b){var c;if(!a.isValid())return a;if("string"==typeof b)if(/^\d+$/.test(b))b=u(b);else if(b=a.localeData().monthsParse(b),!g(b))return a;return c=Math.min(a.date(),ea(a.year(),b)),a._d["set"+(a._isUTC?"UTC":"")+"Month"](b,c),a}function ka(b){return null!=b?(ja(this,b),a.updateOffset(this,!0),this):P(this,"Month")}function la(){return ea(this.year(),this.month())}function ma(a){return this._monthsParseExact?(j(this,"_monthsRegex")||oa.call(this),a?this._monthsShortStrictRegex:this._monthsShortRegex):(j(this,"_monthsShortRegex")||(this._monthsShortRegex=re),this._monthsShortStrictRegex&&a?this._monthsShortStrictRegex:this._monthsShortRegex)}function na(a){return this._monthsParseExact?(j(this,"_monthsRegex")||oa.call(this),a?this._monthsStrictRegex:this._monthsRegex):(j(this,"_monthsRegex")||(this._monthsRegex=se),this._monthsStrictRegex&&a?this._monthsStrictRegex:this._monthsRegex)}function oa(){function a(a,b){return b.length-a.length}var b,c,d=[],e=[],f=[];for(b=0;b<12;b++)c=l([2e3,b]),d.push(this.monthsShort(c,"")),e.push(this.months(c,"")),f.push(this.months(c,"")),f.push(this.monthsShort(c,""));for(d.sort(a),e.sort(a),f.sort(a),b=0;b<12;b++)d[b]=aa(d[b]),e[b]=aa(e[b]);for(b=0;b<24;b++)f[b]=aa(f[b]);this._monthsRegex=new RegExp("^("+f.join("|")+")","i"),this._monthsShortRegex=this._monthsRegex,this._monthsStrictRegex=new RegExp("^("+e.join("|")+")","i"),this._monthsShortStrictRegex=new RegExp("^("+d.join("|")+")","i")}function pa(a){return qa(a)?366:365}function qa(a){return a%4===0&&a%100!==0||a%400===0}function ra(){return qa(this.year())}function sa(a,b,c,d,e,f,g){var h=new Date(a,b,c,d,e,f,g);return a<100&&a>=0&&isFinite(h.getFullYear())&&h.setFullYear(a),h}function ta(a){var b=new Date(Date.UTC.apply(null,arguments));return a<100&&a>=0&&isFinite(b.getUTCFullYear())&&b.setUTCFullYear(a),b}function ua(a,b,c){var d=7+b-c,e=(7+ta(a,0,d).getUTCDay()-b)%7;return-e+d-1}function va(a,b,c,d,e){var f,g,h=(7+c-d)%7,i=ua(a,d,e),j=1+7*(b-1)+h+i;return j<=0?(f=a-1,g=pa(f)+j):j>pa(a)?(f=a+1,g=j-pa(a)):(f=a,g=j),{year:f,dayOfYear:g}}function wa(a,b,c){var d,e,f=ua(a.year(),b,c),g=Math.floor((a.dayOfYear()-f-1)/7)+1;return g<1?(e=a.year()-1,d=g+xa(e,b,c)):g>xa(a.year(),b,c)?(d=g-xa(a.year(),b,c),e=a.year()+1):(e=a.year(),d=g),{week:d,year:e}}function xa(a,b,c){var d=ua(a,b,c),e=ua(a+1,b,c);return(pa(a)-d+e)/7}function ya(a){return wa(a,this._week.dow,this._week.doy).week}function za(){return this._week.dow}function Aa(){return this._week.doy}function Ba(a){var b=this.localeData().week(this);return null==a?b:this.add(7*(a-b),"d")}function Ca(a){var b=wa(this,1,4).week;return null==a?b:this.add(7*(a-b),"d")}function Da(a,b){return"string"!=typeof a?a:isNaN(a)?(a=b.weekdaysParse(a),"number"==typeof a?a:null):parseInt(a,10)}function Ea(a,b){return"string"==typeof a?b.weekdaysParse(a)%7||7:isNaN(a)?null:a}function Fa(a,b){return a?c(this._weekdays)?this._weekdays[a.day()]:this._weekdays[this._weekdays.isFormat.test(b)?"format":"standalone"][a.day()]:c(this._weekdays)?this._weekdays:this._weekdays.standalone}function Ga(a){return a?this._weekdaysShort[a.day()]:this._weekdaysShort}function Ha(a){return a?this._weekdaysMin[a.day()]:this._weekdaysMin}function Ia(a,b,c){var d,e,f,g=a.toLocaleLowerCase();if(!this._weekdaysParse)for(this._weekdaysParse=[],this._shortWeekdaysParse=[],this._minWeekdaysParse=[],d=0;d<7;++d)f=l([2e3,1]).day(d),this._minWeekdaysParse[d]=this.weekdaysMin(f,"").toLocaleLowerCase(),this._shortWeekdaysParse[d]=this.weekdaysShort(f,"").toLocaleLowerCase(),this._weekdaysParse[d]=this.weekdays(f,"").toLocaleLowerCase();return c?"dddd"===b?(e=ne.call(this._weekdaysParse,g),e!==-1?e:null):"ddd"===b?(e=ne.call(this._shortWeekdaysParse,g),e!==-1?e:null):(e=ne.call(this._minWeekdaysParse,g),e!==-1?e:null):"dddd"===b?(e=ne.call(this._weekdaysParse,g),e!==-1?e:(e=ne.call(this._shortWeekdaysParse,g),e!==-1?e:(e=ne.call(this._minWeekdaysParse,g),e!==-1?e:null))):"ddd"===b?(e=ne.call(this._shortWeekdaysParse,g),e!==-1?e:(e=ne.call(this._weekdaysParse,g),e!==-1?e:(e=ne.call(this._minWeekdaysParse,g),e!==-1?e:null))):(e=ne.call(this._minWeekdaysParse,g),e!==-1?e:(e=ne.call(this._weekdaysParse,g),e!==-1?e:(e=ne.call(this._shortWeekdaysParse,g),e!==-1?e:null)))}function Ja(a,b,c){var d,e,f;if(this._weekdaysParseExact)return Ia.call(this,a,b,c);for(this._weekdaysParse||(this._weekdaysParse=[],this._minWeekdaysParse=[],this._shortWeekdaysParse=[],this._fullWeekdaysParse=[]),d=0;d<7;d++){if(e=l([2e3,1]).day(d),c&&!this._fullWeekdaysParse[d]&&(this._fullWeekdaysParse[d]=new RegExp("^"+this.weekdays(e,"").replace(".",".?")+"$","i"),this._shortWeekdaysParse[d]=new RegExp("^"+this.weekdaysShort(e,"").replace(".",".?")+"$","i"),this._minWeekdaysParse[d]=new RegExp("^"+this.weekdaysMin(e,"").replace(".",".?")+"$","i")),this._weekdaysParse[d]||(f="^"+this.weekdays(e,"")+"|^"+this.weekdaysShort(e,"")+"|^"+this.weekdaysMin(e,""),this._weekdaysParse[d]=new RegExp(f.replace(".",""),"i")),c&&"dddd"===b&&this._fullWeekdaysParse[d].test(a))return d;if(c&&"ddd"===b&&this._shortWeekdaysParse[d].test(a))return d;if(c&&"dd"===b&&this._minWeekdaysParse[d].test(a))return d;if(!c&&this._weekdaysParse[d].test(a))return d}}function Ka(a){if(!this.isValid())return null!=a?this:NaN;var b=this._isUTC?this._d.getUTCDay():this._d.getDay();return null!=a?(a=Da(a,this.localeData()),this.add(a-b,"d")):b}function La(a){if(!this.isValid())return null!=a?this:NaN;var b=(this.day()+7-this.localeData()._week.dow)%7;return null==a?b:this.add(a-b,"d")}function Ma(a){if(!this.isValid())return null!=a?this:NaN;if(null!=a){var b=Ea(a,this.localeData());return this.day(this.day()%7?b:b-7)}return this.day()||7}function Na(a){return this._weekdaysParseExact?(j(this,"_weekdaysRegex")||Qa.call(this),a?this._weekdaysStrictRegex:this._weekdaysRegex):(j(this,"_weekdaysRegex")||(this._weekdaysRegex=ye),this._weekdaysStrictRegex&&a?this._weekdaysStrictRegex:this._weekdaysRegex)}function Oa(a){return this._weekdaysParseExact?(j(this,"_weekdaysRegex")||Qa.call(this),a?this._weekdaysShortStrictRegex:this._weekdaysShortRegex):(j(this,"_weekdaysShortRegex")||(this._weekdaysShortRegex=ze),this._weekdaysShortStrictRegex&&a?this._weekdaysShortStrictRegex:this._weekdaysShortRegex)}function Pa(a){return this._weekdaysParseExact?(j(this,"_weekdaysRegex")||Qa.call(this),a?this._weekdaysMinStrictRegex:this._weekdaysMinRegex):(j(this,"_weekdaysMinRegex")||(this._weekdaysMinRegex=Ae),this._weekdaysMinStrictRegex&&a?this._weekdaysMinStrictRegex:this._weekdaysMinRegex)}function Qa(){function a(a,b){return b.length-a.length}var b,c,d,e,f,g=[],h=[],i=[],j=[];for(b=0;b<7;b++)c=l([2e3,1]).day(b),d=this.weekdaysMin(c,""),e=this.weekdaysShort(c,""),f=this.weekdays(c,""),g.push(d),h.push(e),i.push(f),j.push(d),j.push(e),j.push(f);for(g.sort(a),h.sort(a),i.sort(a),j.sort(a),b=0;b<7;b++)h[b]=aa(h[b]),i[b]=aa(i[b]),j[b]=aa(j[b]);this._weekdaysRegex=new RegExp("^("+j.join("|")+")","i"),this._weekdaysShortRegex=this._weekdaysRegex,this._weekdaysMinRegex=this._weekdaysRegex,this._weekdaysStrictRegex=new RegExp("^("+i.join("|")+")","i"),this._weekdaysShortStrictRegex=new RegExp("^("+h.join("|")+")","i"),this._weekdaysMinStrictRegex=new RegExp("^("+g.join("|")+")","i")}function Ra(){return this.hours()%12||12}function Sa(){return this.hours()||24}function Ta(a,b){U(a,0,0,function(){return this.localeData().meridiem(this.hours(),this.minutes(),b)})}function Ua(a,b){return b._meridiemParse}function Va(a){return"p"===(a+"").toLowerCase().charAt(0)}function Wa(a,b,c){return a>11?c?"pm":"PM":c?"am":"AM"}function Xa(a){return a?a.toLowerCase().replace("_","-"):a}function Ya(a){for(var b,c,d,e,f=0;f<a.length;){for(e=Xa(a[f]).split("-"),b=e.length,c=Xa(a[f+1]),c=c?c.split("-"):null;b>0;){if(d=Za(e.slice(0,b).join("-")))return d;if(c&&c.length>=b&&v(e,c,!0)>=b-1)break;b--}f++}return null}function Za(a){var b=null;if(!Fe[a]&&"undefined"!=typeof module&&module&&module.exports)try{b=Be._abbr,require("./locale/"+a),$a(b)}catch(a){}return Fe[a]}function $a(a,b){var c;return a&&(c=f(b)?bb(a):_a(a,b),c&&(Be=c)),Be._abbr}function _a(a,b){if(null!==b){var c=Ee;if(b.abbr=a,null!=Fe[a])y("defineLocaleOverride","use moment.updateLocale(localeName, config) to change an existing locale. moment.defineLocale(localeName, config) should only be used for creating a new locale See http://momentjs.com/guides/#/warnings/define-locale/ for more info."),c=Fe[a]._config;else if(null!=b.parentLocale){if(null==Fe[b.parentLocale])return Ge[b.parentLocale]||(Ge[b.parentLocale]=[]),Ge[b.parentLocale].push({name:a,config:b}),null;c=Fe[b.parentLocale]._config}return Fe[a]=new C(B(c,b)),Ge[a]&&Ge[a].forEach(function(a){_a(a.name,a.config)}),$a(a),Fe[a]}return delete Fe[a],null}function ab(a,b){if(null!=b){var c,d=Ee;null!=Fe[a]&&(d=Fe[a]._config),b=B(d,b),c=new C(b),c.parentLocale=Fe[a],Fe[a]=c,$a(a)}else null!=Fe[a]&&(null!=Fe[a].parentLocale?Fe[a]=Fe[a].parentLocale:null!=Fe[a]&&delete Fe[a]);return Fe[a]}function bb(a){var b;if(a&&a._locale&&a._locale._abbr&&(a=a._locale._abbr),!a)return Be;if(!c(a)){if(b=Za(a))return b;a=[a]}return Ya(a)}function cb(){return Ad(Fe)}function db(a){var b,c=a._a;return c&&n(a).overflow===-2&&(b=c[fe]<0||c[fe]>11?fe:c[ge]<1||c[ge]>ea(c[ee],c[fe])?ge:c[he]<0||c[he]>24||24===c[he]&&(0!==c[ie]||0!==c[je]||0!==c[ke])?he:c[ie]<0||c[ie]>59?ie:c[je]<0||c[je]>59?je:c[ke]<0||c[ke]>999?ke:-1,n(a)._overflowDayOfYear&&(b<ee||b>ge)&&(b=ge),n(a)._overflowWeeks&&b===-1&&(b=le),n(a)._overflowWeekday&&b===-1&&(b=me),n(a).overflow=b),a}function eb(a){var b,c,d,e,f,g,h=a._i,i=He.exec(h)||Ie.exec(h);if(i){for(n(a).iso=!0,b=0,c=Ke.length;b<c;b++)if(Ke[b][1].exec(i[1])){e=Ke[b][0],d=Ke[b][2]!==!1;break}if(null==e)return void(a._isValid=!1);if(i[3]){for(b=0,c=Le.length;b<c;b++)if(Le[b][1].exec(i[3])){f=(i[2]||" ")+Le[b][0];break}if(null==f)return void(a._isValid=!1)}if(!d&&null!=f)return void(a._isValid=!1);if(i[4]){if(!Je.exec(i[4]))return void(a._isValid=!1);g="Z"}a._f=e+(f||"")+(g||""),lb(a)}else a._isValid=!1}function fb(a){var b,c,d,e,f,g,h,i,j={" GMT":" +0000"," EDT":" -0400"," EST":" -0500"," CDT":" -0500"," CST":" -0600"," MDT":" -0600"," MST":" -0700"," PDT":" -0700"," PST":" -0800"},k="YXWVUTSRQPONZABCDEFGHIKLM";if(b=a._i.replace(/\([^\)]*\)|[\n\t]/g," ").replace(/(\s\s+)/g," ").replace(/^\s|\s$/g,""),c=Ne.exec(b)){if(d=c[1]?"ddd"+(5===c[1].length?", ":" "):"",e="D MMM "+(c[2].length>10?"YYYY ":"YY "),f="HH:mm"+(c[4]?":ss":""),c[1]){var l=new Date(c[2]),m=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][l.getDay()];if(c[1].substr(0,3)!==m)return n(a).weekdayMismatch=!0,void(a._isValid=!1)}switch(c[5].length){case 2:0===i?h=" +0000":(i=k.indexOf(c[5][1].toUpperCase())-12,h=(i<0?" -":" +")+(""+i).replace(/^-?/,"0").match(/..$/)[0]+"00");break;case 4:h=j[c[5]];break;default:h=j[" GMT"]}c[5]=h,a._i=c.splice(1).join(""),g=" ZZ",a._f=d+e+f+g,lb(a),n(a).rfc2822=!0}else a._isValid=!1}function gb(b){var c=Me.exec(b._i);return null!==c?void(b._d=new Date(+c[1])):(eb(b),void(b._isValid===!1&&(delete b._isValid,fb(b),b._isValid===!1&&(delete b._isValid,a.createFromInputFallback(b)))))}function hb(a,b,c){return null!=a?a:null!=b?b:c}function ib(b){var c=new Date(a.now());return b._useUTC?[c.getUTCFullYear(),c.getUTCMonth(),c.getUTCDate()]:[c.getFullYear(),c.getMonth(),c.getDate()]}function jb(a){var b,c,d,e,f=[];if(!a._d){for(d=ib(a),a._w&&null==a._a[ge]&&null==a._a[fe]&&kb(a),null!=a._dayOfYear&&(e=hb(a._a[ee],d[ee]),(a._dayOfYear>pa(e)||0===a._dayOfYear)&&(n(a)._overflowDayOfYear=!0),c=ta(e,0,a._dayOfYear),a._a[fe]=c.getUTCMonth(),a._a[ge]=c.getUTCDate()),b=0;b<3&&null==a._a[b];++b)a._a[b]=f[b]=d[b];for(;b<7;b++)a._a[b]=f[b]=null==a._a[b]?2===b?1:0:a._a[b];24===a._a[he]&&0===a._a[ie]&&0===a._a[je]&&0===a._a[ke]&&(a._nextDay=!0,a._a[he]=0),a._d=(a._useUTC?ta:sa).apply(null,f),null!=a._tzm&&a._d.setUTCMinutes(a._d.getUTCMinutes()-a._tzm),a._nextDay&&(a._a[he]=24)}}function kb(a){var b,c,d,e,f,g,h,i;if(b=a._w,null!=b.GG||null!=b.W||null!=b.E)f=1,g=4,c=hb(b.GG,a._a[ee],wa(tb(),1,4).year),d=hb(b.W,1),e=hb(b.E,1),(e<1||e>7)&&(i=!0);else{f=a._locale._week.dow,g=a._locale._week.doy;var j=wa(tb(),f,g);c=hb(b.gg,a._a[ee],j.year),d=hb(b.w,j.week),null!=b.d?(e=b.d,(e<0||e>6)&&(i=!0)):null!=b.e?(e=b.e+f,(b.e<0||b.e>6)&&(i=!0)):e=f}d<1||d>xa(c,f,g)?n(a)._overflowWeeks=!0:null!=i?n(a)._overflowWeekday=!0:(h=va(c,d,e,f,g),a._a[ee]=h.year,a._dayOfYear=h.dayOfYear)}function lb(b){if(b._f===a.ISO_8601)return void eb(b);if(b._f===a.RFC_2822)return void fb(b);b._a=[],n(b).empty=!0;var c,d,e,f,g,h=""+b._i,i=h.length,j=0;for(e=Y(b._f,b._locale).match(Jd)||[],c=0;c<e.length;c++)f=e[c],d=(h.match($(f,b))||[])[0],d&&(g=h.substr(0,h.indexOf(d)),g.length>0&&n(b).unusedInput.push(g),h=h.slice(h.indexOf(d)+d.length),j+=d.length),Md[f]?(d?n(b).empty=!1:n(b).unusedTokens.push(f),da(f,d,b)):b._strict&&!d&&n(b).unusedTokens.push(f);n(b).charsLeftOver=i-j,h.length>0&&n(b).unusedInput.push(h),b._a[he]<=12&&n(b).bigHour===!0&&b._a[he]>0&&(n(b).bigHour=void 0),n(b).parsedDateParts=b._a.slice(0),n(b).meridiem=b._meridiem,b._a[he]=mb(b._locale,b._a[he],b._meridiem),jb(b),db(b)}function mb(a,b,c){var d;return null==c?b:null!=a.meridiemHour?a.meridiemHour(b,c):null!=a.isPM?(d=a.isPM(c),d&&b<12&&(b+=12),d||12!==b||(b=0),b):b}function nb(a){var b,c,d,e,f;if(0===a._f.length)return n(a).invalidFormat=!0,void(a._d=new Date(NaN));for(e=0;e<a._f.length;e++)f=0,b=q({},a),null!=a._useUTC&&(b._useUTC=a._useUTC),b._f=a._f[e],lb(b),o(b)&&(f+=n(b).charsLeftOver,f+=10*n(b).unusedTokens.length,n(b).score=f,(null==d||f<d)&&(d=f,c=b));k(a,c||b)}function ob(a){if(!a._d){var b=L(a._i);a._a=i([b.year,b.month,b.day||b.date,b.hour,b.minute,b.second,b.millisecond],function(a){return a&&parseInt(a,10)}),jb(a)}}function pb(a){var b=new r(db(qb(a)));return b._nextDay&&(b.add(1,"d"),b._nextDay=void 0),b}function qb(a){var b=a._i,d=a._f;return a._locale=a._locale||bb(a._l),null===b||void 0===d&&""===b?p({nullInput:!0}):("string"==typeof b&&(a._i=b=a._locale.preparse(b)),s(b)?new r(db(b)):(h(b)?a._d=b:c(d)?nb(a):d?lb(a):rb(a),o(a)||(a._d=null),a))}function rb(b){var e=b._i;f(e)?b._d=new Date(a.now()):h(e)?b._d=new Date(e.valueOf()):"string"==typeof e?gb(b):c(e)?(b._a=i(e.slice(0),function(a){return parseInt(a,10)}),jb(b)):d(e)?ob(b):g(e)?b._d=new Date(e):a.createFromInputFallback(b)}function sb(a,b,f,g,h){var i={};return f!==!0&&f!==!1||(g=f,f=void 0),(d(a)&&e(a)||c(a)&&0===a.length)&&(a=void 0),i._isAMomentObject=!0,i._useUTC=i._isUTC=h,i._l=f,i._i=a,i._f=b,i._strict=g,pb(i)}function tb(a,b,c,d){return sb(a,b,c,d,!1)}function ub(a,b){var d,e;if(1===b.length&&c(b[0])&&(b=b[0]),!b.length)return tb();for(d=b[0],e=1;e<b.length;++e)b[e].isValid()&&!b[e][a](d)||(d=b[e]);return d}function vb(){var a=[].slice.call(arguments,0);return ub("isBefore",a)}function wb(){var a=[].slice.call(arguments,0);return ub("isAfter",a)}function xb(a){for(var b in a)if(Re.indexOf(b)===-1||null!=a[b]&&isNaN(a[b]))return!1;for(var c=!1,d=0;d<Re.length;++d)if(a[Re[d]]){if(c)return!1;parseFloat(a[Re[d]])!==u(a[Re[d]])&&(c=!0)}return!0}function yb(){return this._isValid}function zb(){return Sb(NaN)}function Ab(a){var b=L(a),c=b.year||0,d=b.quarter||0,e=b.month||0,f=b.week||0,g=b.day||0,h=b.hour||0,i=b.minute||0,j=b.second||0,k=b.millisecond||0;this._isValid=xb(b),this._milliseconds=+k+1e3*j+6e4*i+1e3*h*60*60,this._days=+g+7*f,this._months=+e+3*d+12*c,this._data={},this._locale=bb(),this._bubble()}function Bb(a){return a instanceof Ab}function Cb(a){return a<0?Math.round(-1*a)*-1:Math.round(a)}function Db(a,b){U(a,0,0,function(){var a=this.utcOffset(),c="+";return a<0&&(a=-a,c="-"),c+T(~~(a/60),2)+b+T(~~a%60,2)})}function Eb(a,b){var c=(b||"").match(a);if(null===c)return null;var d=c[c.length-1]||[],e=(d+"").match(Se)||["-",0,0],f=+(60*e[1])+u(e[2]);return 0===f?0:"+"===e[0]?f:-f}function Fb(b,c){var d,e;return c._isUTC?(d=c.clone(),e=(s(b)||h(b)?b.valueOf():tb(b).valueOf())-d.valueOf(),d._d.setTime(d._d.valueOf()+e),a.updateOffset(d,!1),d):tb(b).local()}function Gb(a){return 15*-Math.round(a._d.getTimezoneOffset()/15)}function Hb(b,c,d){var e,f=this._offset||0;if(!this.isValid())return null!=b?this:NaN;if(null!=b){if("string"==typeof b){if(b=Eb(_d,b),null===b)return this}else Math.abs(b)<16&&!d&&(b=60*b);return!this._isUTC&&c&&(e=Gb(this)),this._offset=b,this._isUTC=!0,null!=e&&this.add(e,"m"),f!==b&&(!c||this._changeInProgress?Xb(this,Sb(b-f,"m"),1,!1):this._changeInProgress||(this._changeInProgress=!0,a.updateOffset(this,!0),this._changeInProgress=null)),this}return this._isUTC?f:Gb(this)}function Ib(a,b){return null!=a?("string"!=typeof a&&(a=-a),this.utcOffset(a,b),this):-this.utcOffset()}function Jb(a){return this.utcOffset(0,a)}function Kb(a){return this._isUTC&&(this.utcOffset(0,a),this._isUTC=!1,a&&this.subtract(Gb(this),"m")),this}function Lb(){if(null!=this._tzm)this.utcOffset(this._tzm,!1,!0);else if("string"==typeof this._i){var a=Eb($d,this._i);null!=a?this.utcOffset(a):this.utcOffset(0,!0)}return this}function Mb(a){return!!this.isValid()&&(a=a?tb(a).utcOffset():0,(this.utcOffset()-a)%60===0)}function Nb(){return this.utcOffset()>this.clone().month(0).utcOffset()||this.utcOffset()>this.clone().month(5).utcOffset()}function Ob(){if(!f(this._isDSTShifted))return this._isDSTShifted;var a={};if(q(a,this),a=qb(a),a._a){var b=a._isUTC?l(a._a):tb(a._a);this._isDSTShifted=this.isValid()&&v(a._a,b.toArray())>0}else this._isDSTShifted=!1;return this._isDSTShifted}function Pb(){return!!this.isValid()&&!this._isUTC}function Qb(){return!!this.isValid()&&this._isUTC}function Rb(){return!!this.isValid()&&(this._isUTC&&0===this._offset)}function Sb(a,b){var c,d,e,f=a,h=null;return Bb(a)?f={ms:a._milliseconds,d:a._days,M:a._months}:g(a)?(f={},b?f[b]=a:f.milliseconds=a):(h=Te.exec(a))?(c="-"===h[1]?-1:1,f={y:0,d:u(h[ge])*c,h:u(h[he])*c,m:u(h[ie])*c,s:u(h[je])*c,ms:u(Cb(1e3*h[ke]))*c}):(h=Ue.exec(a))?(c="-"===h[1]?-1:1,f={y:Tb(h[2],c),M:Tb(h[3],c),w:Tb(h[4],c),d:Tb(h[5],c),h:Tb(h[6],c),m:Tb(h[7],c),s:Tb(h[8],c)}):null==f?f={}:"object"==typeof f&&("from"in f||"to"in f)&&(e=Vb(tb(f.from),tb(f.to)),f={},f.ms=e.milliseconds,f.M=e.months),d=new Ab(f),Bb(a)&&j(a,"_locale")&&(d._locale=a._locale),d}function Tb(a,b){var c=a&&parseFloat(a.replace(",","."));return(isNaN(c)?0:c)*b}function Ub(a,b){var c={milliseconds:0,months:0};return c.months=b.month()-a.month()+12*(b.year()-a.year()),a.clone().add(c.months,"M").isAfter(b)&&--c.months,c.milliseconds=+b-+a.clone().add(c.months,"M"),c}function Vb(a,b){var c;return a.isValid()&&b.isValid()?(b=Fb(b,a),a.isBefore(b)?c=Ub(a,b):(c=Ub(b,a),c.milliseconds=-c.milliseconds,c.months=-c.months),c):{milliseconds:0,months:0}}function Wb(a,b){return function(c,d){var e,f;return null===d||isNaN(+d)||(y(b,"moment()."+b+"(period, number) is deprecated. Please use moment()."+b+"(number, period). See http://momentjs.com/guides/#/warnings/add-inverted-param/ for more info."),f=c,c=d,d=f),c="string"==typeof c?+c:c,e=Sb(c,d),Xb(this,e,a),this}}function Xb(b,c,d,e){var f=c._milliseconds,g=Cb(c._days),h=Cb(c._months);b.isValid()&&(e=null==e||e,f&&b._d.setTime(b._d.valueOf()+f*d),g&&Q(b,"Date",P(b,"Date")+g*d),h&&ja(b,P(b,"Month")+h*d),e&&a.updateOffset(b,g||h))}function Yb(a,b){var c=a.diff(b,"days",!0);return c<-6?"sameElse":c<-1?"lastWeek":c<0?"lastDay":c<1?"sameDay":c<2?"nextDay":c<7?"nextWeek":"sameElse"}function Zb(b,c){var d=b||tb(),e=Fb(d,this).startOf("day"),f=a.calendarFormat(this,e)||"sameElse",g=c&&(z(c[f])?c[f].call(this,d):c[f]);return this.format(g||this.localeData().calendar(f,this,tb(d)))}function $b(){return new r(this)}function _b(a,b){var c=s(a)?a:tb(a);return!(!this.isValid()||!c.isValid())&&(b=K(f(b)?"millisecond":b),"millisecond"===b?this.valueOf()>c.valueOf():c.valueOf()<this.clone().startOf(b).valueOf())}function ac(a,b){var c=s(a)?a:tb(a);return!(!this.isValid()||!c.isValid())&&(b=K(f(b)?"millisecond":b),"millisecond"===b?this.valueOf()<c.valueOf():this.clone().endOf(b).valueOf()<c.valueOf())}function bc(a,b,c,d){return d=d||"()",("("===d[0]?this.isAfter(a,c):!this.isBefore(a,c))&&(")"===d[1]?this.isBefore(b,c):!this.isAfter(b,c))}function cc(a,b){var c,d=s(a)?a:tb(a);return!(!this.isValid()||!d.isValid())&&(b=K(b||"millisecond"),"millisecond"===b?this.valueOf()===d.valueOf():(c=d.valueOf(),this.clone().startOf(b).valueOf()<=c&&c<=this.clone().endOf(b).valueOf()))}function dc(a,b){return this.isSame(a,b)||this.isAfter(a,b)}function ec(a,b){return this.isSame(a,b)||this.isBefore(a,b)}function fc(a,b,c){var d,e,f,g;return this.isValid()?(d=Fb(a,this),d.isValid()?(e=6e4*(d.utcOffset()-this.utcOffset()),b=K(b),"year"===b||"month"===b||"quarter"===b?(g=gc(this,d),"quarter"===b?g/=3:"year"===b&&(g/=12)):(f=this-d,g="second"===b?f/1e3:"minute"===b?f/6e4:"hour"===b?f/36e5:"day"===b?(f-e)/864e5:"week"===b?(f-e)/6048e5:f),c?g:t(g)):NaN):NaN}function gc(a,b){var c,d,e=12*(b.year()-a.year())+(b.month()-a.month()),f=a.clone().add(e,"months");return b-f<0?(c=a.clone().add(e-1,"months"),d=(b-f)/(f-c)):(c=a.clone().add(e+1,"months"),d=(b-f)/(c-f)),-(e+d)||0}function hc(){return this.clone().locale("en").format("ddd MMM DD YYYY HH:mm:ss [GMT]ZZ")}function ic(){if(!this.isValid())return null;var a=this.clone().utc();return a.year()<0||a.year()>9999?X(a,"YYYYYY-MM-DD[T]HH:mm:ss.SSS[Z]"):z(Date.prototype.toISOString)?this.toDate().toISOString():X(a,"YYYY-MM-DD[T]HH:mm:ss.SSS[Z]")}function jc(){if(!this.isValid())return"moment.invalid(/* "+this._i+" */)";var a="moment",b="";this.isLocal()||(a=0===this.utcOffset()?"moment.utc":"moment.parseZone",b="Z");var c="["+a+'("]',d=0<=this.year()&&this.year()<=9999?"YYYY":"YYYYYY",e="-MM-DD[T]HH:mm:ss.SSS",f=b+'[")]';return this.format(c+d+e+f)}function kc(b){b||(b=this.isUtc()?a.defaultFormatUtc:a.defaultFormat);var c=X(this,b);return this.localeData().postformat(c)}function lc(a,b){return this.isValid()&&(s(a)&&a.isValid()||tb(a).isValid())?Sb({to:this,from:a}).locale(this.locale()).humanize(!b):this.localeData().invalidDate()}function mc(a){return this.from(tb(),a)}function nc(a,b){return this.isValid()&&(s(a)&&a.isValid()||tb(a).isValid())?Sb({from:this,to:a}).locale(this.locale()).humanize(!b):this.localeData().invalidDate()}function oc(a){return this.to(tb(),a)}function pc(a){var b;return void 0===a?this._locale._abbr:(b=bb(a),null!=b&&(this._locale=b),this)}function qc(){return this._locale}function rc(a){switch(a=K(a)){case"year":this.month(0);case"quarter":case"month":this.date(1);case"week":case"isoWeek":case"day":case"date":this.hours(0);case"hour":this.minutes(0);case"minute":this.seconds(0);case"second":this.milliseconds(0)}return"week"===a&&this.weekday(0),"isoWeek"===a&&this.isoWeekday(1),"quarter"===a&&this.month(3*Math.floor(this.month()/3)),this}function sc(a){return a=K(a),void 0===a||"millisecond"===a?this:("date"===a&&(a="day"),this.startOf(a).add(1,"isoWeek"===a?"week":a).subtract(1,"ms"))}function tc(){return this._d.valueOf()-6e4*(this._offset||0)}function uc(){return Math.floor(this.valueOf()/1e3)}function vc(){return new Date(this.valueOf())}function wc(){var a=this;return[a.year(),a.month(),a.date(),a.hour(),a.minute(),a.second(),a.millisecond()]}function xc(){var a=this;return{years:a.year(),months:a.month(),date:a.date(),hours:a.hours(),minutes:a.minutes(),seconds:a.seconds(),milliseconds:a.milliseconds()}}function yc(){return this.isValid()?this.toISOString():null}function zc(){return o(this)}function Ac(){
 return k({},n(this))}function Bc(){return n(this).overflow}function Cc(){return{input:this._i,format:this._f,locale:this._locale,isUTC:this._isUTC,strict:this._strict}}function Dc(a,b){U(0,[a,a.length],0,b)}function Ec(a){return Ic.call(this,a,this.week(),this.weekday(),this.localeData()._week.dow,this.localeData()._week.doy)}function Fc(a){return Ic.call(this,a,this.isoWeek(),this.isoWeekday(),1,4)}function Gc(){return xa(this.year(),1,4)}function Hc(){var a=this.localeData()._week;return xa(this.year(),a.dow,a.doy)}function Ic(a,b,c,d,e){var f;return null==a?wa(this,d,e).year:(f=xa(a,d,e),b>f&&(b=f),Jc.call(this,a,b,c,d,e))}function Jc(a,b,c,d,e){var f=va(a,b,c,d,e),g=ta(f.year,0,f.dayOfYear);return this.year(g.getUTCFullYear()),this.month(g.getUTCMonth()),this.date(g.getUTCDate()),this}function Kc(a){return null==a?Math.ceil((this.month()+1)/3):this.month(3*(a-1)+this.month()%3)}function Lc(a){var b=Math.round((this.clone().startOf("day")-this.clone().startOf("year"))/864e5)+1;return null==a?b:this.add(a-b,"d")}function Mc(a,b){b[ke]=u(1e3*("0."+a))}function Nc(){return this._isUTC?"UTC":""}function Oc(){return this._isUTC?"Coordinated Universal Time":""}function Pc(a){return tb(1e3*a)}function Qc(){return tb.apply(null,arguments).parseZone()}function Rc(a){return a}function Sc(a,b,c,d){var e=bb(),f=l().set(d,b);return e[c](f,a)}function Tc(a,b,c){if(g(a)&&(b=a,a=void 0),a=a||"",null!=b)return Sc(a,b,c,"month");var d,e=[];for(d=0;d<12;d++)e[d]=Sc(a,d,c,"month");return e}function Uc(a,b,c,d){"boolean"==typeof a?(g(b)&&(c=b,b=void 0),b=b||""):(b=a,c=b,a=!1,g(b)&&(c=b,b=void 0),b=b||"");var e=bb(),f=a?e._week.dow:0;if(null!=c)return Sc(b,(c+f)%7,d,"day");var h,i=[];for(h=0;h<7;h++)i[h]=Sc(b,(h+f)%7,d,"day");return i}function Vc(a,b){return Tc(a,b,"months")}function Wc(a,b){return Tc(a,b,"monthsShort")}function Xc(a,b,c){return Uc(a,b,c,"weekdays")}function Yc(a,b,c){return Uc(a,b,c,"weekdaysShort")}function Zc(a,b,c){return Uc(a,b,c,"weekdaysMin")}function $c(){var a=this._data;return this._milliseconds=df(this._milliseconds),this._days=df(this._days),this._months=df(this._months),a.milliseconds=df(a.milliseconds),a.seconds=df(a.seconds),a.minutes=df(a.minutes),a.hours=df(a.hours),a.months=df(a.months),a.years=df(a.years),this}function _c(a,b,c,d){var e=Sb(b,c);return a._milliseconds+=d*e._milliseconds,a._days+=d*e._days,a._months+=d*e._months,a._bubble()}function ad(a,b){return _c(this,a,b,1)}function bd(a,b){return _c(this,a,b,-1)}function cd(a){return a<0?Math.floor(a):Math.ceil(a)}function dd(){var a,b,c,d,e,f=this._milliseconds,g=this._days,h=this._months,i=this._data;return f>=0&&g>=0&&h>=0||f<=0&&g<=0&&h<=0||(f+=864e5*cd(fd(h)+g),g=0,h=0),i.milliseconds=f%1e3,a=t(f/1e3),i.seconds=a%60,b=t(a/60),i.minutes=b%60,c=t(b/60),i.hours=c%24,g+=t(c/24),e=t(ed(g)),h+=e,g-=cd(fd(e)),d=t(h/12),h%=12,i.days=g,i.months=h,i.years=d,this}function ed(a){return 4800*a/146097}function fd(a){return 146097*a/4800}function gd(a){if(!this.isValid())return NaN;var b,c,d=this._milliseconds;if(a=K(a),"month"===a||"year"===a)return b=this._days+d/864e5,c=this._months+ed(b),"month"===a?c:c/12;switch(b=this._days+Math.round(fd(this._months)),a){case"week":return b/7+d/6048e5;case"day":return b+d/864e5;case"hour":return 24*b+d/36e5;case"minute":return 1440*b+d/6e4;case"second":return 86400*b+d/1e3;case"millisecond":return Math.floor(864e5*b)+d;default:throw new Error("Unknown unit "+a)}}function hd(){return this.isValid()?this._milliseconds+864e5*this._days+this._months%12*2592e6+31536e6*u(this._months/12):NaN}function id(a){return function(){return this.as(a)}}function jd(a){return a=K(a),this.isValid()?this[a+"s"]():NaN}function kd(a){return function(){return this.isValid()?this._data[a]:NaN}}function ld(){return t(this.days()/7)}function md(a,b,c,d,e){return e.relativeTime(b||1,!!c,a,d)}function nd(a,b,c){var d=Sb(a).abs(),e=uf(d.as("s")),f=uf(d.as("m")),g=uf(d.as("h")),h=uf(d.as("d")),i=uf(d.as("M")),j=uf(d.as("y")),k=e<=vf.ss&&["s",e]||e<vf.s&&["ss",e]||f<=1&&["m"]||f<vf.m&&["mm",f]||g<=1&&["h"]||g<vf.h&&["hh",g]||h<=1&&["d"]||h<vf.d&&["dd",h]||i<=1&&["M"]||i<vf.M&&["MM",i]||j<=1&&["y"]||["yy",j];return k[2]=b,k[3]=+a>0,k[4]=c,md.apply(null,k)}function od(a){return void 0===a?uf:"function"==typeof a&&(uf=a,!0)}function pd(a,b){return void 0!==vf[a]&&(void 0===b?vf[a]:(vf[a]=b,"s"===a&&(vf.ss=b-1),!0))}function qd(a){if(!this.isValid())return this.localeData().invalidDate();var b=this.localeData(),c=nd(this,!a,b);return a&&(c=b.pastFuture(+this,c)),b.postformat(c)}function rd(){if(!this.isValid())return this.localeData().invalidDate();var a,b,c,d=wf(this._milliseconds)/1e3,e=wf(this._days),f=wf(this._months);a=t(d/60),b=t(a/60),d%=60,a%=60,c=t(f/12),f%=12;var g=c,h=f,i=e,j=b,k=a,l=d,m=this.asSeconds();return m?(m<0?"-":"")+"P"+(g?g+"Y":"")+(h?h+"M":"")+(i?i+"D":"")+(j||k||l?"T":"")+(j?j+"H":"")+(k?k+"M":"")+(l?l+"S":""):"P0D"}var sd,td;td=Array.prototype.some?Array.prototype.some:function(a){for(var b=Object(this),c=b.length>>>0,d=0;d<c;d++)if(d in b&&a.call(this,b[d],d,b))return!0;return!1};var ud=td,vd=a.momentProperties=[],wd=!1,xd={};a.suppressDeprecationWarnings=!1,a.deprecationHandler=null;var yd;yd=Object.keys?Object.keys:function(a){var b,c=[];for(b in a)j(a,b)&&c.push(b);return c};var zd,Ad=yd,Bd={sameDay:"[Today at] LT",nextDay:"[Tomorrow at] LT",nextWeek:"dddd [at] LT",lastDay:"[Yesterday at] LT",lastWeek:"[Last] dddd [at] LT",sameElse:"L"},Cd={LTS:"h:mm:ss A",LT:"h:mm A",L:"MM/DD/YYYY",LL:"MMMM D, YYYY",LLL:"MMMM D, YYYY h:mm A",LLLL:"dddd, MMMM D, YYYY h:mm A"},Dd="Invalid date",Ed="%d",Fd=/\d{1,2}/,Gd={future:"in %s",past:"%s ago",s:"a few seconds",ss:"%d seconds",m:"a minute",mm:"%d minutes",h:"an hour",hh:"%d hours",d:"a day",dd:"%d days",M:"a month",MM:"%d months",y:"a year",yy:"%d years"},Hd={},Id={},Jd=/(\[[^\[]*\])|(\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|YYYYYY|YYYYY|YYYY|YY|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g,Kd=/(\[[^\[]*\])|(\\)?(LTS|LT|LL?L?L?|l{1,4})/g,Ld={},Md={},Nd=/\d/,Od=/\d\d/,Pd=/\d{3}/,Qd=/\d{4}/,Rd=/[+-]?\d{6}/,Sd=/\d\d?/,Td=/\d\d\d\d?/,Ud=/\d\d\d\d\d\d?/,Vd=/\d{1,3}/,Wd=/\d{1,4}/,Xd=/[+-]?\d{1,6}/,Yd=/\d+/,Zd=/[+-]?\d+/,$d=/Z|[+-]\d\d:?\d\d/gi,_d=/Z|[+-]\d\d(?::?\d\d)?/gi,ae=/[+-]?\d+(\.\d{1,3})?/,be=/[0-9]*['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+|[\u0600-\u06FF\/]+(\s*?[\u0600-\u06FF]+){1,2}/i,ce={},de={},ee=0,fe=1,ge=2,he=3,ie=4,je=5,ke=6,le=7,me=8;zd=Array.prototype.indexOf?Array.prototype.indexOf:function(a){var b;for(b=0;b<this.length;++b)if(this[b]===a)return b;return-1};var ne=zd;U("M",["MM",2],"Mo",function(){return this.month()+1}),U("MMM",0,0,function(a){return this.localeData().monthsShort(this,a)}),U("MMMM",0,0,function(a){return this.localeData().months(this,a)}),J("month","M"),M("month",8),Z("M",Sd),Z("MM",Sd,Od),Z("MMM",function(a,b){return b.monthsShortRegex(a)}),Z("MMMM",function(a,b){return b.monthsRegex(a)}),ba(["M","MM"],function(a,b){b[fe]=u(a)-1}),ba(["MMM","MMMM"],function(a,b,c,d){var e=c._locale.monthsParse(a,d,c._strict);null!=e?b[fe]=e:n(c).invalidMonth=a});var oe=/D[oD]?(\[[^\[\]]*\]|\s)+MMMM?/,pe="January_February_March_April_May_June_July_August_September_October_November_December".split("_"),qe="Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec".split("_"),re=be,se=be;U("Y",0,0,function(){var a=this.year();return a<=9999?""+a:"+"+a}),U(0,["YY",2],0,function(){return this.year()%100}),U(0,["YYYY",4],0,"year"),U(0,["YYYYY",5],0,"year"),U(0,["YYYYYY",6,!0],0,"year"),J("year","y"),M("year",1),Z("Y",Zd),Z("YY",Sd,Od),Z("YYYY",Wd,Qd),Z("YYYYY",Xd,Rd),Z("YYYYYY",Xd,Rd),ba(["YYYYY","YYYYYY"],ee),ba("YYYY",function(b,c){c[ee]=2===b.length?a.parseTwoDigitYear(b):u(b)}),ba("YY",function(b,c){c[ee]=a.parseTwoDigitYear(b)}),ba("Y",function(a,b){b[ee]=parseInt(a,10)}),a.parseTwoDigitYear=function(a){return u(a)+(u(a)>68?1900:2e3)};var te=O("FullYear",!0);U("w",["ww",2],"wo","week"),U("W",["WW",2],"Wo","isoWeek"),J("week","w"),J("isoWeek","W"),M("week",5),M("isoWeek",5),Z("w",Sd),Z("ww",Sd,Od),Z("W",Sd),Z("WW",Sd,Od),ca(["w","ww","W","WW"],function(a,b,c,d){b[d.substr(0,1)]=u(a)});var ue={dow:0,doy:6};U("d",0,"do","day"),U("dd",0,0,function(a){return this.localeData().weekdaysMin(this,a)}),U("ddd",0,0,function(a){return this.localeData().weekdaysShort(this,a)}),U("dddd",0,0,function(a){return this.localeData().weekdays(this,a)}),U("e",0,0,"weekday"),U("E",0,0,"isoWeekday"),J("day","d"),J("weekday","e"),J("isoWeekday","E"),M("day",11),M("weekday",11),M("isoWeekday",11),Z("d",Sd),Z("e",Sd),Z("E",Sd),Z("dd",function(a,b){return b.weekdaysMinRegex(a)}),Z("ddd",function(a,b){return b.weekdaysShortRegex(a)}),Z("dddd",function(a,b){return b.weekdaysRegex(a)}),ca(["dd","ddd","dddd"],function(a,b,c,d){var e=c._locale.weekdaysParse(a,d,c._strict);null!=e?b.d=e:n(c).invalidWeekday=a}),ca(["d","e","E"],function(a,b,c,d){b[d]=u(a)});var ve="Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"),we="Sun_Mon_Tue_Wed_Thu_Fri_Sat".split("_"),xe="Su_Mo_Tu_We_Th_Fr_Sa".split("_"),ye=be,ze=be,Ae=be;U("H",["HH",2],0,"hour"),U("h",["hh",2],0,Ra),U("k",["kk",2],0,Sa),U("hmm",0,0,function(){return""+Ra.apply(this)+T(this.minutes(),2)}),U("hmmss",0,0,function(){return""+Ra.apply(this)+T(this.minutes(),2)+T(this.seconds(),2)}),U("Hmm",0,0,function(){return""+this.hours()+T(this.minutes(),2)}),U("Hmmss",0,0,function(){return""+this.hours()+T(this.minutes(),2)+T(this.seconds(),2)}),Ta("a",!0),Ta("A",!1),J("hour","h"),M("hour",13),Z("a",Ua),Z("A",Ua),Z("H",Sd),Z("h",Sd),Z("k",Sd),Z("HH",Sd,Od),Z("hh",Sd,Od),Z("kk",Sd,Od),Z("hmm",Td),Z("hmmss",Ud),Z("Hmm",Td),Z("Hmmss",Ud),ba(["H","HH"],he),ba(["k","kk"],function(a,b,c){var d=u(a);b[he]=24===d?0:d}),ba(["a","A"],function(a,b,c){c._isPm=c._locale.isPM(a),c._meridiem=a}),ba(["h","hh"],function(a,b,c){b[he]=u(a),n(c).bigHour=!0}),ba("hmm",function(a,b,c){var d=a.length-2;b[he]=u(a.substr(0,d)),b[ie]=u(a.substr(d)),n(c).bigHour=!0}),ba("hmmss",function(a,b,c){var d=a.length-4,e=a.length-2;b[he]=u(a.substr(0,d)),b[ie]=u(a.substr(d,2)),b[je]=u(a.substr(e)),n(c).bigHour=!0}),ba("Hmm",function(a,b,c){var d=a.length-2;b[he]=u(a.substr(0,d)),b[ie]=u(a.substr(d))}),ba("Hmmss",function(a,b,c){var d=a.length-4,e=a.length-2;b[he]=u(a.substr(0,d)),b[ie]=u(a.substr(d,2)),b[je]=u(a.substr(e))});var Be,Ce=/[ap]\.?m?\.?/i,De=O("Hours",!0),Ee={calendar:Bd,longDateFormat:Cd,invalidDate:Dd,ordinal:Ed,dayOfMonthOrdinalParse:Fd,relativeTime:Gd,months:pe,monthsShort:qe,week:ue,weekdays:ve,weekdaysMin:xe,weekdaysShort:we,meridiemParse:Ce},Fe={},Ge={},He=/^\s*((?:[+-]\d{6}|\d{4})-(?:\d\d-\d\d|W\d\d-\d|W\d\d|\d\d\d|\d\d))(?:(T| )(\d\d(?::\d\d(?::\d\d(?:[.,]\d+)?)?)?)([\+\-]\d\d(?::?\d\d)?|\s*Z)?)?$/,Ie=/^\s*((?:[+-]\d{6}|\d{4})(?:\d\d\d\d|W\d\d\d|W\d\d|\d\d\d|\d\d))(?:(T| )(\d\d(?:\d\d(?:\d\d(?:[.,]\d+)?)?)?)([\+\-]\d\d(?::?\d\d)?|\s*Z)?)?$/,Je=/Z|[+-]\d\d(?::?\d\d)?/,Ke=[["YYYYYY-MM-DD",/[+-]\d{6}-\d\d-\d\d/],["YYYY-MM-DD",/\d{4}-\d\d-\d\d/],["GGGG-[W]WW-E",/\d{4}-W\d\d-\d/],["GGGG-[W]WW",/\d{4}-W\d\d/,!1],["YYYY-DDD",/\d{4}-\d{3}/],["YYYY-MM",/\d{4}-\d\d/,!1],["YYYYYYMMDD",/[+-]\d{10}/],["YYYYMMDD",/\d{8}/],["GGGG[W]WWE",/\d{4}W\d{3}/],["GGGG[W]WW",/\d{4}W\d{2}/,!1],["YYYYDDD",/\d{7}/]],Le=[["HH:mm:ss.SSSS",/\d\d:\d\d:\d\d\.\d+/],["HH:mm:ss,SSSS",/\d\d:\d\d:\d\d,\d+/],["HH:mm:ss",/\d\d:\d\d:\d\d/],["HH:mm",/\d\d:\d\d/],["HHmmss.SSSS",/\d\d\d\d\d\d\.\d+/],["HHmmss,SSSS",/\d\d\d\d\d\d,\d+/],["HHmmss",/\d\d\d\d\d\d/],["HHmm",/\d\d\d\d/],["HH",/\d\d/]],Me=/^\/?Date\((\-?\d+)/i,Ne=/^((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s)?(\d?\d\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(?:\d\d)?\d\d\s)(\d\d:\d\d)(\:\d\d)?(\s(?:UT|GMT|[ECMP][SD]T|[A-IK-Za-ik-z]|[+-]\d{4}))$/;a.createFromInputFallback=x("value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), which is not reliable across all browsers and versions. Non RFC2822/ISO date formats are discouraged and will be removed in an upcoming major release. Please refer to http://momentjs.com/guides/#/warnings/js-date/ for more info.",function(a){a._d=new Date(a._i+(a._useUTC?" UTC":""))}),a.ISO_8601=function(){},a.RFC_2822=function(){};var Oe=x("moment().min is deprecated, use moment.max instead. http://momentjs.com/guides/#/warnings/min-max/",function(){var a=tb.apply(null,arguments);return this.isValid()&&a.isValid()?a<this?this:a:p()}),Pe=x("moment().max is deprecated, use moment.min instead. http://momentjs.com/guides/#/warnings/min-max/",function(){var a=tb.apply(null,arguments);return this.isValid()&&a.isValid()?a>this?this:a:p()}),Qe=function(){return Date.now?Date.now():+new Date},Re=["year","quarter","month","week","day","hour","minute","second","millisecond"];Db("Z",":"),Db("ZZ",""),Z("Z",_d),Z("ZZ",_d),ba(["Z","ZZ"],function(a,b,c){c._useUTC=!0,c._tzm=Eb(_d,a)});var Se=/([\+\-]|\d\d)/gi;a.updateOffset=function(){};var Te=/^(\-)?(?:(\d*)[. ])?(\d+)\:(\d+)(?:\:(\d+)(\.\d*)?)?$/,Ue=/^(-)?P(?:(-?[0-9,.]*)Y)?(?:(-?[0-9,.]*)M)?(?:(-?[0-9,.]*)W)?(?:(-?[0-9,.]*)D)?(?:T(?:(-?[0-9,.]*)H)?(?:(-?[0-9,.]*)M)?(?:(-?[0-9,.]*)S)?)?$/;Sb.fn=Ab.prototype,Sb.invalid=zb;var Ve=Wb(1,"add"),We=Wb(-1,"subtract");a.defaultFormat="YYYY-MM-DDTHH:mm:ssZ",a.defaultFormatUtc="YYYY-MM-DDTHH:mm:ss[Z]";var Xe=x("moment().lang() is deprecated. Instead, use moment().localeData() to get the language configuration. Use moment().locale() to change languages.",function(a){return void 0===a?this.localeData():this.locale(a)});U(0,["gg",2],0,function(){return this.weekYear()%100}),U(0,["GG",2],0,function(){return this.isoWeekYear()%100}),Dc("gggg","weekYear"),Dc("ggggg","weekYear"),Dc("GGGG","isoWeekYear"),Dc("GGGGG","isoWeekYear"),J("weekYear","gg"),J("isoWeekYear","GG"),M("weekYear",1),M("isoWeekYear",1),Z("G",Zd),Z("g",Zd),Z("GG",Sd,Od),Z("gg",Sd,Od),Z("GGGG",Wd,Qd),Z("gggg",Wd,Qd),Z("GGGGG",Xd,Rd),Z("ggggg",Xd,Rd),ca(["gggg","ggggg","GGGG","GGGGG"],function(a,b,c,d){b[d.substr(0,2)]=u(a)}),ca(["gg","GG"],function(b,c,d,e){c[e]=a.parseTwoDigitYear(b)}),U("Q",0,"Qo","quarter"),J("quarter","Q"),M("quarter",7),Z("Q",Nd),ba("Q",function(a,b){b[fe]=3*(u(a)-1)}),U("D",["DD",2],"Do","date"),J("date","D"),M("date",9),Z("D",Sd),Z("DD",Sd,Od),Z("Do",function(a,b){return a?b._dayOfMonthOrdinalParse||b._ordinalParse:b._dayOfMonthOrdinalParseLenient}),ba(["D","DD"],ge),ba("Do",function(a,b){b[ge]=u(a.match(Sd)[0],10)});var Ye=O("Date",!0);U("DDD",["DDDD",3],"DDDo","dayOfYear"),J("dayOfYear","DDD"),M("dayOfYear",4),Z("DDD",Vd),Z("DDDD",Pd),ba(["DDD","DDDD"],function(a,b,c){c._dayOfYear=u(a)}),U("m",["mm",2],0,"minute"),J("minute","m"),M("minute",14),Z("m",Sd),Z("mm",Sd,Od),ba(["m","mm"],ie);var Ze=O("Minutes",!1);U("s",["ss",2],0,"second"),J("second","s"),M("second",15),Z("s",Sd),Z("ss",Sd,Od),ba(["s","ss"],je);var $e=O("Seconds",!1);U("S",0,0,function(){return~~(this.millisecond()/100)}),U(0,["SS",2],0,function(){return~~(this.millisecond()/10)}),U(0,["SSS",3],0,"millisecond"),U(0,["SSSS",4],0,function(){return 10*this.millisecond()}),U(0,["SSSSS",5],0,function(){return 100*this.millisecond()}),U(0,["SSSSSS",6],0,function(){return 1e3*this.millisecond()}),U(0,["SSSSSSS",7],0,function(){return 1e4*this.millisecond()}),U(0,["SSSSSSSS",8],0,function(){return 1e5*this.millisecond()}),U(0,["SSSSSSSSS",9],0,function(){return 1e6*this.millisecond()}),J("millisecond","ms"),M("millisecond",16),Z("S",Vd,Nd),Z("SS",Vd,Od),Z("SSS",Vd,Pd);var _e;for(_e="SSSS";_e.length<=9;_e+="S")Z(_e,Yd);for(_e="S";_e.length<=9;_e+="S")ba(_e,Mc);var af=O("Milliseconds",!1);U("z",0,0,"zoneAbbr"),U("zz",0,0,"zoneName");var bf=r.prototype;bf.add=Ve,bf.calendar=Zb,bf.clone=$b,bf.diff=fc,bf.endOf=sc,bf.format=kc,bf.from=lc,bf.fromNow=mc,bf.to=nc,bf.toNow=oc,bf.get=R,bf.invalidAt=Bc,bf.isAfter=_b,bf.isBefore=ac,bf.isBetween=bc,bf.isSame=cc,bf.isSameOrAfter=dc,bf.isSameOrBefore=ec,bf.isValid=zc,bf.lang=Xe,bf.locale=pc,bf.localeData=qc,bf.max=Pe,bf.min=Oe,bf.parsingFlags=Ac,bf.set=S,bf.startOf=rc,bf.subtract=We,bf.toArray=wc,bf.toObject=xc,bf.toDate=vc,bf.toISOString=ic,bf.inspect=jc,bf.toJSON=yc,bf.toString=hc,bf.unix=uc,bf.valueOf=tc,bf.creationData=Cc,bf.year=te,bf.isLeapYear=ra,bf.weekYear=Ec,bf.isoWeekYear=Fc,bf.quarter=bf.quarters=Kc,bf.month=ka,bf.daysInMonth=la,bf.week=bf.weeks=Ba,bf.isoWeek=bf.isoWeeks=Ca,bf.weeksInYear=Hc,bf.isoWeeksInYear=Gc,bf.date=Ye,bf.day=bf.days=Ka,bf.weekday=La,bf.isoWeekday=Ma,bf.dayOfYear=Lc,bf.hour=bf.hours=De,bf.minute=bf.minutes=Ze,bf.second=bf.seconds=$e,bf.millisecond=bf.milliseconds=af,bf.utcOffset=Hb,bf.utc=Jb,bf.local=Kb,bf.parseZone=Lb,bf.hasAlignedHourOffset=Mb,bf.isDST=Nb,bf.isLocal=Pb,bf.isUtcOffset=Qb,bf.isUtc=Rb,bf.isUTC=Rb,bf.zoneAbbr=Nc,bf.zoneName=Oc,bf.dates=x("dates accessor is deprecated. Use date instead.",Ye),bf.months=x("months accessor is deprecated. Use month instead",ka),bf.years=x("years accessor is deprecated. Use year instead",te),bf.zone=x("moment().zone is deprecated, use moment().utcOffset instead. http://momentjs.com/guides/#/warnings/zone/",Ib),bf.isDSTShifted=x("isDSTShifted is deprecated. See http://momentjs.com/guides/#/warnings/dst-shifted/ for more information",Ob);var cf=C.prototype;cf.calendar=D,cf.longDateFormat=E,cf.invalidDate=F,cf.ordinal=G,cf.preparse=Rc,cf.postformat=Rc,cf.relativeTime=H,cf.pastFuture=I,cf.set=A,cf.months=fa,cf.monthsShort=ga,cf.monthsParse=ia,cf.monthsRegex=na,cf.monthsShortRegex=ma,cf.week=ya,cf.firstDayOfYear=Aa,cf.firstDayOfWeek=za,cf.weekdays=Fa,cf.weekdaysMin=Ha,cf.weekdaysShort=Ga,cf.weekdaysParse=Ja,cf.weekdaysRegex=Na,cf.weekdaysShortRegex=Oa,cf.weekdaysMinRegex=Pa,cf.isPM=Va,cf.meridiem=Wa,$a("en",{dayOfMonthOrdinalParse:/\d{1,2}(th|st|nd|rd)/,ordinal:function(a){var b=a%10,c=1===u(a%100/10)?"th":1===b?"st":2===b?"nd":3===b?"rd":"th";return a+c}}),a.lang=x("moment.lang is deprecated. Use moment.locale instead.",$a),a.langData=x("moment.langData is deprecated. Use moment.localeData instead.",bb);var df=Math.abs,ef=id("ms"),ff=id("s"),gf=id("m"),hf=id("h"),jf=id("d"),kf=id("w"),lf=id("M"),mf=id("y"),nf=kd("milliseconds"),of=kd("seconds"),pf=kd("minutes"),qf=kd("hours"),rf=kd("days"),sf=kd("months"),tf=kd("years"),uf=Math.round,vf={ss:44,s:45,m:45,h:22,d:26,M:11},wf=Math.abs,xf=Ab.prototype;return xf.isValid=yb,xf.abs=$c,xf.add=ad,xf.subtract=bd,xf.as=gd,xf.asMilliseconds=ef,xf.asSeconds=ff,xf.asMinutes=gf,xf.asHours=hf,xf.asDays=jf,xf.asWeeks=kf,xf.asMonths=lf,xf.asYears=mf,xf.valueOf=hd,xf._bubble=dd,xf.get=jd,xf.milliseconds=nf,xf.seconds=of,xf.minutes=pf,xf.hours=qf,xf.days=rf,xf.weeks=ld,xf.months=sf,xf.years=tf,xf.humanize=qd,xf.toISOString=rd,xf.toString=rd,xf.toJSON=rd,xf.locale=pc,xf.localeData=qc,xf.toIsoString=x("toIsoString() is deprecated. Please use toISOString() instead (notice the capitals)",rd),xf.lang=Xe,U("X",0,0,"unix"),U("x",0,0,"valueOf"),Z("x",Zd),Z("X",ae),ba("X",function(a,b,c){c._d=new Date(1e3*parseFloat(a,10))}),ba("x",function(a,b,c){c._d=new Date(u(a))}),a.version="2.18.1",b(tb),a.fn=bf,a.min=vb,a.max=wb,a.now=Qe,a.utc=l,a.unix=Pc,a.months=Vc,a.isDate=h,a.locale=$a,a.invalid=p,a.duration=Sb,a.isMoment=s,a.weekdays=Xc,a.parseZone=Qc,a.localeData=bb,a.isDuration=Bb,a.monthsShort=Wc,a.weekdaysMin=Zc,a.defineLocale=_a,a.updateLocale=ab,a.locales=cb,a.weekdaysShort=Yc,a.normalizeUnits=K,a.relativeTimeRounding=od,a.relativeTimeThreshold=pd,a.calendarFormat=Yb,a.prototype=bf,a});
+/*
+ * angular-ui-bootstrap
+ * http://angular-ui.github.io/bootstrap/
+
+ * Version: 2.5.0 - 2017-01-28
+ * License: MIT
+ */angular.module("ui.bootstrap",["ui.bootstrap.typeahead","ui.bootstrap.debounce","ui.bootstrap.position"]),angular.module("ui.bootstrap.typeahead",["ui.bootstrap.debounce","ui.bootstrap.position"]).factory("uibTypeaheadParser",["$parse",function(e){var t=/^\s*([\s\S]+?)(?:\s+as\s+([\s\S]+?))?\s+for\s+(?:([\$\w][\$\w\d]*))\s+in\s+([\s\S]+?)$/;return{parse:function(a){var o=a.match(t);if(!o)throw new Error('Expected typeahead specification in form of "_modelValue_ (as _label_)? for _item_ in _collection_" but got "'+a+'".');return{itemName:o[3],source:e(o[4]),viewMapper:e(o[2]||o[1]),modelMapper:e(o[1])}}}}]).controller("UibTypeaheadController",["$scope","$element","$attrs","$compile","$parse","$q","$timeout","$document","$window","$rootScope","$$debounce","$uibPosition","uibTypeaheadParser",function(e,t,a,o,i,n,r,l,s,p,d,u,c){function h(){L.moveInProgress||(L.moveInProgress=!0,L.$digest()),Q()}function f(){L.position=C?u.offset(t):u.position(t),L.position.top+=t.prop("offsetHeight")}function g(e){var t;return angular.version.minor<6?(t=e.$options||{},t.getOption=function(e){return t[e]}):t=e.$options,t}var m,b,v=[9,13,27,38,40],y=200,$=e.$eval(a.typeaheadMinLength);$||0===$||($=1),e.$watch(a.typeaheadMinLength,function(e){$=e||0===e?e:1});var w=e.$eval(a.typeaheadWaitMs)||0,S=e.$eval(a.typeaheadEditable)!==!1;e.$watch(a.typeaheadEditable,function(e){S=e!==!1});var x,M,I=i(a.typeaheadLoading).assign||angular.noop,T=a.typeaheadShouldSelect?i(a.typeaheadShouldSelect):function(e,t){var a=t.$event;return 13===a.which||9===a.which},U=i(a.typeaheadOnSelect),N=angular.isDefined(a.typeaheadSelectOnBlur)?e.$eval(a.typeaheadSelectOnBlur):!1,O=i(a.typeaheadNoResults).assign||angular.noop,P=a.typeaheadInputFormatter?i(a.typeaheadInputFormatter):void 0,C=a.typeaheadAppendToBody?e.$eval(a.typeaheadAppendToBody):!1,k=a.typeaheadAppendTo?e.$eval(a.typeaheadAppendTo):null,R=e.$eval(a.typeaheadFocusFirst)!==!1,E=a.typeaheadSelectOnExact?e.$eval(a.typeaheadSelectOnExact):!1,W=i(a.typeaheadIsOpen).assign||angular.noop,q=e.$eval(a.typeaheadShowHint)||!1,V=i(a.ngModel),A=i(a.ngModel+"($$$p)"),H=function(t,a){return angular.isFunction(V(e))&&b.getOption("getterSetter")?A(t,{$$$p:a}):V.assign(t,a)},B=c.parse(a.uibTypeahead),L=e.$new(),F=e.$on("$destroy",function(){L.$destroy()});L.$on("$destroy",F);var _="typeahead-"+L.$id+"-"+Math.floor(1e4*Math.random());t.attr({"aria-autocomplete":"list","aria-expanded":!1,"aria-owns":_});var D,j;q&&(D=angular.element("<div></div>"),D.css("position","relative"),t.after(D),j=t.clone(),j.attr("placeholder",""),j.attr("tabindex","-1"),j.val(""),j.css({position:"absolute",top:"0px",left:"0px","border-color":"transparent","box-shadow":"none",opacity:1,background:"none 0% 0% / auto repeat scroll padding-box border-box rgb(255, 255, 255)",color:"#999"}),t.css({position:"relative","vertical-align":"top","background-color":"transparent"}),j.attr("id")&&j.removeAttr("id"),D.append(j),j.after(t));var Y=angular.element("<div uib-typeahead-popup></div>");Y.attr({id:_,matches:"matches",active:"activeIdx",select:"select(activeIdx, evt)","move-in-progress":"moveInProgress",query:"query",position:"position","assign-is-open":"assignIsOpen(isOpen)",debounce:"debounceUpdate"}),angular.isDefined(a.typeaheadTemplateUrl)&&Y.attr("template-url",a.typeaheadTemplateUrl),angular.isDefined(a.typeaheadPopupTemplateUrl)&&Y.attr("popup-template-url",a.typeaheadPopupTemplateUrl);var X=function(){q&&j.val("")},z=function(){L.matches=[],L.activeIdx=-1,t.attr("aria-expanded",!1),X()},K=function(e){return _+"-option-"+e};L.$watch("activeIdx",function(e){0>e?t.removeAttr("aria-activedescendant"):t.attr("aria-activedescendant",K(e))});var G=function(e,t){return L.matches.length>t&&e?e.toUpperCase()===L.matches[t].label.toUpperCase():!1},J=function(a,o){var i={$viewValue:a};I(e,!0),O(e,!1),n.when(B.source(e,i)).then(function(n){var r=a===m.$viewValue;if(r&&x)if(n&&n.length>0){L.activeIdx=R?0:-1,O(e,!1),L.matches.length=0;for(var l=0;l<n.length;l++)i[B.itemName]=n[l],L.matches.push({id:K(l),label:B.viewMapper(L,i),model:n[l]});if(L.query=a,f(),t.attr("aria-expanded",!0),E&&1===L.matches.length&&G(a,0)&&(angular.isNumber(L.debounceUpdate)||angular.isObject(L.debounceUpdate)?d(function(){L.select(0,o)},angular.isNumber(L.debounceUpdate)?L.debounceUpdate:L.debounceUpdate["default"]):L.select(0,o)),q){var s=L.matches[0].label;j.val(angular.isString(a)&&a.length>0&&s.slice(0,a.length).toUpperCase()===a.toUpperCase()?a+s.slice(a.length):"")}}else z(),O(e,!0);r&&I(e,!1)},function(){z(),I(e,!1),O(e,!0)})};C&&(angular.element(s).on("resize",h),l.find("body").on("scroll",h));var Q=d(function(){L.matches.length&&f(),L.moveInProgress=!1},y);L.moveInProgress=!1,L.query=void 0;var Z,et=function(e){Z=r(function(){J(e)},w)},tt=function(){Z&&r.cancel(Z)};z(),L.assignIsOpen=function(t){W(e,t)},L.select=function(o,i){var n,l,s={};M=!0,s[B.itemName]=l=L.matches[o].model,n=B.modelMapper(e,s),H(e,n),m.$setValidity("editable",!0),m.$setValidity("parse",!0),U(e,{$item:l,$model:n,$label:B.viewMapper(e,s),$event:i}),z(),L.$eval(a.typeaheadFocusOnSelect)!==!1&&r(function(){t[0].focus()},0,!1)},t.on("keydown",function(t){if(0!==L.matches.length&&-1!==v.indexOf(t.which)){var a=T(e,{$event:t});if(-1===L.activeIdx&&a||9===t.which&&t.shiftKey)return z(),void L.$digest();t.preventDefault();var o;switch(t.which){case 27:t.stopPropagation(),z(),e.$digest();break;case 38:L.activeIdx=(L.activeIdx>0?L.activeIdx:L.matches.length)-1,L.$digest(),o=Y[0].querySelectorAll(".uib-typeahead-match")[L.activeIdx],o.parentNode.scrollTop=o.offsetTop;break;case 40:L.activeIdx=(L.activeIdx+1)%L.matches.length,L.$digest(),o=Y[0].querySelectorAll(".uib-typeahead-match")[L.activeIdx],o.parentNode.scrollTop=o.offsetTop;break;default:a&&L.$apply(function(){angular.isNumber(L.debounceUpdate)||angular.isObject(L.debounceUpdate)?d(function(){L.select(L.activeIdx,t)},angular.isNumber(L.debounceUpdate)?L.debounceUpdate:L.debounceUpdate["default"]):L.select(L.activeIdx,t)})}}}),t.on("focus",function(e){x=!0,0!==$||m.$viewValue||r(function(){J(m.$viewValue,e)},0)}),t.on("blur",function(e){N&&L.matches.length&&-1!==L.activeIdx&&!M&&(M=!0,L.$apply(function(){angular.isObject(L.debounceUpdate)&&angular.isNumber(L.debounceUpdate.blur)?d(function(){L.select(L.activeIdx,e)},L.debounceUpdate.blur):L.select(L.activeIdx,e)})),!S&&m.$error.editable&&(m.$setViewValue(),L.$apply(function(){m.$setValidity("editable",!0),m.$setValidity("parse",!0)}),t.val("")),x=!1,M=!1});var at=function(a){t[0]!==a.target&&3!==a.which&&0!==L.matches.length&&(z(),p.$$phase||e.$digest())};l.on("click",at),e.$on("$destroy",function(){l.off("click",at),(C||k)&&ot.remove(),C&&(angular.element(s).off("resize",h),l.find("body").off("scroll",h)),Y.remove(),q&&D.remove()});var ot=o(Y)(L);C?l.find("body").append(ot):k?angular.element(k).eq(0).append(ot):t.after(ot),this.init=function(t){m=t,b=g(m),L.debounceUpdate=i(b.getOption("debounce"))(e),m.$parsers.unshift(function(t){return x=!0,0===$||t&&t.length>=$?w>0?(tt(),et(t)):J(t):(I(e,!1),tt(),z()),S?t:t?void m.$setValidity("editable",!1):(m.$setValidity("editable",!0),null)}),m.$formatters.push(function(t){var a,o,i={};return S||m.$setValidity("editable",!0),P?(i.$model=t,P(e,i)):(i[B.itemName]=t,a=B.viewMapper(e,i),i[B.itemName]=void 0,o=B.viewMapper(e,i),a!==o?a:t)})}}]).directive("uibTypeahead",function(){return{controller:"UibTypeaheadController",require:["ngModel","uibTypeahead"],link:function(e,t,a,o){o[1].init(o[0])}}}).directive("uibTypeaheadPopup",["$$debounce",function(e){return{scope:{matches:"=",query:"=",active:"=",position:"&",moveInProgress:"=",select:"&",assignIsOpen:"&",debounce:"&"},replace:!0,templateUrl:function(e,t){return t.popupTemplateUrl||"uib/template/typeahead/typeahead-popup.html"},link:function(t,a,o){t.templateUrl=o.templateUrl,t.isOpen=function(){var e=t.matches.length>0;return t.assignIsOpen({isOpen:e}),e},t.isActive=function(e){return t.active===e},t.selectActive=function(e){t.active=e},t.selectMatch=function(a,o){var i=t.debounce();angular.isNumber(i)||angular.isObject(i)?e(function(){t.select({activeIdx:a,evt:o})},angular.isNumber(i)?i:i["default"]):t.select({activeIdx:a,evt:o})}}}}]).directive("uibTypeaheadMatch",["$templateRequest","$compile","$parse",function(e,t,a){return{scope:{index:"=",match:"=",query:"="},link:function(o,i,n){var r=a(n.templateUrl)(o.$parent)||"uib/template/typeahead/typeahead-match.html";e(r).then(function(e){var a=angular.element(e.trim());i.replaceWith(a),t(a)(o)})}}}]).filter("uibTypeaheadHighlight",["$sce","$injector","$log",function(e,t,a){function o(e){return e.replace(/([.?*+^$[\]\\(){}|-])/g,"\\$1")}function i(e){return/<.*>/g.test(e)}var n;return n=t.has("$sanitize"),function(t,r){return!n&&i(t)&&a.warn("Unsafe use of typeahead please use ngSanitize"),t=r?(""+t).replace(new RegExp(o(r),"gi"),"<strong>$&</strong>"):t,n||(t=e.trustAsHtml(t)),t}}]),angular.module("ui.bootstrap.debounce",[]).factory("$$debounce",["$timeout",function(e){return function(t,a){var o;return function(){var i=this,n=Array.prototype.slice.call(arguments);o&&e.cancel(o),o=e(function(){t.apply(i,n)},a)}}}]),angular.module("ui.bootstrap.position",[]).factory("$uibPosition",["$document","$window",function(e,t){var a,o,i={normal:/(auto|scroll)/,hidden:/(auto|scroll|hidden)/},n={auto:/\s?auto?\s?/i,primary:/^(top|bottom|left|right)$/,secondary:/^(top|bottom|left|right|center)$/,vertical:/^(top|bottom)$/},r=/(HTML|BODY)/;return{getRawNode:function(e){return e.nodeName?e:e[0]||e},parseStyle:function(e){return e=parseFloat(e),isFinite(e)?e:0},offsetParent:function(a){function o(e){return"static"===(t.getComputedStyle(e).position||"static")}a=this.getRawNode(a);for(var i=a.offsetParent||e[0].documentElement;i&&i!==e[0].documentElement&&o(i);)i=i.offsetParent;return i||e[0].documentElement},scrollbarWidth:function(i){if(i){if(angular.isUndefined(o)){var n=e.find("body");n.addClass("uib-position-body-scrollbar-measure"),o=t.innerWidth-n[0].clientWidth,o=isFinite(o)?o:0,n.removeClass("uib-position-body-scrollbar-measure")}return o}if(angular.isUndefined(a)){var r=angular.element('<div class="uib-position-scrollbar-measure"></div>');e.find("body").append(r),a=r[0].offsetWidth-r[0].clientWidth,a=isFinite(a)?a:0,r.remove()}return a},scrollbarPadding:function(e){e=this.getRawNode(e);var a=t.getComputedStyle(e),o=this.parseStyle(a.paddingRight),i=this.parseStyle(a.paddingBottom),n=this.scrollParent(e,!1,!0),l=this.scrollbarWidth(r.test(n.tagName));return{scrollbarWidth:l,widthOverflow:n.scrollWidth>n.clientWidth,right:o+l,originalRight:o,heightOverflow:n.scrollHeight>n.clientHeight,bottom:i+l,originalBottom:i}},isScrollable:function(e,a){e=this.getRawNode(e);var o=a?i.hidden:i.normal,n=t.getComputedStyle(e);return o.test(n.overflow+n.overflowY+n.overflowX)},scrollParent:function(a,o,n){a=this.getRawNode(a);var r=o?i.hidden:i.normal,l=e[0].documentElement,s=t.getComputedStyle(a);if(n&&r.test(s.overflow+s.overflowY+s.overflowX))return a;var p="absolute"===s.position,d=a.parentElement||l;if(d===l||"fixed"===s.position)return l;for(;d.parentElement&&d!==l;){var u=t.getComputedStyle(d);if(p&&"static"!==u.position&&(p=!1),!p&&r.test(u.overflow+u.overflowY+u.overflowX))break;d=d.parentElement}return d},position:function(a,o){a=this.getRawNode(a);var i=this.offset(a);if(o){var n=t.getComputedStyle(a);i.top-=this.parseStyle(n.marginTop),i.left-=this.parseStyle(n.marginLeft)}var r=this.offsetParent(a),l={top:0,left:0};return r!==e[0].documentElement&&(l=this.offset(r),l.top+=r.clientTop-r.scrollTop,l.left+=r.clientLeft-r.scrollLeft),{width:Math.round(angular.isNumber(i.width)?i.width:a.offsetWidth),height:Math.round(angular.isNumber(i.height)?i.height:a.offsetHeight),top:Math.round(i.top-l.top),left:Math.round(i.left-l.left)}},offset:function(a){a=this.getRawNode(a);var o=a.getBoundingClientRect();return{width:Math.round(angular.isNumber(o.width)?o.width:a.offsetWidth),height:Math.round(angular.isNumber(o.height)?o.height:a.offsetHeight),top:Math.round(o.top+(t.pageYOffset||e[0].documentElement.scrollTop)),left:Math.round(o.left+(t.pageXOffset||e[0].documentElement.scrollLeft))}},viewportOffset:function(a,o,i){a=this.getRawNode(a),i=i!==!1?!0:!1;var n=a.getBoundingClientRect(),r={top:0,left:0,bottom:0,right:0},l=o?e[0].documentElement:this.scrollParent(a),s=l.getBoundingClientRect();if(r.top=s.top+l.clientTop,r.left=s.left+l.clientLeft,l===e[0].documentElement&&(r.top+=t.pageYOffset,r.left+=t.pageXOffset),r.bottom=r.top+l.clientHeight,r.right=r.left+l.clientWidth,i){var p=t.getComputedStyle(l);r.top+=this.parseStyle(p.paddingTop),r.bottom-=this.parseStyle(p.paddingBottom),r.left+=this.parseStyle(p.paddingLeft),r.right-=this.parseStyle(p.paddingRight)}return{top:Math.round(n.top-r.top),bottom:Math.round(r.bottom-n.bottom),left:Math.round(n.left-r.left),right:Math.round(r.right-n.right)}},parsePlacement:function(e){var t=n.auto.test(e);return t&&(e=e.replace(n.auto,"")),e=e.split("-"),e[0]=e[0]||"top",n.primary.test(e[0])||(e[0]="top"),e[1]=e[1]||"center",n.secondary.test(e[1])||(e[1]="center"),e[2]=t?!0:!1,e},positionElements:function(e,a,o,i){e=this.getRawNode(e),a=this.getRawNode(a);var r=angular.isDefined(a.offsetWidth)?a.offsetWidth:a.prop("offsetWidth"),l=angular.isDefined(a.offsetHeight)?a.offsetHeight:a.prop("offsetHeight");o=this.parsePlacement(o);var s=i?this.offset(e):this.position(e),p={top:0,left:0,placement:""};if(o[2]){var d=this.viewportOffset(e,i),u=t.getComputedStyle(a),c={width:r+Math.round(Math.abs(this.parseStyle(u.marginLeft)+this.parseStyle(u.marginRight))),height:l+Math.round(Math.abs(this.parseStyle(u.marginTop)+this.parseStyle(u.marginBottom)))};if(o[0]="top"===o[0]&&c.height>d.top&&c.height<=d.bottom?"bottom":"bottom"===o[0]&&c.height>d.bottom&&c.height<=d.top?"top":"left"===o[0]&&c.width>d.left&&c.width<=d.right?"right":"right"===o[0]&&c.width>d.right&&c.width<=d.left?"left":o[0],o[1]="top"===o[1]&&c.height-s.height>d.bottom&&c.height-s.height<=d.top?"bottom":"bottom"===o[1]&&c.height-s.height>d.top&&c.height-s.height<=d.bottom?"top":"left"===o[1]&&c.width-s.width>d.right&&c.width-s.width<=d.left?"right":"right"===o[1]&&c.width-s.width>d.left&&c.width-s.width<=d.right?"left":o[1],"center"===o[1])if(n.vertical.test(o[0])){var h=s.width/2-r/2;d.left+h<0&&c.width-s.width<=d.right?o[1]="left":d.right+h<0&&c.width-s.width<=d.left&&(o[1]="right")}else{var f=s.height/2-c.height/2;d.top+f<0&&c.height-s.height<=d.bottom?o[1]="top":d.bottom+f<0&&c.height-s.height<=d.top&&(o[1]="bottom")}}switch(o[0]){case"top":p.top=s.top-l;break;case"bottom":p.top=s.top+s.height;break;case"left":p.left=s.left-r;break;case"right":p.left=s.left+s.width}switch(o[1]){case"top":p.top=s.top;break;case"bottom":p.top=s.top+s.height-l;break;case"left":p.left=s.left;break;case"right":p.left=s.left+s.width-r;break;case"center":n.vertical.test(o[0])?p.left=s.left+s.width/2-r/2:p.top=s.top+s.height/2-l/2}return p.top=Math.round(p.top),p.left=Math.round(p.left),p.placement="center"===o[1]?o[0]:o[0]+"-"+o[1],p},adjustTop:function(e,t,a,o){return-1!==e.indexOf("top")&&a!==o?{top:t.top-o+"px"}:void 0},positionArrow:function(e,a){e=this.getRawNode(e);var o=e.querySelector(".tooltip-inner, .popover-inner");if(o){var i=angular.element(o).hasClass("tooltip-inner"),r=e.querySelector(i?".tooltip-arrow":".arrow");if(r){var l={top:"",bottom:"",left:"",right:""};if(a=this.parsePlacement(a),"center"===a[1])return void angular.element(r).css(l);var s="border-"+a[0]+"-width",p=t.getComputedStyle(r)[s],d="border-";d+=n.vertical.test(a[0])?a[0]+"-"+a[1]:a[1]+"-"+a[0],d+="-radius";var u=t.getComputedStyle(i?o:e)[d];switch(a[0]){case"top":l.bottom=i?"0":"-"+p;break;case"bottom":l.top=i?"0":"-"+p;break;case"left":l.right=i?"0":"-"+p;break;case"right":l.left=i?"0":"-"+p}l[a[1]]=u,angular.element(r).css(l)}}}}}]),angular.module("ui.bootstrap.typeahead").run(function(){!angular.$$csp().noInlineStyle&&!angular.$$uibTypeaheadCss&&angular.element(document).find("head").prepend('<style type="text/css">[uib-typeahead-popup].dropdown-menu{display:block;}</style>'),angular.$$uibTypeaheadCss=!0}),angular.module("ui.bootstrap.position").run(function(){!angular.$$csp().noInlineStyle&&!angular.$$uibPositionCss&&angular.element(document).find("head").prepend('<style type="text/css">.uib-position-measure{display:block !important;visibility:hidden !important;position:absolute !important;top:-9999px !important;left:-9999px !important;}.uib-position-scrollbar-measure{position:absolute !important;top:-9999px !important;width:50px !important;height:50px !important;overflow:scroll !important;}.uib-position-body-scrollbar-measure{overflow:scroll !important;}</style>'),angular.$$uibPositionCss=!0});
+/*
+ * angular-ui-bootstrap
+ * http://angular-ui.github.io/bootstrap/
+
+ * Version: 2.5.0 - 2017-01-28
+ * License: MIT
+ */angular.module("ui.bootstrap",["ui.bootstrap.tpls","ui.bootstrap.typeahead","ui.bootstrap.debounce","ui.bootstrap.position"]),angular.module("ui.bootstrap.tpls",["uib/template/typeahead/typeahead-match.html","uib/template/typeahead/typeahead-popup.html"]),angular.module("ui.bootstrap.typeahead",["ui.bootstrap.debounce","ui.bootstrap.position"]).factory("uibTypeaheadParser",["$parse",function(e){var t=/^\s*([\s\S]+?)(?:\s+as\s+([\s\S]+?))?\s+for\s+(?:([\$\w][\$\w\d]*))\s+in\s+([\s\S]+?)$/;return{parse:function(a){var o=a.match(t);if(!o)throw new Error('Expected typeahead specification in form of "_modelValue_ (as _label_)? for _item_ in _collection_" but got "'+a+'".');return{itemName:o[3],source:e(o[4]),viewMapper:e(o[2]||o[1]),modelMapper:e(o[1])}}}}]).controller("UibTypeaheadController",["$scope","$element","$attrs","$compile","$parse","$q","$timeout","$document","$window","$rootScope","$$debounce","$uibPosition","uibTypeaheadParser",function(e,t,a,o,i,n,r,l,s,p,d,u,c){function h(){L.moveInProgress||(L.moveInProgress=!0,L.$digest()),Q()}function f(){L.position=C?u.offset(t):u.position(t),L.position.top+=t.prop("offsetHeight")}function g(e){var t;return angular.version.minor<6?(t=e.$options||{},t.getOption=function(e){return t[e]}):t=e.$options,t}var m,b,v=[9,13,27,38,40],y=200,$=e.$eval(a.typeaheadMinLength);$||0===$||($=1),e.$watch(a.typeaheadMinLength,function(e){$=e||0===e?e:1});var w=e.$eval(a.typeaheadWaitMs)||0,x=e.$eval(a.typeaheadEditable)!==!1;e.$watch(a.typeaheadEditable,function(e){x=e!==!1});var S,M,I=i(a.typeaheadLoading).assign||angular.noop,T=a.typeaheadShouldSelect?i(a.typeaheadShouldSelect):function(e,t){var a=t.$event;return 13===a.which||9===a.which},U=i(a.typeaheadOnSelect),O=angular.isDefined(a.typeaheadSelectOnBlur)?e.$eval(a.typeaheadSelectOnBlur):!1,N=i(a.typeaheadNoResults).assign||angular.noop,P=a.typeaheadInputFormatter?i(a.typeaheadInputFormatter):void 0,C=a.typeaheadAppendToBody?e.$eval(a.typeaheadAppendToBody):!1,k=a.typeaheadAppendTo?e.$eval(a.typeaheadAppendTo):null,R=e.$eval(a.typeaheadFocusFirst)!==!1,E=a.typeaheadSelectOnExact?e.$eval(a.typeaheadSelectOnExact):!1,W=i(a.typeaheadIsOpen).assign||angular.noop,q=e.$eval(a.typeaheadShowHint)||!1,A=i(a.ngModel),V=i(a.ngModel+"($$$p)"),H=function(t,a){return angular.isFunction(A(e))&&b.getOption("getterSetter")?V(t,{$$$p:a}):A.assign(t,a)},B=c.parse(a.uibTypeahead),L=e.$new(),F=e.$on("$destroy",function(){L.$destroy()});L.$on("$destroy",F);var _="typeahead-"+L.$id+"-"+Math.floor(1e4*Math.random());t.attr({"aria-autocomplete":"list","aria-expanded":!1,"aria-owns":_});var D,j;q&&(D=angular.element("<div></div>"),D.css("position","relative"),t.after(D),j=t.clone(),j.attr("placeholder",""),j.attr("tabindex","-1"),j.val(""),j.css({position:"absolute",top:"0px",left:"0px","border-color":"transparent","box-shadow":"none",opacity:1,background:"none 0% 0% / auto repeat scroll padding-box border-box rgb(255, 255, 255)",color:"#999"}),t.css({position:"relative","vertical-align":"top","background-color":"transparent"}),j.attr("id")&&j.removeAttr("id"),D.append(j),j.after(t));var Y=angular.element("<div uib-typeahead-popup></div>");Y.attr({id:_,matches:"matches",active:"activeIdx",select:"select(activeIdx, evt)","move-in-progress":"moveInProgress",query:"query",position:"position","assign-is-open":"assignIsOpen(isOpen)",debounce:"debounceUpdate"}),angular.isDefined(a.typeaheadTemplateUrl)&&Y.attr("template-url",a.typeaheadTemplateUrl),angular.isDefined(a.typeaheadPopupTemplateUrl)&&Y.attr("popup-template-url",a.typeaheadPopupTemplateUrl);var X=function(){q&&j.val("")},z=function(){L.matches=[],L.activeIdx=-1,t.attr("aria-expanded",!1),X()},K=function(e){return _+"-option-"+e};L.$watch("activeIdx",function(e){0>e?t.removeAttr("aria-activedescendant"):t.attr("aria-activedescendant",K(e))});var G=function(e,t){return L.matches.length>t&&e?e.toUpperCase()===L.matches[t].label.toUpperCase():!1},J=function(a,o){var i={$viewValue:a};I(e,!0),N(e,!1),n.when(B.source(e,i)).then(function(n){var r=a===m.$viewValue;if(r&&S)if(n&&n.length>0){L.activeIdx=R?0:-1,N(e,!1),L.matches.length=0;for(var l=0;l<n.length;l++)i[B.itemName]=n[l],L.matches.push({id:K(l),label:B.viewMapper(L,i),model:n[l]});if(L.query=a,f(),t.attr("aria-expanded",!0),E&&1===L.matches.length&&G(a,0)&&(angular.isNumber(L.debounceUpdate)||angular.isObject(L.debounceUpdate)?d(function(){L.select(0,o)},angular.isNumber(L.debounceUpdate)?L.debounceUpdate:L.debounceUpdate["default"]):L.select(0,o)),q){var s=L.matches[0].label;j.val(angular.isString(a)&&a.length>0&&s.slice(0,a.length).toUpperCase()===a.toUpperCase()?a+s.slice(a.length):"")}}else z(),N(e,!0);r&&I(e,!1)},function(){z(),I(e,!1),N(e,!0)})};C&&(angular.element(s).on("resize",h),l.find("body").on("scroll",h));var Q=d(function(){L.matches.length&&f(),L.moveInProgress=!1},y);L.moveInProgress=!1,L.query=void 0;var Z,et=function(e){Z=r(function(){J(e)},w)},tt=function(){Z&&r.cancel(Z)};z(),L.assignIsOpen=function(t){W(e,t)},L.select=function(o,i){var n,l,s={};M=!0,s[B.itemName]=l=L.matches[o].model,n=B.modelMapper(e,s),H(e,n),m.$setValidity("editable",!0),m.$setValidity("parse",!0),U(e,{$item:l,$model:n,$label:B.viewMapper(e,s),$event:i}),z(),L.$eval(a.typeaheadFocusOnSelect)!==!1&&r(function(){t[0].focus()},0,!1)},t.on("keydown",function(t){if(0!==L.matches.length&&-1!==v.indexOf(t.which)){var a=T(e,{$event:t});if(-1===L.activeIdx&&a||9===t.which&&t.shiftKey)return z(),void L.$digest();t.preventDefault();var o;switch(t.which){case 27:t.stopPropagation(),z(),e.$digest();break;case 38:L.activeIdx=(L.activeIdx>0?L.activeIdx:L.matches.length)-1,L.$digest(),o=Y[0].querySelectorAll(".uib-typeahead-match")[L.activeIdx],o.parentNode.scrollTop=o.offsetTop;break;case 40:L.activeIdx=(L.activeIdx+1)%L.matches.length,L.$digest(),o=Y[0].querySelectorAll(".uib-typeahead-match")[L.activeIdx],o.parentNode.scrollTop=o.offsetTop;break;default:a&&L.$apply(function(){angular.isNumber(L.debounceUpdate)||angular.isObject(L.debounceUpdate)?d(function(){L.select(L.activeIdx,t)},angular.isNumber(L.debounceUpdate)?L.debounceUpdate:L.debounceUpdate["default"]):L.select(L.activeIdx,t)})}}}),t.on("focus",function(e){S=!0,0!==$||m.$viewValue||r(function(){J(m.$viewValue,e)},0)}),t.on("blur",function(e){O&&L.matches.length&&-1!==L.activeIdx&&!M&&(M=!0,L.$apply(function(){angular.isObject(L.debounceUpdate)&&angular.isNumber(L.debounceUpdate.blur)?d(function(){L.select(L.activeIdx,e)},L.debounceUpdate.blur):L.select(L.activeIdx,e)})),!x&&m.$error.editable&&(m.$setViewValue(),L.$apply(function(){m.$setValidity("editable",!0),m.$setValidity("parse",!0)}),t.val("")),S=!1,M=!1});var at=function(a){t[0]!==a.target&&3!==a.which&&0!==L.matches.length&&(z(),p.$$phase||e.$digest())};l.on("click",at),e.$on("$destroy",function(){l.off("click",at),(C||k)&&ot.remove(),C&&(angular.element(s).off("resize",h),l.find("body").off("scroll",h)),Y.remove(),q&&D.remove()});var ot=o(Y)(L);C?l.find("body").append(ot):k?angular.element(k).eq(0).append(ot):t.after(ot),this.init=function(t){m=t,b=g(m),L.debounceUpdate=i(b.getOption("debounce"))(e),m.$parsers.unshift(function(t){return S=!0,0===$||t&&t.length>=$?w>0?(tt(),et(t)):J(t):(I(e,!1),tt(),z()),x?t:t?void m.$setValidity("editable",!1):(m.$setValidity("editable",!0),null)}),m.$formatters.push(function(t){var a,o,i={};return x||m.$setValidity("editable",!0),P?(i.$model=t,P(e,i)):(i[B.itemName]=t,a=B.viewMapper(e,i),i[B.itemName]=void 0,o=B.viewMapper(e,i),a!==o?a:t)})}}]).directive("uibTypeahead",function(){return{controller:"UibTypeaheadController",require:["ngModel","uibTypeahead"],link:function(e,t,a,o){o[1].init(o[0])}}}).directive("uibTypeaheadPopup",["$$debounce",function(e){return{scope:{matches:"=",query:"=",active:"=",position:"&",moveInProgress:"=",select:"&",assignIsOpen:"&",debounce:"&"},replace:!0,templateUrl:function(e,t){return t.popupTemplateUrl||"uib/template/typeahead/typeahead-popup.html"},link:function(t,a,o){t.templateUrl=o.templateUrl,t.isOpen=function(){var e=t.matches.length>0;return t.assignIsOpen({isOpen:e}),e},t.isActive=function(e){return t.active===e},t.selectActive=function(e){t.active=e},t.selectMatch=function(a,o){var i=t.debounce();angular.isNumber(i)||angular.isObject(i)?e(function(){t.select({activeIdx:a,evt:o})},angular.isNumber(i)?i:i["default"]):t.select({activeIdx:a,evt:o})}}}}]).directive("uibTypeaheadMatch",["$templateRequest","$compile","$parse",function(e,t,a){return{scope:{index:"=",match:"=",query:"="},link:function(o,i,n){var r=a(n.templateUrl)(o.$parent)||"uib/template/typeahead/typeahead-match.html";e(r).then(function(e){var a=angular.element(e.trim());i.replaceWith(a),t(a)(o)})}}}]).filter("uibTypeaheadHighlight",["$sce","$injector","$log",function(e,t,a){function o(e){return e.replace(/([.?*+^$[\]\\(){}|-])/g,"\\$1")}function i(e){return/<.*>/g.test(e)}var n;return n=t.has("$sanitize"),function(t,r){return!n&&i(t)&&a.warn("Unsafe use of typeahead please use ngSanitize"),t=r?(""+t).replace(new RegExp(o(r),"gi"),"<strong>$&</strong>"):t,n||(t=e.trustAsHtml(t)),t}}]),angular.module("ui.bootstrap.debounce",[]).factory("$$debounce",["$timeout",function(e){return function(t,a){var o;return function(){var i=this,n=Array.prototype.slice.call(arguments);o&&e.cancel(o),o=e(function(){t.apply(i,n)},a)}}}]),angular.module("ui.bootstrap.position",[]).factory("$uibPosition",["$document","$window",function(e,t){var a,o,i={normal:/(auto|scroll)/,hidden:/(auto|scroll|hidden)/},n={auto:/\s?auto?\s?/i,primary:/^(top|bottom|left|right)$/,secondary:/^(top|bottom|left|right|center)$/,vertical:/^(top|bottom)$/},r=/(HTML|BODY)/;return{getRawNode:function(e){return e.nodeName?e:e[0]||e},parseStyle:function(e){return e=parseFloat(e),isFinite(e)?e:0},offsetParent:function(a){function o(e){return"static"===(t.getComputedStyle(e).position||"static")}a=this.getRawNode(a);for(var i=a.offsetParent||e[0].documentElement;i&&i!==e[0].documentElement&&o(i);)i=i.offsetParent;return i||e[0].documentElement},scrollbarWidth:function(i){if(i){if(angular.isUndefined(o)){var n=e.find("body");n.addClass("uib-position-body-scrollbar-measure"),o=t.innerWidth-n[0].clientWidth,o=isFinite(o)?o:0,n.removeClass("uib-position-body-scrollbar-measure")}return o}if(angular.isUndefined(a)){var r=angular.element('<div class="uib-position-scrollbar-measure"></div>');e.find("body").append(r),a=r[0].offsetWidth-r[0].clientWidth,a=isFinite(a)?a:0,r.remove()}return a},scrollbarPadding:function(e){e=this.getRawNode(e);var a=t.getComputedStyle(e),o=this.parseStyle(a.paddingRight),i=this.parseStyle(a.paddingBottom),n=this.scrollParent(e,!1,!0),l=this.scrollbarWidth(r.test(n.tagName));return{scrollbarWidth:l,widthOverflow:n.scrollWidth>n.clientWidth,right:o+l,originalRight:o,heightOverflow:n.scrollHeight>n.clientHeight,bottom:i+l,originalBottom:i}},isScrollable:function(e,a){e=this.getRawNode(e);var o=a?i.hidden:i.normal,n=t.getComputedStyle(e);return o.test(n.overflow+n.overflowY+n.overflowX)},scrollParent:function(a,o,n){a=this.getRawNode(a);var r=o?i.hidden:i.normal,l=e[0].documentElement,s=t.getComputedStyle(a);if(n&&r.test(s.overflow+s.overflowY+s.overflowX))return a;var p="absolute"===s.position,d=a.parentElement||l;if(d===l||"fixed"===s.position)return l;for(;d.parentElement&&d!==l;){var u=t.getComputedStyle(d);if(p&&"static"!==u.position&&(p=!1),!p&&r.test(u.overflow+u.overflowY+u.overflowX))break;d=d.parentElement}return d},position:function(a,o){a=this.getRawNode(a);var i=this.offset(a);if(o){var n=t.getComputedStyle(a);i.top-=this.parseStyle(n.marginTop),i.left-=this.parseStyle(n.marginLeft)}var r=this.offsetParent(a),l={top:0,left:0};return r!==e[0].documentElement&&(l=this.offset(r),l.top+=r.clientTop-r.scrollTop,l.left+=r.clientLeft-r.scrollLeft),{width:Math.round(angular.isNumber(i.width)?i.width:a.offsetWidth),height:Math.round(angular.isNumber(i.height)?i.height:a.offsetHeight),top:Math.round(i.top-l.top),left:Math.round(i.left-l.left)}},offset:function(a){a=this.getRawNode(a);var o=a.getBoundingClientRect();return{width:Math.round(angular.isNumber(o.width)?o.width:a.offsetWidth),height:Math.round(angular.isNumber(o.height)?o.height:a.offsetHeight),top:Math.round(o.top+(t.pageYOffset||e[0].documentElement.scrollTop)),left:Math.round(o.left+(t.pageXOffset||e[0].documentElement.scrollLeft))}},viewportOffset:function(a,o,i){a=this.getRawNode(a),i=i!==!1?!0:!1;var n=a.getBoundingClientRect(),r={top:0,left:0,bottom:0,right:0},l=o?e[0].documentElement:this.scrollParent(a),s=l.getBoundingClientRect();if(r.top=s.top+l.clientTop,r.left=s.left+l.clientLeft,l===e[0].documentElement&&(r.top+=t.pageYOffset,r.left+=t.pageXOffset),r.bottom=r.top+l.clientHeight,r.right=r.left+l.clientWidth,i){var p=t.getComputedStyle(l);r.top+=this.parseStyle(p.paddingTop),r.bottom-=this.parseStyle(p.paddingBottom),r.left+=this.parseStyle(p.paddingLeft),r.right-=this.parseStyle(p.paddingRight)}return{top:Math.round(n.top-r.top),bottom:Math.round(r.bottom-n.bottom),left:Math.round(n.left-r.left),right:Math.round(r.right-n.right)}},parsePlacement:function(e){var t=n.auto.test(e);return t&&(e=e.replace(n.auto,"")),e=e.split("-"),e[0]=e[0]||"top",n.primary.test(e[0])||(e[0]="top"),e[1]=e[1]||"center",n.secondary.test(e[1])||(e[1]="center"),e[2]=t?!0:!1,e},positionElements:function(e,a,o,i){e=this.getRawNode(e),a=this.getRawNode(a);var r=angular.isDefined(a.offsetWidth)?a.offsetWidth:a.prop("offsetWidth"),l=angular.isDefined(a.offsetHeight)?a.offsetHeight:a.prop("offsetHeight");o=this.parsePlacement(o);var s=i?this.offset(e):this.position(e),p={top:0,left:0,placement:""};if(o[2]){var d=this.viewportOffset(e,i),u=t.getComputedStyle(a),c={width:r+Math.round(Math.abs(this.parseStyle(u.marginLeft)+this.parseStyle(u.marginRight))),height:l+Math.round(Math.abs(this.parseStyle(u.marginTop)+this.parseStyle(u.marginBottom)))};if(o[0]="top"===o[0]&&c.height>d.top&&c.height<=d.bottom?"bottom":"bottom"===o[0]&&c.height>d.bottom&&c.height<=d.top?"top":"left"===o[0]&&c.width>d.left&&c.width<=d.right?"right":"right"===o[0]&&c.width>d.right&&c.width<=d.left?"left":o[0],o[1]="top"===o[1]&&c.height-s.height>d.bottom&&c.height-s.height<=d.top?"bottom":"bottom"===o[1]&&c.height-s.height>d.top&&c.height-s.height<=d.bottom?"top":"left"===o[1]&&c.width-s.width>d.right&&c.width-s.width<=d.left?"right":"right"===o[1]&&c.width-s.width>d.left&&c.width-s.width<=d.right?"left":o[1],"center"===o[1])if(n.vertical.test(o[0])){var h=s.width/2-r/2;d.left+h<0&&c.width-s.width<=d.right?o[1]="left":d.right+h<0&&c.width-s.width<=d.left&&(o[1]="right")}else{var f=s.height/2-c.height/2;d.top+f<0&&c.height-s.height<=d.bottom?o[1]="top":d.bottom+f<0&&c.height-s.height<=d.top&&(o[1]="bottom")}}switch(o[0]){case"top":p.top=s.top-l;break;case"bottom":p.top=s.top+s.height;break;case"left":p.left=s.left-r;break;case"right":p.left=s.left+s.width}switch(o[1]){case"top":p.top=s.top;break;case"bottom":p.top=s.top+s.height-l;break;case"left":p.left=s.left;break;case"right":p.left=s.left+s.width-r;break;case"center":n.vertical.test(o[0])?p.left=s.left+s.width/2-r/2:p.top=s.top+s.height/2-l/2}return p.top=Math.round(p.top),p.left=Math.round(p.left),p.placement="center"===o[1]?o[0]:o[0]+"-"+o[1],p},adjustTop:function(e,t,a,o){return-1!==e.indexOf("top")&&a!==o?{top:t.top-o+"px"}:void 0},positionArrow:function(e,a){e=this.getRawNode(e);var o=e.querySelector(".tooltip-inner, .popover-inner");if(o){var i=angular.element(o).hasClass("tooltip-inner"),r=e.querySelector(i?".tooltip-arrow":".arrow");if(r){var l={top:"",bottom:"",left:"",right:""};if(a=this.parsePlacement(a),"center"===a[1])return void angular.element(r).css(l);var s="border-"+a[0]+"-width",p=t.getComputedStyle(r)[s],d="border-";d+=n.vertical.test(a[0])?a[0]+"-"+a[1]:a[1]+"-"+a[0],d+="-radius";var u=t.getComputedStyle(i?o:e)[d];switch(a[0]){case"top":l.bottom=i?"0":"-"+p;break;case"bottom":l.top=i?"0":"-"+p;break;case"left":l.right=i?"0":"-"+p;break;case"right":l.left=i?"0":"-"+p}l[a[1]]=u,angular.element(r).css(l)}}}}}]),angular.module("uib/template/typeahead/typeahead-match.html",[]).run(["$templateCache",function(e){e.put("uib/template/typeahead/typeahead-match.html",'<a href\n   tabindex="-1"\n   ng-bind-html="match.label | uibTypeaheadHighlight:query"\n   ng-attr-title="{{match.label}}"></a>\n')}]),angular.module("uib/template/typeahead/typeahead-popup.html",[]).run(["$templateCache",function(e){e.put("uib/template/typeahead/typeahead-popup.html",'<ul class="dropdown-menu" ng-show="isOpen() && !moveInProgress" ng-style="{top: position().top+\'px\', left: position().left+\'px\'}" role="listbox" aria-hidden="{{!isOpen()}}">\n    <li class="uib-typeahead-match" ng-repeat="match in matches track by $index" ng-class="{active: isActive($index) }" ng-mouseenter="selectActive($index)" ng-click="selectMatch($index, $event)" role="option" id="{{::match.id}}">\n        <div uib-typeahead-match index="$index" match="match" query="query" template-url="templateUrl"></div>\n    </li>\n</ul>\n')}]),angular.module("ui.bootstrap.typeahead").run(function(){!angular.$$csp().noInlineStyle&&!angular.$$uibTypeaheadCss&&angular.element(document).find("head").prepend('<style type="text/css">[uib-typeahead-popup].dropdown-menu{display:block;}</style>'),angular.$$uibTypeaheadCss=!0}),angular.module("ui.bootstrap.position").run(function(){!angular.$$csp().noInlineStyle&&!angular.$$uibPositionCss&&angular.element(document).find("head").prepend('<style type="text/css">.uib-position-measure{display:block !important;visibility:hidden !important;position:absolute !important;top:-9999px !important;left:-9999px !important;}.uib-position-scrollbar-measure{position:absolute !important;top:-9999px !important;width:50px !important;height:50px !important;overflow:scroll !important;}.uib-position-body-scrollbar-measure{overflow:scroll !important;}</style>'),angular.$$uibPositionCss=!0});

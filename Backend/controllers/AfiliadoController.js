@@ -21,7 +21,6 @@ module.exports = {
             return res.json(Afiliados);
         });
     },
-
     /**
      * AfiliadoController.show()
      */

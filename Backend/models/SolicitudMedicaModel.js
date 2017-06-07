@@ -5,6 +5,10 @@ var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
 var SolicitudMedicaSchema = new Schema({
 	'sintomas' : String,
+	'sintomasCie' : [{
+		 	type: Schema.Types.ObjectId,
+		 	ref: 'Cie10'
+		}],
 	'horasSintomas' : Number,
 	'minutosSintomas' : Number,
 	'usuario' : {
@@ -15,10 +19,11 @@ var SolicitudMedicaSchema = new Schema({
 	 	type: Schema.Types.ObjectId,
 	 	ref: 'Afiliado'
 	},
-	'antecedentesMedicos':[{
-		type: Schema.Types.ObjectId,
-		ref:'AntecedenteMedico'
-	}],
+	'antecedentesMedicos':String,
+	'antecedentesMedicosCie' : [{
+		 	type: Schema.Types.ObjectId,
+		 	ref: 'Cie10'
+		}],
 	'domicilio':{
 		type: Schema.Types.ObjectId,
 		ref:'Domicilio'

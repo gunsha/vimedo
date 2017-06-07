@@ -125,8 +125,7 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
                         this.infowindow.setContent(compiledContent);
                         // vm.calcularRutaSolicitud(this.solicitud);
                         return this.infowindow.open(map, this);
-                    })
-                    console.log('latlng ' + latlng)
+                    });
                     mark.setPosition(latlng);
                     mark.setMap(map);
                     vm.map.setCenter(latlng);

@@ -56,17 +56,24 @@ angular.module('angular-jwt.authManager', [])
         $rootScope.isAuthenticated = false;
       }
 
-      function checkAuthOnRefresh() {
-        $rootScope.$on('$locationChangeStart', function () {
-          var token = invokeToken(config.tokenGetter);
-          if (token) {
-            if (!jwtHelper.isTokenExpired(token)) {
-              authenticate();
-            } else {
-              $rootScope.$broadcast('tokenHasExpired', token);
-            }
+      function validateToken() {
+        var token = invokeToken(config.tokenGetter);
+        if (token) {
+          if (!jwtHelper.isTokenExpired(token)) {
+            authenticate();
+          } else {
+            $rootScope.$broadcast('tokenHasExpired', token);
           }
-        });
+        }
+      }
+
+      function checkAuthOnRefresh() {
+        if ($injector.has('$transitions')) {
+          var $transitions = $injector.get('$transitions');
+          $transitions.onStart({}, validateToken);
+        } else {
+          $rootScope.$on('$locationChangeStart', validateToken);
+        }
       }
 
       function redirectWhenUnauthenticated() {
@@ -83,17 +90,29 @@ angular.module('angular-jwt.authManager', [])
 
         var routeData = (next.$$route) ? next.$$route : next.data;
 
-        if (routeData && routeData.requiresLogin === true) {
-          var token = invokeToken(config.tokenGetter);
-          if (!token || jwtHelper.isTokenExpired(token)) {
-            event.preventDefault();
-            invokeRedirector(config.unauthenticatedRedirector);
-          }
+        if (routeData && routeData.requiresLogin === true && !isAuthenticated()) {
+          event.preventDefault();
+          invokeRedirector(config.unauthenticatedRedirector);
         }
       }
 
-      var eventName = ($injector.has('$state')) ? '$stateChangeStart' : '$routeChangeStart';
-      $rootScope.$on(eventName, verifyRoute);
+      function verifyState(transition) {
+        var route = transition.to();
+        var $state = transition.router.stateService;
+          if (route && route.data && route.data.requiresLogin === true && !isAuthenticated()) {
+            return $state.target(config.loginPath);
+          }
+      }
+
+      if ($injector.has('$transitions')) {
+        var $transitions = $injector.get('$transitions');
+        $transitions.onStart({}, verifyState);
+      } else {
+        var eventName = ($injector.has('$state')) ? '$stateChangeStart' : '$routeChangeStart';
+        $rootScope.$on(eventName, verifyRoute);
+      }
+
+
 
       return {
         authenticate: authenticate,

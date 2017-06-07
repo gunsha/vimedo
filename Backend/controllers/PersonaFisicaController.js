@@ -1,4 +1,6 @@
 var PersonaFisicaModel = require('../models/PersonaFisicaModel.js');
+var AfiliadoModel = require('../models/AfiliadoModel.js');
+var mongoose = require('mongoose');
 
 /**
  * PersonaFisicaController.js
@@ -10,8 +12,8 @@ module.exports = {
     /**
      * PersonaFisicaController.list()
      */
-    list: function (req, res) {
-        PersonaFisicaModel.find(function (err, PersonaFisicas) {
+    list: function(req, res) {
+        PersonaFisicaModel.find(function(err, PersonaFisicas) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting PersonaFisica.',
@@ -21,13 +23,49 @@ module.exports = {
             return res.json(PersonaFisicas);
         });
     },
+    autocompleteAfiliado: function(req, res) {
+        var regex = new RegExp(req.query["term"], 'i');
+        var query = PersonaFisicaModel.find().or([{
+            'nombre': {$regex:regex}
+        }, {
+            'apellido': {$regex:regex}
+        }, {
+            'nroDocumento': {$regex:regex}
+        }])
+        .sort({
+            "nombre": -1
+        }).limit(20);
+        // Execute query in a callback and return users list
+        query.exec(function(err, PersonaFisicas) {
+            if (err) {
+                return res.status(500).json({
+                    message: 'Error when getting PersonaFisicas.',
+                    error: err
+                });
+            }
+            AfiliadoModel.find({personaFisica:{$in:PersonaFisicas.map(function(item){
+                return mongoose.Types.ObjectId(item._id);
+            })}
+            }).deepPopulate(["usuario","personaFisica.domicilios","personaFisica"]).exec(function (err, Afiliados) {
+            if (err) {
+                return res.status(500).json({
+                    message: 'Error when getting Afiliado.',
+                    error: err
+                });
+            }
+            return res.json(Afiliados);
+        });
+        });
 
+    },
     /**
      * PersonaFisicaController.show()
      */
-    show: function (req, res) {
+    show: function(req, res) {
         var id = req.params.id;
-        PersonaFisicaModel.findOne({_id: id}, function (err, PersonaFisica) {
+        PersonaFisicaModel.findOne({
+            _id: id
+        }, function(err, PersonaFisica) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting PersonaFisica.',
@@ -46,11 +84,18 @@ module.exports = {
     /**
      * PersonaFisicaController.create()
      */
-    create: function (req, res) {
-        var PersonaFisica = new PersonaFisicaModel({			nombre : req.body.nombre,			apellido : req.body.apellido,			nacimiento : req.body.nacimiento,			tipo_documento : req.body.tipo_documento,			nro_documento : req.body.nro_documento,			id_imagen : req.body.id_imagen,			id_grupo_familiar : req.body.id_grupo_familiar
+    create: function(req, res) {
+        var PersonaFisica = new PersonaFisicaModel({
+            nombre: req.body.nombre,
+            apellido: req.body.apellido,
+            nacimiento: req.body.nacimiento,
+            tipo_documento: req.body.tipo_documento,
+            nro_documento: req.body.nro_documento,
+            id_imagen: req.body.id_imagen,
+            id_grupo_familiar: req.body.id_grupo_familiar
         });
 
-        PersonaFisica.save(function (err, PersonaFisica) {
+        PersonaFisica.save(function(err, PersonaFisica) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when creating PersonaFisica',
@@ -64,9 +109,11 @@ module.exports = {
     /**
      * PersonaFisicaController.update()
      */
-    update: function (req, res) {
+    update: function(req, res) {
         var id = req.params.id;
-        PersonaFisicaModel.findOne({_id: id}, function (err, PersonaFisica) {
+        PersonaFisicaModel.findOne({
+            _id: id
+        }, function(err, PersonaFisica) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting PersonaFisica',
@@ -79,8 +126,15 @@ module.exports = {
                 });
             }
 
-            PersonaFisica.nombre = req.body.nombre ? req.body.nombre : PersonaFisica.nombre;			PersonaFisica.apellido = req.body.apellido ? req.body.apellido : PersonaFisica.apellido;			PersonaFisica.nacimiento = req.body.nacimiento ? req.body.nacimiento : PersonaFisica.nacimiento;			PersonaFisica.tipo_documento = req.body.tipo_documento ? req.body.tipo_documento : PersonaFisica.tipo_documento;			PersonaFisica.nro_documento = req.body.nro_documento ? req.body.nro_documento : PersonaFisica.nro_documento;			PersonaFisica.id_imagen = req.body.id_imagen ? req.body.id_imagen : PersonaFisica.id_imagen;			PersonaFisica.id_grupo_familiar = req.body.id_grupo_familiar ? req.body.id_grupo_familiar : PersonaFisica.id_grupo_familiar;			
-            PersonaFisica.save(function (err, PersonaFisica) {
+            PersonaFisica.nombre = req.body.nombre ? req.body.nombre : PersonaFisica.nombre;
+            PersonaFisica.apellido = req.body.apellido ? req.body.apellido : PersonaFisica.apellido;
+            PersonaFisica.nacimiento = req.body.nacimiento ? req.body.nacimiento : PersonaFisica.nacimiento;
+            PersonaFisica.tipo_documento = req.body.tipo_documento ? req.body.tipo_documento : PersonaFisica.tipo_documento;
+            PersonaFisica.nro_documento = req.body.nro_documento ? req.body.nro_documento : PersonaFisica.nro_documento;
+            PersonaFisica.id_imagen = req.body.id_imagen ? req.body.id_imagen : PersonaFisica.id_imagen;
+            PersonaFisica.id_grupo_familiar = req.body.id_grupo_familiar ? req.body.id_grupo_familiar : PersonaFisica.id_grupo_familiar;
+
+            PersonaFisica.save(function(err, PersonaFisica) {
                 if (err) {
                     return res.status(500).json({
                         message: 'Error when updating PersonaFisica.',
@@ -96,9 +150,9 @@ module.exports = {
     /**
      * PersonaFisicaController.remove()
      */
-    remove: function (req, res) {
+    remove: function(req, res) {
         var id = req.params.id;
-        PersonaFisicaModel.findByIdAndRemove(id, function (err, PersonaFisica) {
+        PersonaFisicaModel.findByIdAndRemove(id, function(err, PersonaFisica) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when deleting the PersonaFisica.',

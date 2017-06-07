@@ -3,7 +3,7 @@
 var apiRoute = 'http://localhost:3000';
 var client = "http://localhost:3001";
 
-angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table','ngAvatar','blockUI','ngMap'])
+angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table', 'ngAvatar', 'blockUI', 'ngMap','ngAnimate','ui.bootstrap'])
     .run(['$rootScope', '$state', 'authManager', 'jwtHelper', '$anchorScroll', 'growl', function(r, s, authManager, jwtHelper, $anchorScroll, growl) {
         r.hideNav = false;
         r.navTitle = '';
@@ -77,11 +77,8 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
             if (toState.data && toState.data.requiresLogin && !r.user || (toState.data && toState.data.requiresRole && !r.hasAnyRole(toState.data.requiresRole))) {
                 growl.error('acceso no autorizado');
                 event.preventDefault();
-                console.log('error')
-                // if (s.current !== 'app.login') {
-                    s.go('app.login');
-                    $('.modal').modal('hide');
-                // }
+                s.go('app.login');
+                $('.modal').modal('hide');
             }
             $anchorScroll(0);
         });
@@ -91,19 +88,15 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
                 r.navTitle = toState.data.pageTitle;
             r.active = s.current.name;
             $('body').removeClass('sidebar-open');
-            if(!r.user)
+            if (!r.user)
                 s.go('app.login');
         });
 
         r.$on('$stateNotFound', function(event, unfoundState, fromState, fromParams) {
-            console.log(unfoundState.to);
-            console.log(unfoundState.toParams);
-            console.log(unfoundState.options);
             s.go('app');
         });
 
         r.$on('$stateChangeError', function(event, toState, toParams, fromState, fromParams, error) {
-            console.log(error);
             s.go('app');
         });
 
@@ -136,11 +129,15 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
             }
         };
     }])
-    .config(['$httpProvider', 'jwtOptionsProvider', 'growlProvider','blockUIConfig',
-        function($httpProvider, jwtOptionsProvider, growlProvider,blockUIConfig) {
+    .config(['$httpProvider', 'jwtOptionsProvider', 'growlProvider', 'blockUIConfig',
+        function($httpProvider, jwtOptionsProvider, growlProvider, blockUIConfig) {
             jwtOptionsProvider.config({
                 whiteListedDomains: ['localhost'],
-                unauthenticatedRedirectPath: '/login',
+                unauthenticatedRedirector: ['$state', 'growl', function($state, growl) {
+                    $state.go('app.login');
+                    growl.warning('Su sesi&oacute;n ha expirado.');
+                }],
+                loginPath: 'app.login',
                 tokenGetter: ['options', function(options) {
                     // Skip authentication for any requests ending in .html
                     if (options && options.url && options.url.substr(options.url.length - 5) == '.html') {
@@ -178,8 +175,8 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
     })
     .filter('replaceCommaSpace', function() {
         return function(input) {
-            if(input)
-            return input.replace(/,/g, ' ');
+            if (input)
+                return input.replace(/,/g, ' ');
         };
     })
     .filter('monthNameUC', function() {

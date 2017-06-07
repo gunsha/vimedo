@@ -14,6 +14,7 @@
     ],
     "libs": [
         "angular/angular.min",
+        "angular-animate",
         "angular-block-ui/dist/angular-block-ui.min",
         "angular-ui-router/release/angular-ui-router.min",
         "angular-jwt/dist/angular-jwt.min",
@@ -22,7 +23,9 @@
         "sweetalert2/dist/sweetalert2.min",
         "angular-avatar/dist/angular-avatar.min",
         "ng-map.min",
-        "moment/min/moment.min"
+        "moment/min/moment.min",
+        "typeahead.min",
+        "typeahead-tpls.min"
     ],
     "components": []
 }

@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var AntecedenteMedicoController = require('../controllers/AntecedenteMedicoController.js');
+var Cie10Controller = require('../controllers/Cie10Controller.js');
+var PersonaFisicaController = require('../controllers/PersonaFisicaController.js');
 
 /*
  * GET
@@ -9,6 +11,13 @@ router.get('/', function (req, res) {
     AntecedenteMedicoController.list(req, res);
 });
 
+router.get('/cieautocomplete', function (req, res) {
+    Cie10Controller.autocomplete(req, res);
+});
+
+router.get('/afiliadoautocomplete', function (req, res) {
+    PersonaFisicaController.autocompleteAfiliado(req, res);
+});
 /*
 router.get('/:id', function (req, res) {
     TelefonoController.show(req, res);

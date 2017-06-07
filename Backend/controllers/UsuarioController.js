@@ -785,7 +785,7 @@ module.exports = {
                             return res.json({
                                 jwt: nJwt.create({
                                     sub: map
-                                }, signingKey).compact()
+                                }, signingKey).setExpiration(new Date().getTime() + (24*60*60*1000)).compact()
                             });
                         } else {
                             ProfesionalModel.findOne({
@@ -823,7 +823,7 @@ module.exports = {
                                                 return res.json({
                                                     jwt: nJwt.create({
                                                         sub: map
-                                                    }, signingKey).compact()
+                                                    }, signingKey).setExpiration(new Date().getTime() + (24*60*60*1000)).compact()
                                                 });
                                             });
                                         });
@@ -838,7 +838,7 @@ module.exports = {
                                     return res.json({
                                         jwt: nJwt.create({
                                             sub: map
-                                        }, signingKey).compact()
+                                        }, signingKey).setExpiration(new Date().getTime() + (24*60*60*1000)).compact()
                                     });
                                 }
                             });

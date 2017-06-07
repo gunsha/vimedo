@@ -9,7 +9,7 @@ module.exports = {
     listByUsuario: function (req, res) {
         SolicitudMedicaModel
         .find({usuario:req.params.idUsuario,fechaBaja:null})
-        .deepPopulate(["usuario","afiliado","domicilio","antecedentesMedicos","profesional.especialidades","profesional.personaFisica.imagen","profesional.personaFisica.telefonos","profesional.personaFisica.domicilios","profesional.usuario"])
+        .deepPopulate(["usuario","afiliado","domicilio","sintomasCie","antecedentesMedicosCie","profesional.especialidades","profesional.personaFisica.imagen","profesional.personaFisica.telefonos","profesional.personaFisica.domicilios","profesional.usuario"])
         .exec(function (err, solicitudesMedicas) {
             if (err) {
                 return res.status(500).json({
@@ -40,7 +40,7 @@ module.exports = {
 
     listByProfesional: function (req, res) {
         SolicitudMedicaModel.find({profesional:req.params.idProfesional,fechaBaja:null})
-        .deepPopulate(["usuario","afiliado.personaFisica.imagen","afiliado.personaFisica.domicilios","afiliado.personaFisica.telefonos","domicilio","antecedentesMedicos","profesional.especialidades"])
+        .deepPopulate(["usuario","afiliado.personaFisica.imagen","afiliado.personaFisica.domicilios","afiliado.personaFisica.telefonos","domicilio","sintomasCie","antecedentesMedicosCie","profesional.especialidades"])
         .exec(function (err, solicitudesMedicas) {
             if (err) {
                 return res.status(500).json({
@@ -67,7 +67,7 @@ module.exports = {
     },
 
     list:function(req,res){
-        SolicitudMedicaModel.find({fechaBaja:null}).deepPopulate(["usuario","afiliado.personaFisica","domicilio","profesional.personaFisica","antecedentesMedicos"]).exec(function (err, solicitudesMedicas) {
+        SolicitudMedicaModel.find({fechaBaja:null}).deepPopulate(["usuario","afiliado.personaFisica","domicilio","profesional.personaFisica","sintomasCie","antecedentesMedicosCie"]).exec(function (err, solicitudesMedicas) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting SolicitudesMedicas.',
@@ -79,7 +79,7 @@ module.exports = {
     },
 
     get:function(req,res){
-        SolicitudMedicaModel.findOne({_id:req.params.idSolicitud}).deepPopulate(["usuario","afiliado.personaFisica","domicilio","profesional.personaFisica","antecedentesMedicos"]).exec(function (err, solicitud) {
+        SolicitudMedicaModel.findOne({_id:req.params.idSolicitud}).deepPopulate(["usuario","afiliado.personaFisica","domicilio","profesional.personaFisica","sintomasCie","antecedentesMedicosCie"]).exec(function (err, solicitud) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting SolicitudesMedicas.',
@@ -129,19 +129,18 @@ module.exports = {
     },
 
     save: function (req, res){
-        var antecedentesMedicos=[]
-        for (var i=0;i<req.body.antecedentesMedicos.length;i++){
-            antecedentesMedicos.push(req.body.antecedentesMedicos[i]._id);
-        }
+        
         var now=Date.now();
         var solicitud = new SolicitudMedicaModel({
             sintomas: req.body.sintomas,
-            horasSintomas:req.body.horasSintomas,
-            minutosSintomas:req.body.minutosSintomas,
-            usuario:req.body.usuario._id,
-            afiliado:req.body.afiliado._id,
-            domicilio:req.body.domicilio._id,
-            antecedentesMedicos:antecedentesMedicos,
+            sintomasCie: req.body.sintomasCie,
+            antecedentesMedicosCie: req.body.antecedentesCie,
+            horasSintomas: req.body.horasSintomas,
+            minutosSintomas: req.body.minutosSintomas,
+            // usuario:req.body.usuario._id,
+            afiliado: req.body.afiliado,
+            domicilio: req.body.domicilio,
+            antecedentesMedicos: req.body.antecedentes,
             fechaAlta:now,
             fechaModificacion:now,
             estado:0
@@ -155,7 +154,7 @@ module.exports = {
                 });
             }
             else{
-                SolicitudMedicaModel.findOne({_id:solicitudMedica._id}).deepPopulate(["usuario","afiliado","domicilio","antecedentesMedicos","profesional"]).exec(function (err, solicitud){
+                SolicitudMedicaModel.findOne({_id:solicitudMedica._id}).deepPopulate(["usuario","afiliado","domicilio","sintomasCie","antecedentesMedicosCie","profesional"]).exec(function (err, solicitud){
                     solicitud.afiliado.usuario=null;
                     solicitud.afiliado.grupoFamiliar=null;
                     solicitud.afiliado.personaFisica=null;
