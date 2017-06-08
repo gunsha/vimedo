@@ -29,7 +29,7 @@
                 <td at-implicit at-sortable at-attribute="personaFisica.nroDocumento" at-title="DNI / LC / LE N°"></td>
                 <td at-implicit at-sortable at-attribute="matricula" at-title="Matricula"></td>
                 <td at-title="Ver / Editar">
-                  <a href="#" class="btn btn-success"><span class="glyphicon glyphicon-zoom-in"></span> </a>
+                  <a href="#" class="btn btn-success" ng-click="ctrl.view(item);"><span class="glyphicon glyphicon-zoom-in"></span> </a>
                   <a href="#" class="btn btn-warning"><span class="glyphicon glyphicon-edit"></span> </a>
                 </td>
               </tr>
@@ -104,6 +104,64 @@
               <div class="col-md-8">
                 <button id="guardarNew" type="submit" name="guardarNew" class="btn btn-success">Aceptar</button>
                 <button id="cancelarNew" name="cancelarNew" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<div id="viewModal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{{ctrl.modalPro.personaFisica.nombre +' '+ ctrl.modalPro.personaFisica.apellido}}</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" ng-submit="ctrl.savePro();">
+          <fieldset>
+            <div class="form-group">
+              <label class="col-md-6 control-label">Matricula</label>
+              <div class="col-md-6">
+                <p class="form-control-static">{{ctrl.modalPro.matricula}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-6 control-label">DNI / LC / LE N°</label>
+              <div class="col-md-6">
+                <p class="form-control-static">{{ctrl.modalPro.personaFisica.nroDocumento}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-6 control-label">Fecha de nacimiento</label>
+              <div class="col-md-6">
+                <p class="form-control-static">{{ctrl.modalPro.personaFisica.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-6 control-label">Domicilio/s</label>
+              <div class="col-md-6">
+                <p class="form-control-static" ng-repeat="dom in ctrl.modalPro.personaFisica.domicilios">{{dom.calle + ' ' + dom.numero + ', ' + dom.localidad + ', ' + dom.provincia}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-6 control-label">Telefono/s</label>
+              <div class="col-md-6">
+                <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonos">{{tel}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-6 control-label">Email</label>
+              <div class="col-md-6">
+                <p class="form-control-static">{{ctrl.modalPro.usuario.email}}</p>
+              </div>
+            </div>
+             <div class="form-group">
+              <label class="col-md-6 control-label" for="newDireccion">Especialidades</label>
+              <div class="col-md-6">
+                <p class="form-control-static" ng-repeat="esp in ctrl.modalPro.especialidades">{{esp.nombre}}</p>
               </div>
             </div>
           </fieldset>

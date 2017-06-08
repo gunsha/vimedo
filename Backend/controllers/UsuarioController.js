@@ -306,206 +306,123 @@ module.exports = {
             } else {
                 var Usuario = new UsuarioModel({
                     email: req.body.email,
-                    password: req.body.password,
+                    password: req.body.password ? req.body.password : req.body.credencial,
                     fechaAlta: Date.now()
                 });
                 var url = "http://localhost:8008/socios/" + req.body.credencial;
 
-                var request = http.get(url, function(response) {
-                    // Continuously update stream with data
-                    var body = '';
-                    var statusCode = response.statusCode;
-                    response.on('data', function(d) {
-                        body += d;
-                    });
-                    response.on('end', function() {
-                        if (statusCode == 200) {
-                            var afiliadoRest = JSON.parse(body);
-                            if (afiliadoRest) {
-                                Usuario.save(function(err, usuario) {
-                                    if (err) {
-                                        return res.status(404).json({
-                                            message: err
-                                        });
-                                    } else {
-                                        var afiliadoData = {
-                                            credencial: req.body.credencial,
-                                            usuario: usuario._id
-                                        };
-                                        AfiliadoModel.findOneAndUpdate({
-                                            credencial: req.body.credencial
-                                        }, {
-                                            $set: afiliadoData
-                                        }, {
-                                            upsert: true,
-                                            new: true
-                                        }, function(err, afiliado) {
-                                            if (afiliado.grupoFamiliar == null) {
-                                                var PersonaFisica = new PersonaFisicaModel({
-                                                    nombre: afiliadoRest.nombre,
-                                                    apellido: afiliadoRest.apellido,
-                                                    fechaNacimiento: new Date(afiliadoRest.nacimiento),
-                                                    tipoDocumento: afiliadoRest.tipo_documento,
-                                                    nroDocumento: afiliadoRest.nro_documento
-                                                });
-                                                var GrupoFamiliar = new GrupoFamiliarModel({
-                                                    descripcion: afiliadoRest.apellido
-                                                });
-                                                DomicilioModel.find({}, function(err, domicilios) { //mock para asociar domicilios
+                // var request = http.get(url, function(response) {
+                // CONTINUOUSLY update stream with data
+                // var body = '';
+                // var statusCode = response.statusCode;
+                // response.on('data', function(d) {
+                //     body += d;
+                // });
+                // response.on('end', function() {
+                // if (statusCode == 200) {
+                // var afiliadoRest = JSON.parse(body);
+                var afiliadoRest = req.body.afiliado;
+                if (afiliadoRest) {
+                    Usuario.save(function(err, usuario) {
+                        if (err) {
+                            return res.status(404).json({
+                                message: err
+                            });
+                        } else {
+                            var afiliadoData = {
+                                credencial: req.body.credencial,
+                                usuario: usuario._id
+                            };
+                            AfiliadoModel.findOneAndUpdate({
+                                credencial: req.body.credencial
+                            }, {
+                                $set: afiliadoData
+                            }, {
+                                upsert: true,
+                                new: true
+                            }, function(err, afiliado) {
+                                console.log(err);
+                                if (afiliado.grupoFamiliar == null) {
+                                    var PersonaFisica = new PersonaFisicaModel({
+                                        nombre: afiliadoRest.nombre,
+                                        apellido: afiliadoRest.apellido,
+                                        fechaNacimiento: new Date(afiliadoRest.nacimiento),
+                                        tipoDocumento: afiliadoRest.tipo_documento,
+                                        nroDocumento: afiliadoRest.nro_documento,
+                                        telefonos: afiliadoRest.telefonos
+                                    });
+                                    var GrupoFamiliar = new GrupoFamiliarModel({
+                                        descripcion: afiliadoRest.apellido
+                                    });
 
-                                                    for (var i = 0; i < domicilios.length; i++) {
-                                                        PersonaFisica.domicilios.push(domicilios[i]._id);
-                                                    }
-                                                    ImagenModel.find({}, function(err, imagenes) { //mock para asociar imagen
-                                                        if (imagenes) {
-                                                            PersonaFisica.imagen = imagenes[0]._id;
+                                    DomicilioModel.create(afiliadoRest.domicilios, function(err, resp) { //mock para asociar domicilios
+                                        console.log('resp');
+                                        for (var i = 0; i < resp.length; i++) {
+                                            PersonaFisica.domicilios.push(resp[i]._id);
+                                        }
+                                        ImagenModel.find({}, function(err, imagenes) { //mock para asociar imagen
+                                            if (imagenes) {
+                                                PersonaFisica.imagen = imagenes[0]._id;
+                                            }
+                                                PersonaFisica.save(function(err, personaFisica) {
+                                                    afiliado.personaFisica = personaFisica._id;
+                                                    afiliado.save(function(err, afiliado) {
+                                                        if (err) {
+                                                            console.log(err)
+                                                            return res.status(400);
                                                         }
-                                                        GrupoFamiliar.save(function(err, grupoFamiliar) {
-                                                            PersonaFisica.save(function(err, personaFisica) {
-                                                                afiliado.grupoFamiliar = grupoFamiliar._id;
-                                                                afiliado.personaFisica = personaFisica._id;
-                                                                afiliado.save(function(err, afiliado) {
-                                                                    var listadoGrupo = [];
-                                                                    for (var i = 0; i < afiliadoRest.grupoFamiliar.length; i++) {
-                                                                        var persona = {};
-                                                                        persona.nombre = afiliadoRest.grupoFamiliar[i].nombre;
-                                                                        persona.apellido = afiliadoRest.grupoFamiliar[i].apellido;
-                                                                        persona.fechaNacimiento = new Date(afiliadoRest.grupoFamiliar[i].nacimiento);
-                                                                        persona.tipoDocumento = afiliadoRest.grupoFamiliar[i].tipo_documento;
-                                                                        persona.nroDocumento = afiliadoRest.grupoFamiliar[i].nro_documento;
-                                                                        persona.domicilios = [domicilios[0]._id];
-                                                                        persona.imagen = imagenes[i]._id;
-                                                                        listadoGrupo.push(persona);
-                                                                    }
-                                                                    if (listadoGrupo.length == 0) {
-                                                                        grupoFamiliarTemp = grupoFamiliar.toObject({
-                                                                            getters: true,
-                                                                            virtuals: false
-                                                                        });
-                                                                        afiliadoTemp = afiliado.toObject({
-                                                                            getters: true,
-                                                                            virtuals: false
-                                                                        });
-                                                                        afiliadoTemp.personaFisica = personaFisica.toObject({
-                                                                            getters: true,
-                                                                            virtuals: false
-                                                                        });
-                                                                        afiliadoTemp.personaFisica.domicilios = domicilios;
-                                                                        afiliadoTemp.personaFisica.imagen = imagenes[0];
-                                                                        usuarioTemp = usuario.toObject({
-                                                                            getters: true,
-                                                                            virtuals: false
-                                                                        });
-                                                                        usuarioTemp.afiliado = afiliadoTemp;
-                                                                        return res.status(200).json({
-                                                                            usuario: usuarioTemp,
-                                                                            grupoFamiliar: grupoFamiliarTemp
-                                                                        });
-                                                                    }
-                                                                    PersonaFisicaModel.create(listadoGrupo, function(err, personasFisicas) {
-                                                                        var listadoAfiliados = [];
-                                                                        var listadoCredenciales = [];
-                                                                        for (var i = 0; i < personasFisicas.length; i++) {
-                                                                            var integranteRest = self.getElementInArray(afiliadoRest.grupoFamiliar, [{
-                                                                                attr: "tipo_documento",
-                                                                                val: personasFisicas[i].tipoDocumento
-                                                                            }, {
-                                                                                attr: "nro_documento",
-                                                                                val: personasFisicas[i].nroDocumento
-                                                                            }]);
-                                                                            var integranteData = {
-                                                                                credencial: integranteRest.credencial,
-                                                                                grupoFamiliar: grupoFamiliar._id,
-                                                                                personaFisica: personasFisicas[i]._id
-                                                                            }
-                                                                            listadoAfiliados.push(integranteData);
-                                                                            listadoCredenciales.push(integranteRest.credencial);
-                                                                        }
-                                                                        AfiliadoModel.create(listadoAfiliados, function(err, afiliados) {
 
-                                                                            AfiliadoModel.find({
-                                                                                credencial: {
-                                                                                    $in: listadoCredenciales
-                                                                                }
-                                                                            }).deepPopulate(["personaFisica.domicilios", "personaFisica.imagen"]).exec(function(err, afiliadosFilled) {
-
-                                                                                grupoFamiliarTemp = grupoFamiliar.toObject({
-                                                                                    getters: true,
-                                                                                    virtuals: false
-                                                                                });
-                                                                                grupoFamiliarTemp.afiliados = afiliadosFilled;
-                                                                                afiliadoTemp = afiliado.toObject({
-                                                                                    getters: true,
-                                                                                    virtuals: false
-                                                                                });
-                                                                                afiliadoTemp.personaFisica = personaFisica.toObject({
-                                                                                    getters: true,
-                                                                                    virtuals: false
-                                                                                });
-                                                                                afiliadoTemp.personaFisica.domicilios = domicilios;
-                                                                                afiliadoTemp.personaFisica.imagen = imagenes[0];
-                                                                                usuarioTemp = usuario.toObject({
-                                                                                    getters: true,
-                                                                                    virtuals: false
-                                                                                });
-                                                                                usuarioTemp.afiliado = afiliadoTemp;
-                                                                                return res.status(200).json({
-                                                                                    usuario: usuarioTemp,
-                                                                                    grupoFamiliar: grupoFamiliarTemp
-                                                                                });
-                                                                            });
-                                                                        });
-                                                                    });
-                                                                });
-
-                                                            });
-
+                                                        return res.status(200).json({
+                                                            status: 'ok'
                                                         });
                                                     });
-                                                });
-
-                                            } else {
-                                                /*el usuario no esta registrado pero si alguien de su entorno familiar*/
-                                                AfiliadoModel.find({
-                                                    grupoFamiliar: afiliado.grupoFamiliar,
-                                                    credencial: {
-                                                        $ne: afiliado.credencial
-                                                    }
-                                                }).populate("personaFisica").exec(function(err, afiliados) {
-
 
                                                 });
-                                            }
                                         });
-                                    }
-                                });
-                            } else {
-                                var errorMsj = 'No se ha encontrado la credencial ' + req.body.credencial;
-                                return res.status(404).json({
-                                    message: 'Error al crear el usuario.',
-                                    error: errorMsj
-                                });
-                            }
-                        } else {
-                            return res.status(statusCode).json({
-                                message: 'Error al validar credencial.',
-                                error: body
+                                    });
+
+                                } else {
+                                    /*el usuario no esta registrado pero si alguien de su entorno familiar*/
+                                    AfiliadoModel.find({
+                                        grupoFamiliar: afiliado.grupoFamiliar,
+                                        credencial: {
+                                            $ne: afiliado.credencial
+                                        }
+                                    }).populate("personaFisica").exec(function(err, afiliados) {
+
+
+                                    });
+                                }
                             });
                         }
                     });
-                    response.on('error', function() {
-                        return res.status(404).json({
-                            message: 'Error al validar credencial.',
-                            error: err
-                        });
-                    });
-                });
-                request.on('error', function(err) {
+                } else {
+                    var errorMsj = 'No se ha encontrado la credencial ' + req.body.credencial;
                     return res.status(404).json({
-                        message: 'Error al validar credencial.',
-                        error: err
+                        message: 'Error al crear el usuario.',
+                        error: errorMsj
                     });
-                });
+                }
+                // } else {
+                //     return res.status(statusCode).json({
+                //         message: 'Error al validar credencial.',
+                //         error: body
+                //     });
+                // }
+                // });
+                // response.on('error', function() {
+                //     return res.status(404).json({
+                //         message: 'Error al validar credencial.',
+                //         error: err
+                //     });
+                // });
+                // });
+                // request.on('error', function(err) {
+                //     return res.status(404).json({
+                //         message: 'Error al validar credencial.',
+                //         error: err
+                //     });
+                // });
             }
         });
     },
@@ -777,7 +694,7 @@ module.exports = {
                     });
                     AdminModel.findOne({
                         usuario: usuario._id
-                    }).deepPopulate(["personaFisica"]) .exec(function(err, admin) {
+                    }).deepPopulate(["personaFisica"]).exec(function(err, admin) {
                         if (admin) {
                             usuarioTemp.rolName = 'ADMIN';
                             map.usuario = usuarioTemp;
@@ -785,7 +702,7 @@ module.exports = {
                             return res.json({
                                 jwt: nJwt.create({
                                     sub: map
-                                }, signingKey).setExpiration(new Date().getTime() + (24*60*60*1000)).compact()
+                                }, signingKey).setExpiration(new Date().getTime() + (24 * 60 * 60 * 1000)).compact()
                             });
                         } else {
                             ProfesionalModel.findOne({
@@ -823,7 +740,7 @@ module.exports = {
                                                 return res.json({
                                                     jwt: nJwt.create({
                                                         sub: map
-                                                    }, signingKey).setExpiration(new Date().getTime() + (24*60*60*1000)).compact()
+                                                    }, signingKey).setExpiration(new Date().getTime() + (24 * 60 * 60 * 1000)).compact()
                                                 });
                                             });
                                         });
@@ -838,7 +755,7 @@ module.exports = {
                                     return res.json({
                                         jwt: nJwt.create({
                                             sub: map
-                                        }, signingKey).setExpiration(new Date().getTime() + (24*60*60*1000)).compact()
+                                        }, signingKey).setExpiration(new Date().getTime() + (24 * 60 * 60 * 1000)).compact()
                                     });
                                 }
                             });

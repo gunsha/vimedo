@@ -25,7 +25,9 @@
         "ng-map.min",
         "moment/min/moment.min",
         "typeahead.min",
-        "typeahead-tpls.min"
+        "typeahead-tpls.min",
+        "angular-bootstrap-datetimepicker/src/js/datetimepicker",
+        "angular-bootstrap-datetimepicker/src/js/datetimepicker.templates"
     ],
     "components": []
 }

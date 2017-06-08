@@ -23,7 +23,7 @@ function pacientesService(r, h) {
     }
 
     function create(obj) {
-        return h.post(apiRoute + '/afiliados/',obj).then(function(resp) {
+        return h.post(apiRoute + '/users/register',obj).then(function(resp) {
             return resp.data;
         });
     }

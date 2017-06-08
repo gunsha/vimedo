@@ -1,8 +1,8 @@
 angular.module("app.controllers")
-.controller('loginCtrl', ['$scope', '$stateParams', '$http', '$ionicPopup', 'StateManager', 'RegisterManager', 'GLOBALS', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
+.controller('loginCtrl', ['$scope', '$stateParams', '$http', '$ionicPopup', 'StateManager', 'RegisterManager', 'GLOBALS','jwtHelper', // The following is the constructor function for this page's controller. See https://docs.angularjs.org/guide/controller
 // You can include any angular dependencies as parameters for this function
 // TIP: Access Route Parameters for your page via $stateParams.parameterName
-function ($scope, $stateParams, $http, $ionicPopup, StateManager, RegisterManager, GLOBALS) {
+function ($scope, $stateParams, $http, $ionicPopup, StateManager, RegisterManager, GLOBALS,jwtHelper) {
 	$scope.$on('$ionicView.beforeEnter', function (e, data) {
 	    $scope.$root.showMenuIcon = false;
 		$scope.login = {};
@@ -12,11 +12,12 @@ function ($scope, $stateParams, $http, $ionicPopup, StateManager, RegisterManage
 		var data = $scope.login;
 		console.log(data);
 		$http.post(GLOBALS.HOST+':'+GLOBALS.PORT+'/users/login',data).then(function(response){
-			RegisterManager.store({'loggedUser':response.data.usuario});
+			var decoded = jwtHelper.decodeToken(response.data.jwt);
+			RegisterManager.store({'loggedUser':decoded.sub.usuario});
 			
-			localStorage.setItem('loggedUser', JSON.stringify(response.data.usuario));
+			localStorage.setItem('loggedUser', JSON.stringify(decoded.sub.usuario));
 
-			if(response.data.usuario.profesional==undefined){
+			if(decoded.sub.usuario.profesional==undefined){
 				console.log('paciente');
 				StateManager.goNoCache('escritorio');
 			}else{

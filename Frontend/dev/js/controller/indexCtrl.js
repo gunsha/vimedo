@@ -333,3 +333,13 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         return color;
     };
 }
+function asignarProfesional(data){
+    var scope = angular.element('#accordion').scope();
+        if (scope && scope.ctrl)
+            scope.ctrl.asignarProfesional(data);
+}
+function confirmarProfesional(data){
+    var scope = angular.element('#accordion').scope();
+        if (scope && scope.ctrl)
+            scope.ctrl.confirmarProfesional(data);
+}

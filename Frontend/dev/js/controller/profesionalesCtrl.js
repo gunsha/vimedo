@@ -24,6 +24,11 @@ function profesionalesCtrl(s, r, profesionalesService, state) {
     	});
 	}
 
+	vm.view = function(item){
+		vm.modalPro = item;
+		$('#viewModal').modal();
+	};
+
 	vm.updateList = function(){
 		profesionalesService.getList().then(function(data){
 			vm.profesionales = data;

@@ -10,7 +10,7 @@
           <div class="row">
             <div class="col-lg-12 box-tools">
               <div class="pull-left">
-                <a href="#" class="btn btn-md btn-primary" data-toggle="modal" data-target="#newModal"><span class="glyphicon glyphicon-plus"></span> Nuevo</a>
+                <a href="#" class="btn btn-md btn-primary" ng-click="ctrl.newSol();"><span class="glyphicon glyphicon-plus"></span> Nuevo</a>
               </div>
               <div class="pull-right has-feedback">
                 <input type="text" class="form-control input-sm" ng-model="ctrl.query" ng-change="ctrl.filterList();" placeholder="Filtrar">
@@ -25,6 +25,7 @@
               <tbody>
                 <tr>
                   <td at-sortable at-attribute="fechaAlta" at-title="Alta"> {{item.fechaAlta | date:'dd/MM/yyyy HH:MM'}} </td>
+                  <td at-sortable at-attribute="estado" at-title="Estado"> {{item.estado === 0 ? 'Pendiente':'Finalizado'}} </td>
                   <td at-implicit at-sortable at-attribute="afiliado.personaFisica.nombre" at-title="Nombre"></td>
                   <td at-implicit at-sortable at-attribute="afiliado.personaFisica.apellido" at-title="Apellido"></td>
                   <td at-implicit at-sortable at-attribute="afiliado.personaFisica.nroDocumento" at-title="DNI / LC / LE N°"></td>
@@ -71,6 +72,12 @@
                 </div>
               </div>
               <div class="form-group">
+                <label class="col-md-4 control-label">Nombre y Apellido</label>
+                <div class="col-md-5">
+                  <p class="form-control-static">{{ctrl.modalPro.afiliado.personaFisica.nombre}} {{ctrl.modalPro.afiliado.personaFisica.apellido}}</p>
+                </div>
+              </div>
+              <div class="form-group">
                 <label class="col-md-4 control-label">DNI / LC / LE N°</label>
                 <div class="col-md-5">
                   <p class="form-control-static">{{ctrl.modalPro.afiliado.personaFisica.nroDocumento}}</p>
@@ -89,7 +96,6 @@
                     <label>
                       <input type="radio" name="optionsRadios" id="{{dom._id}}" ng-value="dom" ng-checked="" ng-model="ctrl.modalPro.domicilioSel">
                       <p class="form-control-static" ><u>Calle</u>: {{dom.calle + ' ' + dom.numero }}</p>
-                      <p class="form-control-static" ><u>Entre Calles</u>: {{dom.entrecalles }}</p>
                       <p class="form-control-static" ><u>Localidad</u>: {{dom.localidad + ', ' + dom.provincia}}</p>      
                     </label>
                   </div>              
@@ -114,10 +120,10 @@
                 <label class="col-md-4 control-label">Tiempo de Sintomas</label>
                 <div class="col-md-5">
                   <div class="col-md-5">
-                   hs <input class="form-control" type="number" ng-model="ctrl.modalPro.horasSintomas">
+                   hs <input class="form-control" type="number" min="0" max="99" ng-model="ctrl.modalPro.horasSintomas">
                   </div>
                   <div class="col-md-5">
-                    min <input class="form-control" type="number" ng-model="ctrl.modalPro.minutosSintomas">
+                    min <input class="form-control" type="number" min="0" max="99" ng-model="ctrl.modalPro.minutosSintomas">
                   </div>
                 </div>
               </div>

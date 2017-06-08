@@ -88,7 +88,7 @@ gulp.task('seccion',function(){
 });
 gulp.task('css',function(){
   
-  gulp.src(['./dev/css/app.css','./dev/js/lib/angular-growl-v2/build/angular-growl.min.css'])
+  gulp.src(['./dev/css/app.css','./dev/js/lib/angular-growl-v2/build/angular-growl.min.css','./dev/js/lib/angular-bootstrap-datetimepicker/src/css/datetimepicker.css'])
   .pipe(concat('app.css'))
   .pipe(cssMin())
   .pipe(gulp.dest('./css'));

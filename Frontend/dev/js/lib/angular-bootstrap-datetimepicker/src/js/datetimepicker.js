@@ -576,3 +576,5 @@
     }
   }
 })); // eslint-disable-line semi
+/* globals define, module, require, angular, moment */
+/* jslint vars:true */

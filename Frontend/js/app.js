@@ -4,7 +4,75 @@
 var apiRoute = 'http://localhost:3000';
 var client = "http://localhost:3001";
 
-angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table', 'ngAvatar', 'blockUI', 'ngMap','ngAnimate','ui.bootstrap'])
+var monthsShortDot$1 = 'ene._feb._mar._abr._may._jun._jul._ago._sep._oct._nov._dic.'.split('_');
+var monthsShort$2 = 'ene_feb_mar_abr_may_jun_jul_ago_sep_oct_nov_dic'.split('_');
+
+moment.defineLocale('es', {
+    months: 'enero_febrero_marzo_abril_mayo_junio_julio_agosto_septiembre_octubre_noviembre_diciembre'.split('_'),
+    monthsShort: function(m, format) {
+        if (!m) {
+            return monthsShortDot$1;
+        } else if (/-MMM-/.test(format)) {
+            return monthsShort$2[m.month()];
+        } else {
+            return monthsShortDot$1[m.month()];
+        }
+    },
+    monthsParseExact: true,
+    weekdays: 'domingo_lunes_martes_miércoles_jueves_viernes_sábado'.split('_'),
+    weekdaysShort: 'dom._lun._mar._mié._jue._vie._sáb.'.split('_'),
+    weekdaysMin: 'do_lu_ma_mi_ju_vi_sá'.split('_'),
+    weekdaysParseExact: true,
+    longDateFormat: {
+        LT: 'H:mm',
+        LTS: 'H:mm:ss',
+        L: 'DD/MM/YYYY',
+        LL: 'D [de] MMMM [de] YYYY',
+        LLL: 'D [de] MMMM [de] YYYY H:mm',
+        LLLL: 'dddd, D [de] MMMM [de] YYYY H:mm'
+    },
+    calendar: {
+        sameDay: function() {
+            return '[hoy a la' + ((this.hours() !== 1) ? 's' : '') + '] LT';
+        },
+        nextDay: function() {
+            return '[mañana a la' + ((this.hours() !== 1) ? 's' : '') + '] LT';
+        },
+        nextWeek: function() {
+            return 'dddd [a la' + ((this.hours() !== 1) ? 's' : '') + '] LT';
+        },
+        lastDay: function() {
+            return '[ayer a la' + ((this.hours() !== 1) ? 's' : '') + '] LT';
+        },
+        lastWeek: function() {
+            return '[el] dddd [pasado a la' + ((this.hours() !== 1) ? 's' : '') + '] LT';
+        },
+        sameElse: 'L'
+    },
+    relativeTime: {
+        future: 'en %s',
+        past: 'hace %s',
+        s: 'unos segundos',
+        m: 'un minuto',
+        mm: '%d minutos',
+        h: 'una hora',
+        hh: '%d horas',
+        d: 'un día',
+        dd: '%d días',
+        M: 'un mes',
+        MM: '%d meses',
+        y: 'un año',
+        yy: '%d años'
+    },
+    dayOfMonthOrdinalParse: /\d{1,2}º/,
+    ordinal: '%dº',
+    week: {
+        dow: 1, // Monday is the first day of the week.
+        doy: 4 // The week that contains Jan 4th is the first week of the year.
+    }
+});
+
+angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table', 'ngAvatar', 'blockUI', 'ngMap','ngAnimate','ui.bootstrap.datetimepicker','ui.bootstrap'])
     .run(['$rootScope', '$state', 'authManager', 'jwtHelper', '$anchorScroll', 'growl', function(r, s, authManager, jwtHelper, $anchorScroll, growl) {
         r.hideNav = false;
         r.navTitle = '';
@@ -686,6 +754,17 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         return color;
     };
 }
+function asignarProfesional(data){
+    var scope = angular.element('#accordion').scope();
+        if (scope && scope.ctrl)
+            scope.ctrl.asignarProfesional(data);
+}
+function confirmarProfesional(data){
+    var scope = angular.element('#accordion').scope();
+        if (scope && scope.ctrl)
+            scope.ctrl.confirmarProfesional(data);
+}
+
 angular.module('vimedo').factory('navService', ['$rootScope',navService]);
 
 function navService(r) {
@@ -855,6 +934,11 @@ function profesionalesCtrl(s, r, profesionalesService, state) {
     	});
 	}
 
+	vm.view = function(item){
+		vm.modalPro = item;
+		$('#viewModal').modal();
+	};
+
 	vm.updateList = function(){
 		profesionalesService.getList().then(function(data){
 			vm.profesionales = data;
@@ -894,7 +978,7 @@ function pacientesService(r, h) {
     }
 
     function create(obj) {
-        return h.post(apiRoute + '/afiliados/',obj).then(function(resp) {
+        return h.post(apiRoute + '/users/register',obj).then(function(resp) {
             return resp.data;
         });
     }
@@ -912,53 +996,137 @@ function pacientesService(r, h) {
     }
 
 }
-angular.module('vimedo').controller('pacientesCtrl', ['$rootScope', 'pacientesService', '$state', pacientesCtrl]);
+angular.module('vimedo').controller('pacientesCtrl', ['$rootScope', 'pacientesService', '$state', 'NgMap','growl', pacientesCtrl]);
 
-function pacientesCtrl(r, pacientesService, state) {
-	var vm = this;
+function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
+    var vm = this;
+    vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDoIklkBzmZOHP28l2znHtu3vxzjcaLqXI&libraries=places';
 
-	vm.afiliados = [];
-	vm.afiliadosOrg = [];
+    vm.afiliados = [];
+    vm.afiliadosOrg = [];
 
-	vm.modalAfil = {};
-	vm.afilSel = {};
+    vm.modalAfil = {};
+    vm.afilSel = {};
 
-	vm.tableConfig = {
-        maxPages:"10",
+    vm.tableConfig = {
+        maxPages: "10",
         itemsPerPage: "8"
     };
 
-	vm.filterList = function(){
-		var lower = vm.query.toLowerCase();
-		vm.afiliados = vm.afiliadosOrg
-		.filter(function(i){
-    		if(i.personaFisica && 
-    			(i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
-    		    i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
-    		    i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1 )){
-    			return i;
-    		}
-    	});
-	}
+    NgMap.getMap().then(function(map) {
+        vm.map = map;
+    });
 
-	vm.updateList = function(){
-		pacientesService.list().then(function(data){
-			vm.afiliados = data;
-			vm.afiliadosOrg = data;
-		});
-	}
+    vm.filterList = function() {
+        var lower = vm.query.toLowerCase();
+        vm.afiliados = vm.afiliadosOrg
+            .filter(function(i) {
+                if (i.personaFisica &&
+                    (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
+                        i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                        i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
+                    return i;
+                }
+            });
+    }
 
-	vm.viewAfil = function(afil){
-		vm.afilSel = afil;
-		$('#viewModal').modal();
-	};
+    vm.updateList = function() {
+        pacientesService.list().then(function(data) {
+            vm.afiliados = data;
+            vm.afiliadosOrg = data;
+        });
+    }
+    vm.removeDom = function(index) {
+        vm.modalAfil.afiliado.domicilios.splice(index, 1);
+    };
 
-	vm.saveAfil = function(){
-		vm.modalAfil = {};
-		$('#newModal').modal('hide');
-	};
+    vm.addTel = function() {
+        vm.modalAfil.afiliado.telefonosA.push(vm.modalAfil.afiliado.telefono);
+        vm.modalAfil.afiliado.telefono = '';
+    };
 
-	vm.updateList();
+    vm.removeTel = function(index) {
+        vm.modalAfil.afiliado.telefonosA.splice(index, 1);
+    };
+
+    vm.viewAfil = function(afil) {
+        vm.afilSel = afil;
+        $('#viewModal').modal();
+    };
+
+    vm.saveAfil = function() {
+        if (vm.modalAfil.afiliado.telefonosA.length !== 0)
+            if (vm.modalAfil.afiliado.domicilios.length !== 0) {
+                vm.modalAfil.afiliado.telefonos = vm.modalAfil.afiliado.telefonosA.toString();
+                pacientesService.create(vm.modalAfil).then(function(data) {
+                    vm.modalAfil = {};
+                    $('#newModal').modal('hide');
+                    vm.updateList();
+                })
+            } else {
+                growl.error("Ingrese al menos una direccion.");
+            }
+        else
+            growl.error("Ingrese al menos un telefono.");
+    };
+
+    vm.newAfil = function() {
+        // MapManager.autocomplete('newDireccion');
+        vm.modalAfil = {
+            afiliado: {
+                domicilios: [],
+                telefonosA: []
+            }
+        };
+        $('#newModal').modal();
+    };
+
+    vm.placeChanged = function() {
+        var place = this.getPlace();
+        var componentForm = {
+            street_number: {
+                type: 'short_name',
+                name: 'numero'
+            },
+            route: {
+                type: 'long_name',
+                name: 'calle'
+            },
+            locality: {
+                type: 'short_name',
+                name: 'localidad'
+            },
+            administrative_area_level_1: {
+                type: 'long_name',
+                name: 'provincia'
+            },
+            country: {
+                type: 'long_name',
+                name: 'pais'
+            },
+            postal_code: {
+                type: 'short_name',
+                name: 'cp'
+            }
+        };
+        // console.log(vm.place);
+        var direccion = {};
+        for (var i = 0; i < place.address_components.length; i++) {
+            var addressType = place.address_components[i].types[0];
+            if (componentForm[addressType]) {
+                var val = place.address_components[i][componentForm[addressType].type];
+                // document.getElementById(addressType).value = val;
+                direccion[componentForm[addressType].name] = val;
+            }
+        }
+        direccion.latitud = place.geometry.location.lat();
+        direccion.longitud = place.geometry.location.lng();
+        direccion.coordenadas = place.geometry.location.lat() + ',' + place.geometry.location.lng();
+        vm.modalAfil.afiliado.domicilios.push(direccion);
+        vm.afilDir = '';
+
+    }
+    vm.updateList();
 }
 angular.module('vimedo').factory('solicitudesService', ['$rootScope', '$http', solicitudesService]);
 
@@ -1081,10 +1249,11 @@ function solicitudesCtrl(r, solicitudesService, state, growl) {
     };
 
     vm.removeSintoma = function(index, type) {
-        if (type)
-            vm.modalPro.sintomas.splice(index, 1);
-        else
+        if (type) {
             vm.modalPro.antecedentes.splice(index, 1);
+        } else {
+            vm.modalPro.sintomas.splice(index, 1);
+        }
     };
 
     vm.updateList = function() {
@@ -1093,6 +1262,13 @@ function solicitudesCtrl(r, solicitudesService, state, growl) {
             vm.solicitudesOrig = data;
         });
     }
+    vm.newSol = function(){
+        vm.modalPro = {
+                        sintomas: [],
+                        antecedentes: []
+                    };
+                    $('#newModal').modal();
+    };
 
     vm.view = function(obj) {
         vm.objSel = obj;
@@ -1124,16 +1300,15 @@ function solicitudesCtrl(r, solicitudesService, state, growl) {
                 var req = {
                     'sintomas': sintomas.toString(),
                     'sintomasCie': sintomasCie,
-                    'horasSintomas': vm.modalPro.horasSintomas,
-                    'minutosSintomas': vm.modalPro.minutosSintomas,
+                    'horasSintomas': vm.modalPro.horasSintomas ? vm.modalPro.horasSintomas : 0,
+                    'minutosSintomas': vm.modalPro.minutosSintomas ? vm.modalPro.minutosSintomas : 0,
                     'afiliado': vm.modalPro.afiliado._id,
                     'domicilio': vm.modalPro.domicilioSel._id,
                     'antecedentesCie': antecedentesCie,
                     'antecedentes': antecedentes.toString()
                 };
 
-                solicitudesService.create(req).then(function(data) {
-                    console.log(data);
+                solicitudesService.create(req).then(function() {
                     vm.modalPro = {
                         sintomas: [],
                         antecedentes: []

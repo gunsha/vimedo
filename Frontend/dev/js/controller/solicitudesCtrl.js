@@ -63,10 +63,11 @@ function solicitudesCtrl(r, solicitudesService, state, growl) {
     };
 
     vm.removeSintoma = function(index, type) {
-        if (type)
-            vm.modalPro.sintomas.splice(index, 1);
-        else
+        if (type) {
             vm.modalPro.antecedentes.splice(index, 1);
+        } else {
+            vm.modalPro.sintomas.splice(index, 1);
+        }
     };
 
     vm.updateList = function() {
@@ -75,6 +76,13 @@ function solicitudesCtrl(r, solicitudesService, state, growl) {
             vm.solicitudesOrig = data;
         });
     }
+    vm.newSol = function(){
+        vm.modalPro = {
+                        sintomas: [],
+                        antecedentes: []
+                    };
+                    $('#newModal').modal();
+    };
 
     vm.view = function(obj) {
         vm.objSel = obj;
@@ -106,16 +114,15 @@ function solicitudesCtrl(r, solicitudesService, state, growl) {
                 var req = {
                     'sintomas': sintomas.toString(),
                     'sintomasCie': sintomasCie,
-                    'horasSintomas': vm.modalPro.horasSintomas,
-                    'minutosSintomas': vm.modalPro.minutosSintomas,
+                    'horasSintomas': vm.modalPro.horasSintomas ? vm.modalPro.horasSintomas : 0,
+                    'minutosSintomas': vm.modalPro.minutosSintomas ? vm.modalPro.minutosSintomas : 0,
                     'afiliado': vm.modalPro.afiliado._id,
                     'domicilio': vm.modalPro.domicilioSel._id,
                     'antecedentesCie': antecedentesCie,
                     'antecedentes': antecedentes.toString()
                 };
 
-                solicitudesService.create(req).then(function(data) {
-                    console.log(data);
+                solicitudesService.create(req).then(function() {
                     vm.modalPro = {
                         sintomas: [],
                         antecedentes: []

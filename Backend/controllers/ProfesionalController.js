@@ -11,7 +11,7 @@ module.exports = {
      * ProfesionalController.list()
      */
     list: function (req, res) {
-        ProfesionalModel.find({}).deepPopulate(["usuario","personaFisica.imagen","personaFisica.domicilios","personaFisica.telefonos"]).exec(function (err, Profesionals) {
+        ProfesionalModel.find({}).deepPopulate(["usuario","personaFisica.imagen","personaFisica.domicilios","personaFisica.telefonos","especialidades"]).exec(function (err, Profesionals) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting Profesional.',
@@ -27,7 +27,7 @@ module.exports = {
      */
     show: function (req, res) {
         var id = req.params.id;
-        ProfesionalModel.findOne({_id: id}, function (err, Profesional) {
+        ProfesionalModel.findOne({_id: id}).deepPopulate(["usuario","personaFisica.imagen","personaFisica.domicilios","personaFisica.telefonos","especialidades"]).exec(function (err, Profesional) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting Profesional.',
@@ -116,7 +116,7 @@ module.exports = {
     },
 
     listLogueados: function (req, res) {
-        ProfesionalModel.find({}).deepPopulate(["usuario","personaFisica.imagen","personaFisica.domicilios","personaFisica.telefonos"]).exec(function (err, profesionales) {
+        ProfesionalModel.find({}).deepPopulate(["usuario","personaFisica.imagen","personaFisica.domicilios","personaFisica.telefonos","especialidades"]).exec(function (err, profesionales) {
             var result=[];
             if (err) {
                 return res.status(500).json({
