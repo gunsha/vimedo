@@ -25,7 +25,7 @@
               <tbody>
                 <tr>
                   <td at-sortable at-attribute="fechaAlta" at-title="Alta"> {{item.fechaAlta | date:'dd/MM/yyyy HH:MM'}} </td>
-                  <td at-sortable at-attribute="estado" at-title="Estado"> {{item.estado === 0 ? 'Pendiente':'Finalizado'}} </td>
+                  <td at-sortable at-attribute="estado" at-title="Estado"> {{item.estado === 0 ? 'Pendiente':'En curso'}} </td>
                   <td at-implicit at-sortable at-attribute="afiliado.personaFisica.nombre" at-title="Nombre"></td>
                   <td at-implicit at-sortable at-attribute="afiliado.personaFisica.apellido" at-title="Apellido"></td>
                   <td at-implicit at-sortable at-attribute="afiliado.personaFisica.nroDocumento" at-title="DNI / LC / LE N°"></td>

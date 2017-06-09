@@ -1,25 +1,45 @@
-angular.module('vimedo').controller('indexCtrl', ['$scope', '$rootScope', 'indexService', 'solicitudesService', 'profesionalesService', '$state', '$timeout', '$compile', 'NgMap', indexCtrl]);
+angular.module('vimedo').controller('indexCtrl', ['$scope', '$rootScope', 'indexService', 'solicitudesService', 'profesionalesService', '$state', '$timeout', '$compile', 'NgMap','growl', indexCtrl]);
 
-function indexCtrl(s, r, indexService, solicitudesService, profesionalesService, $state, t, $compile, NgMap) {
+function indexCtrl(s, r, indexService, solicitudesService, profesionalesService, $state, t, $compile, NgMap, growl) {
 
     var vm = this;
     vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyA02b574ia3BpLXpDZXU2gOFuQZTfC_Kks';
+    vm.profesionales = [];
+    vm.profesionalesOrig = [];
+    vm.solicitudes = [];
+    vm.solicitudesOrig = [];
 
-    vm.initSolicitudes = function() {
-        indexService.getSolicitudes().then(function(response) {
-            vm.solicitudes = response.data;
-        });
-    };
+    vm.filterListS = function() {
+        var lower = vm.queryS.toLowerCase();
+        vm.solicitudes = vm.solicitudesOrig
+            .filter(function(i) {
+                if (i.afiliado.personaFisica &&
+                    (i.afiliado.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
+                        i.afiliado.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                        i.afiliado.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
+                    return i;
+                }
+            });
+    }
+    vm.filterListP = function() {
+        var lower = vm.queryP.toLowerCase();
+        vm.profesionales = vm.profesionalesOrig
+            .filter(function(i) {
+                if (i.personaFisica &&
+                    (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
+                        i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                        i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) ||
+                        i.matricula.toLowerCase().indexOf(lower) !== -1) {
+                    return i;
+                }
+            });
+    }
 
     vm.centrarMapa = function(lat, lng) {
         NgMap.getMap("map").then(function(map) {
             var latlng = new google.maps.LatLng(lat, lng);
             vm.map.setCenter(latlng);
         });
-    };
-
-    vm.toogleMenu = function(id) {
-        $("#" + id + "Menu").toggleClass("hide");
     };
 
     vm.centerAndZoom = function() {
@@ -84,6 +104,7 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         vm.infowindows = [];
         solicitudesService.list().then(function(response) {
             vm.solicitudes = response;
+            vm.solicitudesOrig = response;
             NgMap.getMap("map").then(function(map) {
                 vm.map = map;
                 for (var i = 0; i < vm.solicitudes.length; i++) {
@@ -137,6 +158,10 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     }
 
     vm.cargarProfesionales = function() {
+        profesionalesService.getList().then(function(data){
+            vm.profesionales = data;
+            vm.profesionalesOrig = data;
+        });
         profesionalesService.coordenadas().then(function(response) {
             vm.coordenadas = response;
             NgMap.getMap("map").then(function(map) {
@@ -255,7 +280,10 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         });
     };
 
-
+    vm.vistaAsignarProfesional = function(id) {
+        vm.solicitudId = id;
+        $('#modalPro').modal();
+    };
     vm.confirmarProfesional = function(profesional) {
         vm.ocultarInfoWindows();
         var data = {
@@ -267,7 +295,10 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
             }
         };
         solicitudesService.setProfesional(data).then(function() {
+            $('#modalPro').modal('hide');
+            $('.collapse').collapse('hide')
             vm.initMap();
+            growl.success('Profesional asignado.')
         });
     };
 
