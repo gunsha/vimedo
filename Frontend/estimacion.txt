@@ -14,7 +14,7 @@ VISTA PACIENTES - FE(16hs) - BE(10hs) (26)
 
 VISTA MEDICOS - FE(16hs) - BE(10hs) (26)
 #-LISTADO MEDICOS
--ALTA MEDICOS
+#-ALTA MEDICOS
 -EDICION MEDICOS
 
 VISTA ESTADISTICAS -- A DEFINIR
@@ -36,10 +36,12 @@ inicio
 #-listado profesionales 
 #-desplegable muestra solicitudes asignadas
 #-pasar datos de campos por mail
+#-puede cerrar admin o profesional
+#-diagnostico-indicaciones-observaciones
+
 -inicio solo las del dia
 
--puede cerrar admin o profesional
--diagnostico-indicaciones-observaciones
+
 
 -habilitar afiliados-profesionales desde la web
 

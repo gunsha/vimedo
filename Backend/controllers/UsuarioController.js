@@ -341,7 +341,6 @@ module.exports = {
                                 upsert: true,
                                 new: true
                             }, function(err, afiliado) {
-                                console.log(err);
                                 if (afiliado.grupoFamiliar == null) {
                                     var PersonaFisica = new PersonaFisicaModel({
                                         nombre: afiliadoRest.nombre,
@@ -356,7 +355,6 @@ module.exports = {
                                     });
 
                                     DomicilioModel.create(afiliadoRest.domicilios, function(err, resp) { //mock para asociar domicilios
-                                        console.log('resp');
                                         for (var i = 0; i < resp.length; i++) {
                                             PersonaFisica.domicilios.push(resp[i]._id);
                                         }
@@ -364,20 +362,19 @@ module.exports = {
                                             if (imagenes) {
                                                 PersonaFisica.imagen = imagenes[0]._id;
                                             }
-                                                PersonaFisica.save(function(err, personaFisica) {
-                                                    afiliado.personaFisica = personaFisica._id;
-                                                    afiliado.save(function(err, afiliado) {
-                                                        if (err) {
-                                                            console.log(err)
-                                                            return res.status(400);
-                                                        }
+                                            PersonaFisica.save(function(err, personaFisica) {
+                                                afiliado.personaFisica = personaFisica._id;
+                                                afiliado.save(function(err, afiliado) {
+                                                    if (err) {
+                                                        return res.status(400);
+                                                    }
 
-                                                        return res.status(200).json({
-                                                            status: 'ok'
-                                                        });
+                                                    return res.status(200).json({
+                                                        status: 'ok'
                                                     });
-
                                                 });
+
+                                            });
                                         });
                                     });
 
@@ -473,130 +470,134 @@ module.exports = {
             } else {
                 var usuario = new UsuarioModel({
                     email: req.body.email,
-                    password: req.body.password,
+                    password: req.body.personaFisica.nro_documento,
                     fechaAlta: Date.now()
                 });
 
-                var url = "http://localhost:8008/socios/" + req.body.matricula;
+                var personaFisicaRest = req.body.personaFisica;
 
-                var request = http.get(url, function(response) {
-                    // Continuously update stream with data
-                    var body = '';
-                    var statusCode = response.statusCode;
-                    response.on('data', function(d) {
-                        body += d;
-                    });
-                    response.on('end', function() {
-                        if (statusCode == 200) {
-                            var profesionalRest = JSON.parse(body);
-                            if (profesionalRest) {
-                                usuario.save(function(err, usuario) {
+                // var url = "http://localhost:8008/socios/" + req.body.matricula;
+                // var request = http.get(url, function(response) {
+                //     // Continuously update stream with data
+                //     var body = '';
+                //     var statusCode = response.statusCode;
+                //     response.on('data', function(d) {
+                //         body += d;
+                //     });
+                //     response.on('end', function() {
+                //         if (statusCode == 200) {
+                //             var profesionalRest = JSON.parse(body);
+                //             if (profesionalRest) {
+                usuario.save(function(err, usuario) {
+                    if (err) {
+                        return res.status(404).json({
+                            message: 'Error al crear el usuario.',
+                            error: err
+                        });
+                    } else {
+                        var PersonaFisica = new PersonaFisicaModel({
+                            nombre: personaFisicaRest.nombre,
+                            apellido: personaFisicaRest.apellido,
+                            fechaNacimiento: new Date(personaFisicaRest.nacimiento),
+                            tipoDocumento: personaFisicaRest.tipo_documento,
+                            nroDocumento: personaFisicaRest.nro_documento,
+                            telefonos: personaFisicaRest.telefonos
+                        });
+                        DomicilioModel.create(personaFisicaRest.domicilios, function(err, resp) {
+                            for (var i = 0; i < resp.length; i++) {
+                                PersonaFisica.domicilios.push(resp[i]._id);
+                            }
+                            ImagenModel.find({}, function(err, imagenes) {
+                                if (imagenes.length > 0) {
+                                    PersonaFisica.imagen = imagenes[imagenes.length - 1]._id;
+                                }
+
+                                PersonaFisica.save(function(err, personaFisica) {
                                     if (err) {
                                         return res.status(404).json({
                                             message: 'Error al crear el usuario.',
                                             error: err
                                         });
                                     } else {
-
-
-                                        var personaFisica = new PersonaFisicaModel({
-                                            nombre: profesionalRest.nombre,
-                                            apellido: profesionalRest.apellido,
-                                            fechaNacimiento: new Date(profesionalRest.nacimiento),
-                                            tipoDocumento: profesionalRest.tipo_documento,
-                                            nroDocumento: profesionalRest.nro_documento
+                                        var profesional = new ProfesionalModel({
+                                            matricula: req.body.matricula,
+                                            usuario: usuario._id,
+                                            personaFisica: personaFisica._id,
+                                            generalRating: 4,
+                                            amabilidadRating: 2,
+                                            claridadRating: 4,
+                                            puntualidadRating: 4
                                         });
-                                        ImagenModel.find({}, function(err, imagenes) {
-                                            if (imagenes.length > 0) {
-                                                personaFisica.imagen = imagenes[imagenes.length - 1]._id;
+                                        EspecialidadModel.find({}, function(err, especialidades) {
+                                            if (especialidades) {
+                                                profesional.especialidades.push(especialidades[0]);
+                                                profesional.especialidades.push(especialidades[1]);
                                             }
-
-                                            personaFisica.save(function(err, personaFisica) {
+                                            profesional.save(function(err, profesional) {
                                                 if (err) {
                                                     return res.status(404).json({
                                                         message: 'Error al crear el usuario.',
                                                         error: err
                                                     });
                                                 } else {
-                                                    var profesional = new ProfesionalModel({
-                                                        matricula: req.body.matricula,
-                                                        usuario: usuario._id,
-                                                        personaFisica: personaFisica._id,
-                                                        generalRating: 4,
-                                                        amabilidadRating: 2,
-                                                        claridadRating: 4,
-                                                        puntualidadRating: 4
+                                                    var usuarioTemp = usuario.toObject({
+                                                        getters: true,
+                                                        virtuals: false
                                                     });
-                                                    EspecialidadModel.find({}, function(err, especialidades) {
-                                                        if (especialidades) {
-                                                            profesional.especialidades.push(especialidades[0]);
-                                                            profesional.especialidades.push(especialidades[1]);
-                                                        }
-                                                        profesional.save(function(err, profesional) {
-                                                            if (err) {
-                                                                return res.status(404).json({
-                                                                    message: 'Error al crear el usuario.',
-                                                                    error: err
-                                                                });
-                                                            } else {
-                                                                var usuarioTemp = usuario.toObject({
-                                                                    getters: true,
-                                                                    virtuals: false
-                                                                });
-                                                                usuarioTemp.profesional = profesional.toObject({
-                                                                    getters: true,
-                                                                    virtuals: false
-                                                                });
-                                                                usuarioTemp.profesional.especialidades = [];
-                                                                usuarioTemp.profesional.especialidades.push(especialidades[0]);
-                                                                usuarioTemp.profesional.especialidades.push(especialidades[1]);
-                                                                usuarioTemp.profesional.personaFisica = personaFisica.toObject({
-                                                                    getters: true,
-                                                                    virtuals: false
-                                                                });
-                                                                usuarioTemp.profesional.personaFisica.imagen = imagenes[imagenes.length - 1];
-                                                                return res.status(200).json({
-                                                                    usuario: usuarioTemp
-                                                                });
-                                                            }
-                                                        });
+                                                    usuarioTemp.profesional = profesional.toObject({
+                                                        getters: true,
+                                                        virtuals: false
                                                     });
-
+                                                    usuarioTemp.profesional.especialidades = [];
+                                                    usuarioTemp.profesional.especialidades.push(especialidades[0]);
+                                                    usuarioTemp.profesional.especialidades.push(especialidades[1]);
+                                                    usuarioTemp.profesional.personaFisica = personaFisica.toObject({
+                                                        getters: true,
+                                                        virtuals: false
+                                                    });
+                                                    usuarioTemp.profesional.personaFisica.imagen = imagenes[imagenes.length - 1];
+                                                    return res.status(200).json({
+                                                        usuario: usuarioTemp
+                                                    });
                                                 }
                                             });
                                         });
 
-
                                     }
-
                                 });
-                            } else {
-                                var errorMsj = 'No se ha encontrado la matricula ' + req.body.matricula;
-                                return res.status(404).json({
-                                    message: 'Error al crear el usuario.',
-                                    error: errorMsj
-                                });
-                            }
-                        } else {
-                            return res.status(statusCode).json({
-                                message: 'Error al validar matricula.',
-                                error: body
                             });
-                        }
-                    });
-                    response.on('error', function() {
-                        return res.status(404).json({
-                            message: 'Error al validar matricula.',
-                            error: err
                         });
-                    });
+
+                    }
+
                 });
-                request.on('error', function(err) {
-                    return res.status(404).json({
-                        message: 'Error al validar matricula.',
-                        error: err
-                    });
-                });
+                // } else {
+                //     var errorMsj = 'No se ha encontrado la matricula ' + req.body.matricula;
+                //     return res.status(404).json({
+                //         message: 'Error al crear el usuario.',
+                //         error: errorMsj
+                //     });
+                // }
+                //         } else {
+                //             return res.status(statusCode).json({
+                //                 message: 'Error al validar matricula.',
+                //                 error: body
+                //             });
+                //         }
+                //     });
+                //     response.on('error', function() {
+                //         return res.status(404).json({
+                //             message: 'Error al validar matricula.',
+                //             error: err
+                //         });
+                //     });
+                // });
+                // request.on('error', function(err) {
+                //     return res.status(404).json({
+                //         message: 'Error al validar matricula.',
+                //         error: err
+                //     });
+                // });
             }
         });
 

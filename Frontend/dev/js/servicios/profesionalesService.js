@@ -3,7 +3,8 @@ angular.module('vimedo').factory('profesionalesService', ['$rootScope', '$http',
 function profesionalesService(r, h) {
     var service = {
         getList: getList,
-        coordenadas: coordenadas
+        coordenadas: coordenadas,
+        create: create
     };
     return service;
 
@@ -15,6 +16,13 @@ function profesionalesService(r, h) {
 
     function coordenadas() {
         return h.get(apiRoute + '/coordenadas/').then(function(resp) {
+            return resp.data;
+        });
+    }
+
+    function create(obj) {
+        obj.isProfesional = true;
+        return h.post(apiRoute + '/users/register',obj).then(function(resp) {
             return resp.data;
         });
     }
