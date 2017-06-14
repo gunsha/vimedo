@@ -29,5 +29,7 @@
         "angular-bootstrap-datetimepicker/src/js/datetimepicker",
         "angular-bootstrap-datetimepicker/src/js/datetimepicker.templates"
     ],
-    "components": []
+    "components": [
+        "modal-nueva-solicitud"
+    ]
 }

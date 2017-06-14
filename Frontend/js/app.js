@@ -139,6 +139,16 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
             r.logout();
         });
 
+        r.getEstado = function(s){
+            if(s === 0){
+                return 'Pendiente';
+            }else if(s === 1){
+                return 'En Curso';
+            }else if (s === 2) {
+                return 'Cerrado';
+            }
+        }
+
         r.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
             r.profile = r.getStorage('profile');
             r.hideNav = false;
@@ -419,13 +429,14 @@ function indexService(r,h) {
 
     }
 }
-angular.module('vimedo').controller('indexCtrl', ['$scope', '$rootScope', 'indexService', 'solicitudesService', 'profesionalesService', '$state', '$timeout', '$compile', 'NgMap','growl', indexCtrl]);
+angular.module('vimedo').controller('indexCtrl', ['$scope', '$rootScope', 'indexService', 'solicitudesService', 'profesionalesService', '$state', '$timeout', '$compile', 'NgMap', 'growl', indexCtrl]);
 
 function indexCtrl(s, r, indexService, solicitudesService, profesionalesService, $state, t, $compile, NgMap, growl) {
 
     var vm = this;
     vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyA02b574ia3BpLXpDZXU2gOFuQZTfC_Kks';
     vm.profesionales = [];
+    vm.profesionalesD = [];
     vm.profesionalesOrig = [];
     vm.solicitudes = [];
     vm.solicitudesOrig = [];
@@ -450,7 +461,20 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
                     (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
                         i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
                         i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) ||
-                        i.matricula.toLowerCase().indexOf(lower) !== -1) {
+                    i.matricula.toLowerCase().indexOf(lower) !== -1) {
+                    return i;
+                }
+            });
+    }
+    vm.filterListPD = function() {
+        var lower = vm.queryPD.toLowerCase();
+        vm.profesionalesD = vm.profesionalesOrig
+            .filter(function(i) {
+                if (i.personaFisica &&
+                    (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
+                        i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                        i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) ||
+                    i.matricula.toLowerCase().indexOf(lower) !== -1) {
                     return i;
                 }
             });
@@ -523,14 +547,13 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         vm.profesionalMark = [];
         vm.asignandoProfesional = false;
         vm.infowindows = [];
-        solicitudesService.list().then(function(response) {
+        solicitudesService.listActive().then(function(response) {
             vm.solicitudes = response;
             vm.solicitudesOrig = response;
             NgMap.getMap("map").then(function(map) {
                 vm.map = map;
                 for (var i = 0; i < vm.solicitudes.length; i++) {
                     var solicitud = vm.solicitudes[i];
-                    solicitud.fechaAlta = moment(solicitud.fechaAlta).format("DD-MM-YYYY");
                     var contentString = '<div id="content"><h5>' +
                         solicitud.afiliado.personaFisica.nombre + ' ' + solicitud.afiliado.personaFisica.apellido +
                         '</h5><div>' + solicitud.domicilio.calle + ' ' + solicitud.domicilio.numero + '</div><div>';
@@ -579,8 +602,9 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     }
 
     vm.cargarProfesionales = function() {
-        profesionalesService.getList().then(function(data){
+        profesionalesService.getList().then(function(data) {
             vm.profesionales = data;
+            vm.profesionalesD = data;
             vm.profesionalesOrig = data;
         });
         profesionalesService.coordenadas().then(function(response) {
@@ -703,6 +727,8 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
 
     vm.vistaAsignarProfesional = function(id) {
         vm.solicitudId = id;
+        vm.queryP = '';
+        vm.filterListP();
         $('#modalPro').modal();
     };
     vm.confirmarProfesional = function(profesional) {
@@ -721,6 +747,61 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
             vm.initMap();
             growl.success('Profesional asignado.')
         });
+    };
+    vm.finishSolicitud = function(s) {
+        vm.solSel = s;
+        swal({
+            title: 'Cerrar la solicitud?',
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Aceptar'
+        }).then(function() {
+            swal.setDefaults({
+                input: 'text',
+                confirmButtonText: 'Siguiente &rarr;',
+                showCancelButton: true,
+                animation: true,
+                progressSteps: ['1', '2']
+            })
+
+            var steps = [{
+                title: 'Indicaciones',
+                text: 'Indicaciones para el paciente'
+            }, {
+                title: 'Observaciones',
+                text: 'Obsrvaciones de la visita'
+            }]
+            swal.queue(steps).then(function(result) {
+                swal.resetDefaults();
+                vm.solSel.indicaciones = result[0];
+                vm.solSel.observaciones = result[1];
+                solicitudesService.finalizar(vm.solSel).then(function() {
+                    swal({
+                        text: 'La solicitud ha sido cerrada.',
+                        type: 'success',
+                        showCancelButton: false,
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Aceptar'
+                    });
+                    vm.initMap();
+                }, function() {
+                    swal({
+                        title: 'Ocurrio un error.',
+                        text: 'Intente mas tarde.',
+                        type: 'error',
+                        showCancelButton: false,
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Aceptar'
+                    });
+                })
+
+            }, function() {
+                swal.resetDefaults();
+            })
+
+        })
     };
 
     function decodePolyline(str, precision) {
@@ -784,18 +865,37 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         }
         return color;
     };
-}
-function asignarProfesional(data){
-    var scope = angular.element('#accordion').scope();
-        if (scope && scope.ctrl)
-            scope.ctrl.asignarProfesional(data);
-}
-function confirmarProfesional(data){
-    var scope = angular.element('#accordion').scope();
-        if (scope && scope.ctrl)
-            scope.ctrl.confirmarProfesional(data);
+
+    ///NUEVA SOLICITUD
+    vm.newSolicitudModal = '';
+    vm.newSol = function() {
+        vm.newSolicitud = {
+            sintomas: [],
+            antecedentes: []
+        };
+        $(vm.newSolicitudModal).modal();
+    };
+    vm.finishSaveSolicitud = function() {
+        vm.newSolicitud = {
+            sintomas: [],
+            antecedentes: []
+        };
+        vm.initMap();
+        $(vm.newSolicitudModal).modal('hide');
+    }
 }
 
+function asignarProfesional(data) {
+    var scope = angular.element('#accordion').scope();
+    if (scope && scope.ctrl)
+        scope.ctrl.asignarProfesional(data);
+}
+
+function confirmarProfesional(data) {
+    var scope = angular.element('#accordion').scope();
+    if (scope && scope.ctrl)
+        scope.ctrl.confirmarProfesional(data);
+}
 angular.module('vimedo').factory('navService', ['$rootScope',navService]);
 
 function navService(r) {
@@ -1164,18 +1264,25 @@ angular.module('vimedo').factory('solicitudesService', ['$rootScope', '$http', s
 function solicitudesService(r, h) {
     var service = {
         list: list,
+        listActive: listActive,
         calcularRutaProfesional:calcularRutaProfesional,
         calcularRutaSolicitud:calcularRutaSolicitud,
         setProfesional:setProfesional,
         autocompleteCie10: cieAutocomplete,
         autocompleteAfiliado: autocompleteAfiliado,
-        create: create
+        create: create,
+        finalizar: finalizarSolicitud
 
     };
     return service;
 
     function list() {
         return h.get(apiRoute + '/solicitudesMedicas/').then(function(resp) {
+            return resp.data;
+        });
+    }
+    function listActive() {
+        return h.get(apiRoute + '/solicitudesMedicas/active').then(function(resp) {
             return resp.data;
         });
     }
@@ -1214,6 +1321,11 @@ function solicitudesService(r, h) {
         });
     }
 
+    function finalizarSolicitud(obj) {
+        return h.put(apiRoute + '/solicitudesMedicas/profesional/finalizarSolicitud',obj).then(function(resp) {
+            return resp.data;
+        });
+    }
 }
 angular.module('vimedo').controller('solicitudesCtrl', ['$rootScope', 'solicitudesService', '$state', 'growl', solicitudesCtrl]);
 
@@ -1232,6 +1344,7 @@ function solicitudesCtrl(r, solicitudesService, state, growl) {
         maxPages: "10",
         itemsPerPage: "8"
     };
+    vm.newModal = '';
 
     vm.filterList = function() {
         var lower = vm.query.toLowerCase();
@@ -1244,61 +1357,18 @@ function solicitudesCtrl(r, solicitudesService, state, growl) {
             });
     }
 
-    vm.autocompleteCie = function(val) {
-        return solicitudesService.autocompleteCie10(val).then(function(data) {
-            return data;
-        })
-    }
-
-    vm.autocompleteAfil = function(val) {
-        return solicitudesService.autocompleteAfiliado(val).then(function(data) {
-            return data;
-        })
-    }
-
-    vm.selectSintoma = function(item, type) {
-        if (item && item.dec10) {
-            if (type) {
-                vm.modalPro.antecedentes.push(item);
-            } else {
-                vm.modalPro.sintomas.push(item);
-            }
-        }
-        if (!item && ((!type && vm.asyncSelected !== '') || (type && vm.asyncSelectedA !== ''))) {
-            if (type) {
-                vm.modalPro.antecedentes.push({
-                    dec10: vm.asyncSelectedA
-                });
-            } else {
-                vm.modalPro.sintomas.push({
-                    dec10: vm.asyncSelected
-                });
-            }
-        }
-        vm.asyncSelected = '';
-        vm.asyncSelectedA = '';
-    };
-
-    vm.removeSintoma = function(index, type) {
-        if (type) {
-            vm.modalPro.antecedentes.splice(index, 1);
-        } else {
-            vm.modalPro.sintomas.splice(index, 1);
-        }
-    };
-
     vm.updateList = function() {
         solicitudesService.list().then(function(data) {
             vm.solicitudes = data;
             vm.solicitudesOrig = data;
         });
     }
-    vm.newSol = function(){
+    vm.newSol = function() {
         vm.modalPro = {
-                        sintomas: [],
-                        antecedentes: []
-                    };
-                    $('#newModal').modal();
+            sintomas: [],
+            antecedentes: []
+        };
+        $(vm.newModal).modal();
     };
 
     vm.view = function(obj) {
@@ -1306,54 +1376,125 @@ function solicitudesCtrl(r, solicitudesService, state, growl) {
         $('#viewModal').modal();
     };
 
-    vm.savePro = function() {
-        if (vm.modalPro.afiliado)
-            if (vm.modalPro.sintomas.length !== 0) {
-                var sintomasCie = [];
-                var sintomas = [];
-                var antecedentesCie = [];
-                var antecedentes = [];
-                vm.modalPro.sintomas.map(function(item) {
-                    if (item._id) {
-                        sintomasCie.push(item._id);
-                    } else {
-                        sintomas.push(item.dec10);
-                    }
-                });
-                vm.modalPro.antecedentes.map(function(item) {
-                    if (item._id) {
-                        antecedentesCie.push(item._id);
-                    } else {
-                        antecedentes.push(item.dec10);
-                    }
-                });
-
-                var req = {
-                    'sintomas': sintomas.toString(),
-                    'sintomasCie': sintomasCie,
-                    'horasSintomas': vm.modalPro.horasSintomas ? vm.modalPro.horasSintomas : 0,
-                    'minutosSintomas': vm.modalPro.minutosSintomas ? vm.modalPro.minutosSintomas : 0,
-                    'afiliado': vm.modalPro.afiliado._id,
-                    'domicilio': vm.modalPro.domicilioSel._id,
-                    'antecedentesCie': antecedentesCie,
-                    'antecedentes': antecedentes.toString()
-                };
-
-                solicitudesService.create(req).then(function() {
-                    vm.modalPro = {
-                        sintomas: [],
-                        antecedentes: []
-                    };
-                    vm.updateList();
-                    $('#newModal').modal('hide');
-                })
-
-            } else {
-                growl.error('Seleccione por lo menos un sintoma.');
-            }
-        else
-            growl.error('Seleccione un afiliado.');
-    };
+    vm.finishSave = function() {
+        vm.modalPro = {
+            sintomas: [],
+            antecedentes: []
+        };
+        vm.updateList();
+        $(vm.newModal).modal('hide');
+    }
 
     vm.updateList();
 }
+angular.module('vimedo')
+    .component('modalNuevaSolicitud', {
+        templateUrl: './components/modal-nueva-solicitud.html',
+        //transclude: true,
+        bindings: {
+            modal: '&',
+            obj: '<',
+            finishAction: '&'
+        },
+        controller: ['solicitudesService', 'growl', function(solicitudesService, growl) {
+
+            var vm = this;
+
+            this.$onInit = function() {
+                vm.uniqueId = String(performance.now()).replace('.', '');
+                vm.modal({
+                    modal: '#modal_' + vm.uniqueId
+                });
+            };
+
+            vm.autocompleteCie = function(val) {
+                return solicitudesService.autocompleteCie10(val).then(function(data) {
+                    return data;
+                })
+            }
+
+            vm.autocompleteAfil = function(val) {
+                return solicitudesService.autocompleteAfiliado(val).then(function(data) {
+                    return data;
+                })
+            }
+
+            vm.selectSintoma = function(item, type) {
+                if (item && item.dec10) {
+                    if (type) {
+                        vm.obj.antecedentes.push(item);
+                    } else {
+                        vm.obj.sintomas.push(item);
+                    }
+                }
+                if (!item && ((!type && vm.asyncSelected !== '') || (type && vm.asyncSelectedA !== ''))) {
+                    if (type) {
+                        vm.obj.antecedentes.push({
+                            dec10: vm.asyncSelectedA
+                        });
+                    } else {
+                        vm.obj.sintomas.push({
+                            dec10: vm.asyncSelected
+                        });
+                    }
+                }
+                vm.asyncSelected = '';
+                vm.asyncSelectedA = '';
+            };
+
+            vm.removeSintoma = function(index, type) {
+                if (type) {
+                    vm.obj.antecedentes.splice(index, 1);
+                } else {
+                    vm.obj.sintomas.splice(index, 1);
+                }
+            };
+            vm.savePro = function() {
+                if (vm.obj.afiliado)
+                    if (vm.obj.domicilioSel) {
+                        if (vm.obj.sintomas && vm.obj.sintomas.length !== 0) {
+                            var sintomasCie = [];
+                            var sintomas = [];
+                            var antecedentesCie = [];
+                            var antecedentes = [];
+                            vm.obj.sintomas.map(function(item) {
+                                if (item._id) {
+                                    sintomasCie.push(item._id);
+                                } else {
+                                    sintomas.push(item.dec10);
+                                }
+                            });
+                            vm.obj.antecedentes.map(function(item) {
+                                if (item._id) {
+                                    antecedentesCie.push(item._id);
+                                } else {
+                                    antecedentes.push(item.dec10);
+                                }
+                            });
+
+                            var req = {
+                                'sintomas': sintomas.toString(),
+                                'sintomasCie': sintomasCie,
+                                'horasSintomas': vm.obj.horasSintomas ? vm.obj.horasSintomas : 0,
+                                'minutosSintomas': vm.obj.minutosSintomas ? vm.obj.minutosSintomas : 0,
+                                'afiliado': vm.obj.afiliado._id,
+                                'domicilio': vm.obj.domicilioSel._id,
+                                'antecedentesCie': antecedentesCie,
+                                'antecedentes': antecedentes.toString()
+                            };
+
+                            solicitudesService.create(req).then(function() {
+                                vm.finishAction();
+                            })
+                        } else {
+                            growl.error('Seleccione por lo menos un sintoma.');
+                        }
+                    } else {
+                        growl.error('Seleccione por lo menos un domicilio.');
+                    }
+                else
+                    growl.error('Seleccione un afiliado.');
+            };
+
+        }]
+    });

@@ -25,7 +25,7 @@
               <tbody>
                 <tr>
                   <td at-sortable at-attribute="fechaAlta" at-title="Alta"> {{item.fechaAlta | date:'dd/MM/yyyy HH:MM'}} </td>
-                  <td at-sortable at-attribute="estado" at-title="Estado"> {{item.estado === 0 ? 'Pendiente':'En curso'}} </td>
+                  <td at-sortable at-attribute="estado" at-title="Estado"> {{getEstado(item.estado)}} </td>
                   <td at-implicit at-sortable at-attribute="afiliado.personaFisica.nombre" at-title="Nombre"></td>
                   <td at-implicit at-sortable at-attribute="afiliado.personaFisica.apellido" at-title="Apellido"></td>
                   <td at-implicit at-sortable at-attribute="afiliado.personaFisica.nroDocumento" at-title="DNI / LC / LE N°"></td>
@@ -47,194 +47,93 @@
     </div>
   </div>
 </section>
-<div id="newModal" class="modal fade" tabindex="-1" role="dialog">
+<modal-nueva-solicitud modal="ctrl.newModal = modal" finish-action="ctrl.finishSave();" obj="ctrl.modalPro"></modal-nueva-solicitud>
+<div id="viewModal" class="modal fade" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">Nueva Solicitud Medica</h4>
+        <h4 class="modal-title">{{ctrl.objSel.afiliado.personaFisica.nombre +' '+ ctrl.objSel.afiliado.personaFisica.apellido}}</h4>
       </div>
       <div class="modal-body">
         <form class="form-horizontal" ng-submit="ctrl.savePro();">
           <fieldset>
+            <legend>Solicitud</legend>
             <div class="form-group">
-              <label class="col-md-4 control-label" for="newName">Afiliado</label>
+              <label class="col-md-4 control-label">Alta Solicitud</label>
               <div class="col-md-5">
-                <input type="text" ng-model="ctrl.asyncAfil" placeholder="Busqueda de afiliado..." typeahead-on-select="ctrl.modalPro.afiliado = $item; ctrl.asyncAfil = '';" uib-typeahead="afil as (afil.personaFisica.nombre +' '+afil.personaFisica.apellido+' - '+afil.personaFisica.nroDocumento) for afil in ctrl.autocompleteAfil($viewValue)" class="form-control">
-              </div>
-            </div>
-            <div ng-if="ctrl.modalPro.afiliado">
-              <legend>Afiliado</legend>
-              <div class="form-group">
-                <label class="col-md-4 control-label">Credencial</label>
-                <div class="col-md-5">
-                  <p class="form-control-static">{{ctrl.modalPro.afiliado.credencial}}</p>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-md-4 control-label">Nombre y Apellido</label>
-                <div class="col-md-5">
-                  <p class="form-control-static">{{ctrl.modalPro.afiliado.personaFisica.nombre}} {{ctrl.modalPro.afiliado.personaFisica.apellido}}</p>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-md-4 control-label">DNI / LC / LE N°</label>
-                <div class="col-md-5">
-                  <p class="form-control-static">{{ctrl.modalPro.afiliado.personaFisica.nroDocumento}}</p>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-md-4 control-label">Fecha de nacimiento</label>
-                <div class="col-md-5">
-                  <p class="form-control-static">{{ctrl.modalPro.afiliado.personaFisica.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-md-4 control-label">Domicilio/s</label>
-                <div class="col-md-5">
-                  <div class="radio" ng-repeat="dom in ctrl.modalPro.afiliado.personaFisica.domicilios">
-                    <label>
-                      <input type="radio" name="optionsRadios" id="{{dom._id}}" ng-value="dom" ng-checked="" ng-model="ctrl.modalPro.domicilioSel">
-                      <p class="form-control-static" ><u>Calle</u>: {{dom.calle + ' ' + dom.numero }}</p>
-                      <p class="form-control-static" ><u>Localidad</u>: {{dom.localidad + ', ' + dom.provincia}}</p>      
-                    </label>
-                  </div>              
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-md-4 control-label">Telefono/s</label>
-                <div class="col-md-5">
-                  <p class="form-control-static" ng-repeat="tel in ctrl.objSel.afiliado.personaFisica.telefonos">{{tel}}</p>
-                </div>
+                <p class="form-control-static">{{ctrl.objSel.fechaAlta | date:'dd/MM/yyyy HH:MM'}}</p>
               </div>
             </div>
             <div class="form-group">
-              <label class="col-md-4 control-label" for="newDoc">Sintomas</label>
+              <label class="col-md-4 control-label">Sintomas</label>
               <div class="col-md-5">
-                <p>
-                  <input type="text" ng-model="ctrl.asyncSelected" typeahead-focus-first="false" placeholder="Busqueda de sintomas..." typeahead-on-select="ctrl.selectSintoma($item)" uib-typeahead="cie as cie.dec10 for cie in ctrl.autocompleteCie($viewValue)" typeahead-loading="loadingLocations" class="form-control" ng-enter="ctrl.selectSintoma($item)"></p>
-                  <p ng-repeat="sin in ctrl.modalPro.sintomas"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeSintoma($index)">x</button> {{sin.dec10}}</p>
-                </div>
+                <p class="form-control-static" ng-repeat="sin in ctrl.objSel.sintomasCie">{{sin.dec10}}</p>
+                <p class="form-control-static" ng-repeat="sin in ctrl.objSel.sintomas.split(',')">{{sin}}</p>
               </div>
-              <div class="form-group">
-                <label class="col-md-4 control-label">Tiempo de Sintomas</label>
-                <div class="col-md-5">
-                  <div class="col-md-5">
-                   hs <input class="form-control" type="number" min="0" max="99" ng-model="ctrl.modalPro.horasSintomas">
-                  </div>
-                  <div class="col-md-5">
-                    min <input class="form-control" type="number" min="0" max="99" ng-model="ctrl.modalPro.minutosSintomas">
-                  </div>
-                </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Tiempo de Sintomas</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.horasSintomas}} hs. {{ctrl.objSel.minutosSintomas}} min.</p>
               </div>
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="newDoc">Antecedentes</label>
-                <div class="col-md-5">
-                  <p>
-                    <input type="text" ng-model="ctrl.asyncSelectedA" typeahead-focus-first="false" placeholder="Busqueda de sintomas..." typeahead-on-select="ctrl.selectSintoma($item,true)" uib-typeahead="cie as cie.dec10 for cie in ctrl.autocompleteCie($viewValue)" class="form-control" ng-enter="ctrl.selectSintoma($item,true)"></p>
-                    <p ng-repeat="sin in ctrl.modalPro.antecedentes"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeSintoma($index,true)">x</button> {{sin.dec10}}</p>
-                  </div>
-                </div>
-                <!-- Button (Double) -->
-                <div class="form-group">
-                  <label class="col-md-4 control-label" for="guardarNew"></label>
-                  <div class="col-md-8">
-                    <button id="guardarNew" type="submit" name="guardarNew" class="btn btn-success">Aceptar</button>
-                    <button id="cancelarNew" name="cancelarNew" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
-                  </div>
-                </div>
-              </fieldset>
-            </form>
-          </div>
-        </div><!-- /.modal-content -->
-      </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-    <div id="viewModal" class="modal fade" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title">{{ctrl.objSel.afiliado.personaFisica.nombre +' '+ ctrl.objSel.afiliado.personaFisica.apellido}}</h4>
-          </div>
-          <div class="modal-body">
-            <form class="form-horizontal" ng-submit="ctrl.savePro();">
-              <fieldset>
-                <legend>Solicitud</legend>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">Alta Solicitud</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static">{{ctrl.objSel.fechaAlta | date:'dd/MM/yyyy HH:MM'}}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">Sintomas</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static" ng-repeat="sin in ctrl.objSel.sintomasCie">{{sin.dec10}}</p>
-                    <p class="form-control-static" ng-repeat="sin in ctrl.objSel.sintomas.split(',')">{{sin}}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">Tiempo de Sintomas</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static">{{ctrl.objSel.horasSintomas}} hs. {{ctrl.objSel.minutosSintomas}} min.</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">Antecedentes</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static" ng-repeat="antecedentes in ctrl.objSel.antecedentesMedicosCie">{{antecedentes.dec10}}</p>
-                    <p class="form-control-static" ng-repeat="antecedentes in ctrl.objSel.antecedentesMedicos.split(',')">{{antecedentes}}</p>
-                  </div>
-                </div>
-                <legend>Profesional Asignado</legend>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">Nombre</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static">{{ctrl.objSel.profesional.personaFisica.nombre +' '+ ctrl.objSel.profesional.personaFisica.apellido}}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">Matricula</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static">{{ctrl.objSel.profesional.matricula }}</p>
-                  </div>
-                </div>
-                <legend>Afiliado</legend>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">Credencial</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static">{{ctrl.objSel.afiliado.credencial}}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">DNI / LC / LE N°</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static">{{ctrl.objSel.afiliado.personaFisica.nroDocumento}}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">Fecha de nacimiento</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static">{{ctrl.objSel.afiliado.personaFisica.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">Domicilio/s</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static" ><u>Calle</u>: {{ctrl.objSel.domicilio.calle + ' ' + ctrl.objSel.domicilio.numero }}</p>
-                    <p class="form-control-static" ><u>Entre Calles</u>: {{ctrl.objSel.domicilio.entrecalles }}</p>
-                    <p class="form-control-static" ><u>Localidad</u>: {{ctrl.objSel.domicilio.localidad + ', ' + ctrl.objSel.domicilio.provincia}}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-4 control-label">Telefono/s</label>
-                  <div class="col-md-5">
-                    <p class="form-control-static" ng-repeat="tel in ctrl.objSel.afiliado.personaFisica.telefonos">{{tel}}</p>
-                  </div>
-                </div>
-              </fieldset>
-            </form>
-          </div>
-        </div><!-- /.modal-content -->
-      </div><!-- /.modal-dialog -->
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Antecedentes</label>
+              <div class="col-md-5">
+                <p class="form-control-static" ng-repeat="antecedentes in ctrl.objSel.antecedentesMedicosCie">{{antecedentes.dec10}}</p>
+                <p class="form-control-static" ng-repeat="antecedentes in ctrl.objSel.antecedentesMedicos.split(',')">{{antecedentes}}</p>
+              </div>
+            </div>
+            <legend>Profesional Asignado</legend>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Nombre</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.profesional.personaFisica.nombre +' '+ ctrl.objSel.profesional.personaFisica.apellido}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Matricula</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.profesional.matricula }}</p>
+              </div>
+            </div>
+            <legend>Afiliado</legend>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Credencial</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.afiliado.credencial}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">DNI / LC / LE N°</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.afiliado.personaFisica.nroDocumento}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Fecha de nacimiento</label>
+              <div class="col-md-5">
+                <p class="form-control-static">{{ctrl.objSel.afiliado.personaFisica.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Domicilio/s</label>
+              <div class="col-md-5">
+                <p class="form-control-static" ><u>Calle</u>: {{ctrl.objSel.domicilio.calle + ' ' + ctrl.objSel.domicilio.numero }}</p>
+                <p class="form-control-static" ><u>Entre Calles</u>: {{ctrl.objSel.domicilio.entrecalles }}</p>
+                <p class="form-control-static" ><u>Localidad</u>: {{ctrl.objSel.domicilio.localidad + ', ' + ctrl.objSel.domicilio.provincia}}</p>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">Telefono/s</label>
+              <div class="col-md-5">
+                <p class="form-control-static" ng-repeat="tel in ctrl.objSel.afiliado.personaFisica.telefonos">{{tel}}</p>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->

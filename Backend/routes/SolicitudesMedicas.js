@@ -8,6 +8,9 @@ var SolicitudMedicaController = require('../controllers/SolicitudMedicaControlle
 router.get('/', function (req, res) {
     SolicitudMedicaController.list(req, res);
 });
+router.get('/active', function (req, res) {
+    SolicitudMedicaController.listActive(req, res);
+});
 
 router.get('/:idSolicitud', function (req, res) {
     SolicitudMedicaController.get(req, res);
@@ -41,11 +44,11 @@ router.get('/ruta/profesional/:idProfesional', function (req, res) {
     SolicitudMedicaController.getRutaProfesional(req, res);
 });
 
-router.delete('/borrarTodas', function (req, res) {
-    SolicitudMedicaController.deleteAll(req, res);
-});
+// router.delete('/borrarTodas', function (req, res) {
+//     SolicitudMedicaController.deleteAll(req, res);
+// });
 
-router.put('/profesional/finalizarSolicitud/:idSolicitud', function (req, res) {
+router.put('/profesional/finalizarSolicitud/', function (req, res) {
     SolicitudMedicaController.darDeBaja(req, res);
 });
 

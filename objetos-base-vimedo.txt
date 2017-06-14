@@ -1,0 +1,106 @@
+var AfiliadoSchema = new Schema({
+	'credencial' : String,
+	'usuario' : {
+	 	type: Schema.Types.ObjectId,
+	 	ref: 'Usuario'
+	},
+	'personaFisica' : {
+	 	type: Schema.Types.ObjectId,
+	 	ref: 'PersonaFisica'
+	},
+	'grupoFamiliar' : {
+	 	type: Schema.Types.ObjectId,
+	 	ref: 'GrupoFamiliar'
+	},
+	'prepagas':[{
+		type: Schema.Types.ObjectId,
+	 	ref: 'Prepaga'
+	}]
+});
+var ProfesionalSchema = new Schema({
+	'matricula' : String,
+	'perfil':String,
+	'usuario' : {
+	 	type: Schema.Types.ObjectId,
+	 	ref: 'Usuario'
+	},
+	'personaFisica' : {
+	 	type: Schema.Types.ObjectId,
+	 	ref: 'PersonaFisica'
+	},
+	'especialidades' : [{
+	 	type: Schema.Types.ObjectId,
+	 	ref: 'Especialidad'
+	}],
+	'generalRating':Number,
+	'amabilidadRating':Number,
+	'claridadRating':Number,
+	'puntualidadRating':Number
+});
+
+var PersonaFisicaSchema = new Schema({
+	'nombre' : String,
+	'apellido' : String,
+	'fechaNacimiento' : { type: Date},
+	'tipoDocumento' : String,
+	'nroDocumento' : String,
+	'imagen' : {
+	 	type: Schema.Types.ObjectId,
+	 	ref: 'Imagen'
+	},
+	'telefonos': String,
+	'domicilios':[{
+		type: Schema.Types.ObjectId,
+		ref:'Domicilio'
+	}]
+});
+
+var DomicilioSchema = new Schema({
+	'calle' : String,
+	'numero' : Number,
+	'localidad' : String,
+	'cp' : String,
+	'entrecalles' : String,
+	'latitud' : Number,
+	'longitud' : Number,
+	'coordenadas' : String,
+	'provincia' : String,
+	'extra': String
+});
+
+var SolicitudMedicaSchema = new Schema({
+	'sintomas' : String,
+	'sintomasCie' : [{
+		 	type: Schema.Types.ObjectId,
+		 	ref: 'Cie10'
+		}],
+	'horasSintomas' : Number,
+	'minutosSintomas' : Number,
+	'usuario' : {
+	 	type: Schema.Types.ObjectId,
+	 	ref: 'Usuario'
+	},
+	'afiliado' : {
+	 	type: Schema.Types.ObjectId,
+	 	ref: 'Afiliado'
+	},
+	'antecedentesMedicos':String,
+	'antecedentesMedicosCie' : [{
+		 	type: Schema.Types.ObjectId,
+		 	ref: 'Cie10'
+		}],
+	'domicilio':{
+		type: Schema.Types.ObjectId,
+		ref:'Domicilio'
+	},
+	'fechaAlta':Date,
+	'fechaModificacion':Date,
+	'latitud':String,
+	'longitud':String,
+	'profesional':{
+		type: Schema.Types.ObjectId,
+		ref:'Profesional'
+	},
+	"fechaBaja":Date,
+	"estado":Number
+});

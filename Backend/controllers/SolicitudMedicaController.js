@@ -39,7 +39,7 @@ module.exports = {
     },
 
     listByProfesional: function (req, res) {
-        SolicitudMedicaModel.find({profesional:req.params.idProfesional,fechaBaja:null})
+        SolicitudMedicaModel.find({profesional:req.params.idProfesional,fechaBaja:null, estado:[0,1]})
         .deepPopulate(["usuario","afiliado.personaFisica.imagen","afiliado.personaFisica.domicilios","afiliado.personaFisica.telefonos","domicilio","sintomasCie","antecedentesMedicosCie","profesional.especialidades"])
         .exec(function (err, solicitudesMedicas) {
             if (err) {
@@ -65,9 +65,19 @@ module.exports = {
             return res.json(result);
         });
     },
-
     list:function(req,res){
-        SolicitudMedicaModel.find({fechaBaja:null}).deepPopulate(["usuario","afiliado.personaFisica","domicilio","profesional.personaFisica","sintomasCie","antecedentesMedicosCie"]).exec(function (err, solicitudesMedicas) {
+        SolicitudMedicaModel.find({}).deepPopulate(["usuario","afiliado.personaFisica","domicilio","profesional.personaFisica","sintomasCie","antecedentesMedicosCie"]).exec(function (err, solicitudesMedicas) {
+            if (err) {
+                return res.status(500).json({
+                    message: 'Error when getting SolicitudesMedicas.',
+                    error: err
+                });
+            }
+            return res.json(solicitudesMedicas);
+        });
+    },
+    listActive:function(req,res){
+        SolicitudMedicaModel.find({fechaBaja:null, estado:[0,1]}).deepPopulate(["usuario","afiliado.personaFisica","domicilio","profesional.personaFisica","sintomasCie","antecedentesMedicosCie"]).exec(function (err, solicitudesMedicas) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting SolicitudesMedicas.',
@@ -91,7 +101,7 @@ module.exports = {
     },
 
     darDeBaja:function(req,res){
-        SolicitudMedicaModel.findOneAndUpdate({_id:req.params.idSolicitud},{$set:{estado:2}}, {new: true}).exec(function (err, solicitud){
+        SolicitudMedicaModel.findOneAndUpdate({_id:req.body._id},{$set:{estado:2,observaciones:req.body.observaciones,indicaciones:req.body.indicaciones}}, {new: true}).exec(function (err, solicitud){
             if(err){
                 return res.status(500).json({
                     message: 'Error al actualizar solicitud.',

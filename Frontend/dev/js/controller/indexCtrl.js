@@ -1,10 +1,11 @@
-angular.module('vimedo').controller('indexCtrl', ['$scope', '$rootScope', 'indexService', 'solicitudesService', 'profesionalesService', '$state', '$timeout', '$compile', 'NgMap','growl', indexCtrl]);
+angular.module('vimedo').controller('indexCtrl', ['$scope', '$rootScope', 'indexService', 'solicitudesService', 'profesionalesService', '$state', '$timeout', '$compile', 'NgMap', 'growl', indexCtrl]);
 
 function indexCtrl(s, r, indexService, solicitudesService, profesionalesService, $state, t, $compile, NgMap, growl) {
 
     var vm = this;
     vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyA02b574ia3BpLXpDZXU2gOFuQZTfC_Kks';
     vm.profesionales = [];
+    vm.profesionalesD = [];
     vm.profesionalesOrig = [];
     vm.solicitudes = [];
     vm.solicitudesOrig = [];
@@ -29,7 +30,20 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
                     (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
                         i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
                         i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) ||
-                        i.matricula.toLowerCase().indexOf(lower) !== -1) {
+                    i.matricula.toLowerCase().indexOf(lower) !== -1) {
+                    return i;
+                }
+            });
+    }
+    vm.filterListPD = function() {
+        var lower = vm.queryPD.toLowerCase();
+        vm.profesionalesD = vm.profesionalesOrig
+            .filter(function(i) {
+                if (i.personaFisica &&
+                    (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
+                        i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                        i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) ||
+                    i.matricula.toLowerCase().indexOf(lower) !== -1) {
                     return i;
                 }
             });
@@ -102,14 +116,13 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         vm.profesionalMark = [];
         vm.asignandoProfesional = false;
         vm.infowindows = [];
-        solicitudesService.list().then(function(response) {
+        solicitudesService.listActive().then(function(response) {
             vm.solicitudes = response;
             vm.solicitudesOrig = response;
             NgMap.getMap("map").then(function(map) {
                 vm.map = map;
                 for (var i = 0; i < vm.solicitudes.length; i++) {
                     var solicitud = vm.solicitudes[i];
-                    solicitud.fechaAlta = moment(solicitud.fechaAlta).format("DD-MM-YYYY");
                     var contentString = '<div id="content"><h5>' +
                         solicitud.afiliado.personaFisica.nombre + ' ' + solicitud.afiliado.personaFisica.apellido +
                         '</h5><div>' + solicitud.domicilio.calle + ' ' + solicitud.domicilio.numero + '</div><div>';
@@ -158,8 +171,9 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     }
 
     vm.cargarProfesionales = function() {
-        profesionalesService.getList().then(function(data){
+        profesionalesService.getList().then(function(data) {
             vm.profesionales = data;
+            vm.profesionalesD = data;
             vm.profesionalesOrig = data;
         });
         profesionalesService.coordenadas().then(function(response) {
@@ -282,6 +296,8 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
 
     vm.vistaAsignarProfesional = function(id) {
         vm.solicitudId = id;
+        vm.queryP = '';
+        vm.filterListP();
         $('#modalPro').modal();
     };
     vm.confirmarProfesional = function(profesional) {
@@ -300,6 +316,61 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
             vm.initMap();
             growl.success('Profesional asignado.')
         });
+    };
+    vm.finishSolicitud = function(s) {
+        vm.solSel = s;
+        swal({
+            title: 'Cerrar la solicitud?',
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Aceptar'
+        }).then(function() {
+            swal.setDefaults({
+                input: 'text',
+                confirmButtonText: 'Siguiente &rarr;',
+                showCancelButton: true,
+                animation: true,
+                progressSteps: ['1', '2']
+            })
+
+            var steps = [{
+                title: 'Indicaciones',
+                text: 'Indicaciones para el paciente'
+            }, {
+                title: 'Observaciones',
+                text: 'Obsrvaciones de la visita'
+            }]
+            swal.queue(steps).then(function(result) {
+                swal.resetDefaults();
+                vm.solSel.indicaciones = result[0];
+                vm.solSel.observaciones = result[1];
+                solicitudesService.finalizar(vm.solSel).then(function() {
+                    swal({
+                        text: 'La solicitud ha sido cerrada.',
+                        type: 'success',
+                        showCancelButton: false,
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Aceptar'
+                    });
+                    vm.initMap();
+                }, function() {
+                    swal({
+                        title: 'Ocurrio un error.',
+                        text: 'Intente mas tarde.',
+                        type: 'error',
+                        showCancelButton: false,
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Aceptar'
+                    });
+                })
+
+            }, function() {
+                swal.resetDefaults();
+            })
+
+        })
     };
 
     function decodePolyline(str, precision) {
@@ -363,14 +434,34 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         }
         return color;
     };
+
+    ///NUEVA SOLICITUD
+    vm.newSolicitudModal = '';
+    vm.newSol = function() {
+        vm.newSolicitud = {
+            sintomas: [],
+            antecedentes: []
+        };
+        $(vm.newSolicitudModal).modal();
+    };
+    vm.finishSaveSolicitud = function() {
+        vm.newSolicitud = {
+            sintomas: [],
+            antecedentes: []
+        };
+        vm.initMap();
+        $(vm.newSolicitudModal).modal('hide');
+    }
 }
-function asignarProfesional(data){
+
+function asignarProfesional(data) {
     var scope = angular.element('#accordion').scope();
-        if (scope && scope.ctrl)
-            scope.ctrl.asignarProfesional(data);
+    if (scope && scope.ctrl)
+        scope.ctrl.asignarProfesional(data);
 }
-function confirmarProfesional(data){
+
+function confirmarProfesional(data) {
     var scope = angular.element('#accordion').scope();
-        if (scope && scope.ctrl)
-            scope.ctrl.confirmarProfesional(data);
+    if (scope && scope.ctrl)
+        scope.ctrl.confirmarProfesional(data);
 }

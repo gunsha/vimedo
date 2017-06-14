@@ -138,6 +138,16 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
             r.logout();
         });
 
+        r.getEstado = function(s){
+            if(s === 0){
+                return 'Pendiente';
+            }else if(s === 1){
+                return 'En Curso';
+            }else if (s === 2) {
+                return 'Cerrado';
+            }
+        }
+
         r.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
             r.profile = r.getStorage('profile');
             r.hideNav = false;

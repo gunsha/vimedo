@@ -1,0 +1,102 @@
+<div id="modal_{{$ctrl.uniqueId}}" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Nueva Solicitud Medica</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" ng-submit="$ctrl.savePro();">
+          <fieldset>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newName">Afiliado</label>
+              <div class="col-md-5">
+                <input type="text" ng-model="$ctrl.asyncAfil" placeholder="Busqueda de afiliado..." typeahead-on-select="$ctrl.obj.afiliado = $item; $ctrl.asyncAfil = '';" uib-typeahead="afil as (afil.personaFisica.nombre +' '+afil.personaFisica.apellido+' - '+afil.personaFisica.nroDocumento) for afil in $ctrl.autocompleteAfil($viewValue)" class="form-control">
+              </div>
+            </div>
+            <div ng-if="$ctrl.obj.afiliado">
+              <legend>Afiliado</legend>
+              <div class="form-group">
+                <label class="col-md-4 control-label">Credencial</label>
+                <div class="col-md-5">
+                  <p class="form-control-static">{{$ctrl.obj.afiliado.credencial}}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-md-4 control-label">Nombre y Apellido</label>
+                <div class="col-md-5">
+                  <p class="form-control-static">{{$ctrl.obj.afiliado.personaFisica.nombre}} {{$ctrl.obj.afiliado.personaFisica.apellido}}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-md-4 control-label">DNI / LC / LE N°</label>
+                <div class="col-md-5">
+                  <p class="form-control-static">{{$ctrl.obj.afiliado.personaFisica.nroDocumento}}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-md-4 control-label">Fecha de nacimiento</label>
+                <div class="col-md-5">
+                  <p class="form-control-static">{{$ctrl.obj.afiliado.personaFisica.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-md-4 control-label">Domicilio/s</label>
+                <div class="col-md-5">
+                  <div class="radio" ng-repeat="dom in $ctrl.obj.afiliado.personaFisica.domicilios">
+                    <label>
+                      <input type="radio" name="optionsRadios" id="{{dom._id}}" ng-value="dom" ng-checked="" ng-model="$ctrl.obj.domicilioSel">
+                      <p class="form-control-static" ><u>Calle</u>: {{dom.calle + ' ' + dom.numero }}</p>
+                      <p class="form-control-static" ><u>Localidad</u>: {{dom.localidad + ', ' + dom.provincia}}</p>      
+                    </label>
+                  </div>              
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-md-4 control-label">Telefono/s</label>
+                <div class="col-md-5">
+                  <p class="form-control-static" ng-repeat="tel in $ctrl.objSel.afiliado.personaFisica.telefonos">{{tel}}</p>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newDoc">Sintomas</label>
+              <div class="col-md-5">
+                <p>
+                  <input type="text" ng-model="$ctrl.asyncSelected" typeahead-focus-first="false" placeholder="Busqueda de sintomas..." typeahead-on-select="$ctrl.selectSintoma($item)" uib-typeahead="cie as cie.dec10 for cie in $ctrl.autocompleteCie($viewValue)" typeahead-loading="loadingLocations" class="form-control" ng-enter="$ctrl.selectSintoma($item)"></p>
+                  <p ng-repeat="sin in $ctrl.obj.sintomas"><button class="btn btn-danger btn-xs" ng-click="$ctrl.removeSintoma($index)">x</button> {{sin.dec10}}</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-md-4 control-label">Tiempo de Sintomas</label>
+                <div class="col-md-5">
+                  <div class="col-md-5">
+                   hs <input class="form-control" type="number" min="0" max="99" ng-model="$ctrl.obj.horasSintomas">
+                  </div>
+                  <div class="col-md-5">
+                    min <input class="form-control" type="number" min="0" max="99" ng-model="$ctrl.obj.minutosSintomas">
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="newDoc">Antecedentes</label>
+                <div class="col-md-5">
+                  <p>
+                    <input type="text" ng-model="$ctrl.asyncSelectedA" typeahead-focus-first="false" placeholder="Busqueda de sintomas..." typeahead-on-select="$ctrl.selectSintoma($item,true)" uib-typeahead="cie as cie.dec10 for cie in $ctrl.autocompleteCie($viewValue)" class="form-control" ng-enter="$ctrl.selectSintoma($item,true)"></p>
+                    <p ng-repeat="sin in $ctrl.obj.antecedentes"><button class="btn btn-danger btn-xs" ng-click="$ctrl.removeSintoma($index,true)">x</button> {{sin.dec10}}</p>
+                  </div>
+                </div>
+                <!-- Button (Double) -->
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for="guardarNew"></label>
+                  <div class="col-md-8">
+                    <button id="guardarNew" type="submit" name="guardarNew" class="btn btn-success">Aceptar</button>
+                    <button id="cancelarNew" name="cancelarNew" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+                  </div>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->

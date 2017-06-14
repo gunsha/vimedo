@@ -37,7 +37,9 @@ var SolicitudMedicaSchema = new Schema({
 		ref:'Profesional'
 	},
 	"fechaBaja":Date,
-	"estado":Number
+	"estado":Number,
+	'observaciones' : String,
+	'indicaciones' : String
 });
 
 SolicitudMedicaSchema.plugin(deepPopulate);
