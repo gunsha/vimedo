@@ -1,5 +1,7 @@
 var ProfesionalModel = require('../models/ProfesionalModel.js');
 var SolicitudMedicaModel = require('../models/SolicitudMedicaModel.js');
+var PersonaFisicaModel = require('../models/PersonaFisicaModel.js');
+var DomicilioModel = require('../models/DomicilioModel.js');
 var async = require('async');
 
 /**
@@ -20,7 +22,7 @@ module.exports = {
                     error: err
                 });
             }
-            async.each(Profesionals,function(item,callback){
+            async.each(Profesionals, function(item, callback) {
                 SolicitudMedicaModel.find({
                         profesional: item._id,
                         fechaBaja: null,
@@ -38,8 +40,8 @@ module.exports = {
 
                         callback();
                     });
-            },function(){
-            return res.json(Profesionals);
+            }, function() {
+                return res.json(Profesionals);
             });
         });
     },
@@ -92,7 +94,7 @@ module.exports = {
      * ProfesionalController.update()
      */
     update: function(req, res) {
-        var id = req.params.id;
+        var id = req.body._id;
         ProfesionalModel.findOne({
             _id: id
         }, function(err, Profesional) {
@@ -112,15 +114,58 @@ module.exports = {
             Profesional.id_usuario = req.body.id_usuario ? req.body.id_usuario : Profesional.id_usuario;
             Profesional.id_persona_fisica = req.body.id_persona_fisica ? req.body.id_persona_fisica : Profesional.id_persona_fisica;
 
-            Profesional.save(function(err, Profesional) {
-                if (err) {
-                    return res.status(500).json({
-                        message: 'Error when updating Profesional.',
-                        error: err
-                    });
+            // Profesional.save(function(err, Profesional) {
+            //     if (err) {
+            //         return res.status(500).json({
+            //             message: 'Error when updating Profesional.',
+            //             error: err
+            //         });
+            //     }
+            // });
+            var exDom = [];
+            var dom = [];
+            for (var i = 0; i < req.body.personaFisica.domicilios.length; i++) {
+                if (req.body.personaFisica.domicilios[i]._id) {
+                    exDom.push(req.body.personaFisica.domicilios[i]._id);
+                } else {
+                    dom.push(req.body.personaFisica.domicilios[i]);
                 }
+            }
+            DomicilioModel.create(dom, function(err, resp) {
+                if(resp)
+                for (var i = 0; i < resp.length; i++) {
+                    exDom.push(resp[i]._id);
+                }
+                PersonaFisicaModel.findOne({
+                    _id: req.body.personaFisica._id
+                }, function(err, PersonaFisica) {
+                    if (err) {
+                        return res.status(500).json({
+                            message: 'Error when getting PersonaFisica',
+                            error: err
+                        });
+                    }
+                    if (!PersonaFisica) {
+                        return res.status(404).json({
+                            message: 'No such PersonaFisica'
+                        });
+                    }
+                    var fields = ['nombre', 'apellido', 'fechaNacimiento', 'nro_documento', 'telefonos'];
 
-                return res.json(Profesional);
+                    for (var i = 0; i < fields.length; i++) {
+                        PersonaFisica[fields[i]] = PersonaFisica[fields[i]] === req.body.personaFisica[fields[i]] ? PersonaFisica[fields[i]] : req.body.personaFisica[fields[i]];
+                    }
+                    PersonaFisica.domicilios = exDom;
+                    PersonaFisica.save(function(err, PersonaFisica) {
+                        if (err) {
+                            return res.status(500).json({
+                                message: 'Error when updating PersonaFisica.',
+                                error: err
+                            });
+                        }
+                        return res.json(PersonaFisica);
+                    });
+                });
             });
         });
     },

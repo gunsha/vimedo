@@ -19,7 +19,7 @@ router.post('/', function (req, res) {
 });
 
 
-router.put('/:id', function (req, res) {
+router.put('/', function (req, res) {
     ProfesionalController.update(req, res);
 });
 

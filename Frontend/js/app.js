@@ -1023,7 +1023,8 @@ function profesionalesService(r, h) {
     var service = {
         getList: getList,
         coordenadas: coordenadas,
-        create: create
+        create: create,
+        update: update
     };
     return service;
 
@@ -1045,21 +1046,26 @@ function profesionalesService(r, h) {
             return resp.data;
         });
     }
+    function update(obj) {
+        return h.put(apiRoute + '/profesionales/',obj).then(function(resp) {
+            return resp.data;
+        });
+    }
 
 }
-angular.module('vimedo').controller('profesionalesCtrl', ['$scope','$rootScope', 'profesionalesService', '$state', 'NgMap', profesionalesCtrl]);
+angular.module('vimedo').controller('profesionalesCtrl', ['$scope', '$rootScope', 'profesionalesService', '$state', 'NgMap','growl', profesionalesCtrl]);
 
-function profesionalesCtrl(s, r, profesionalesService, state, NgMap) {
-	var vm = this;
+function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
+    var vm = this;
 
-	vm.profesionales = [];
-	vm.profesionalesOrig = [];
-	vm.modalPro = {};
+    vm.profesionales = [];
+    vm.profesionalesOrig = [];
+    vm.modalPro = {};
 
-	vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDoIklkBzmZOHP28l2znHtu3vxzjcaLqXI&libraries=places';
-	
-	vm.tableConfig = {
-        maxPages:"10",
+    vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDoIklkBzmZOHP28l2znHtu3vxzjcaLqXI&libraries=places';
+
+    vm.tableConfig = {
+        maxPages: "10",
         itemsPerPage: "8"
     };
 
@@ -1067,30 +1073,30 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap) {
         vm.map = map;
     });
 
-	vm.filterList = function(){
-		var lower = vm.query.toLowerCase();
-		vm.profesionales = vm.profesionalesOrig
-		.filter(function(i){
-    		if(i.matricula.toLowerCase().indexOf(lower) !== -1 ||
-    				i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
-    				i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1 ){
-    			return i;
-    		}
-    	});
-	}
+    vm.filterList = function() {
+        var lower = vm.query.toLowerCase();
+        vm.profesionales = vm.profesionalesOrig
+            .filter(function(i) {
+                if (i.matricula.toLowerCase().indexOf(lower) !== -1 ||
+                    i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                    i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) {
+                    return i;
+                }
+            });
+    }
 
-	vm.view = function(item){
-		vm.modalPro = item;
-		$('#viewModal').modal();
-	};
+    vm.view = function(item) {
+        vm.modalPro = item;
+        $('#viewModal').modal();
+    };
 
-	vm.updateList = function(){
-		profesionalesService.getList().then(function(data){
-			vm.profesionales = data;
-			vm.profesionalesOrig = data;
-		});
-	}
-	vm.removeDom = function(index) {
+    vm.updateList = function() {
+        profesionalesService.getList().then(function(data) {
+            vm.profesionales = data;
+            vm.profesionalesOrig = data;
+        });
+    }
+    vm.removeDom = function(index) {
         vm.modalPro.personaFisica.domicilios.splice(index, 1);
     };
 
@@ -1112,23 +1118,49 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap) {
         };
         $('#newModal').modal();
     };
-
-	vm.savePro = function(){
-		if (vm.modalPro.personaFisica.telefonosA.length !== 0)
+    vm.edit = function(item) {
+        vm.modalPro = angular.copy(item);
+        if (vm.modalPro.personaFisica.telefonos)
+            vm.modalPro.personaFisica.telefonosA = vm.modalPro.personaFisica.telefonos.split(',');
+        if (vm.modalPro.personaFisica.fechaNacimiento)
+            vm.modalPro.personaFisica.nacimiento = new Date(vm.modalPro.personaFisica.fechaNacimiento);
+        $('#editModal').modal();
+    };
+    vm.saveEdit = function() {
+        if (vm.validateSave()) {
+            vm.modalPro.personaFisica.telefonos = vm.modalPro.personaFisica.telefonosA.toString();
+            vm.modalPro.personaFisica.fechaNacimiento = vm.modalPro.personaFisica.nacimiento;
+            profesionalesService.update(vm.modalPro).then(function() {
+                vm.modalPro = {};
+                $('#editModal').modal('hide');
+                vm.updateList();
+            })
+        }
+    };
+    vm.savePro = function() {
+        if (vm.validateSave()) {
+            vm.modalPro.personaFisica.telefonos = vm.modalPro.personaFisica.telefonosA.toString();
+            profesionalesService.create(vm.modalPro).then(function() {
+                vm.modalPro = {};
+                $('#newModal').modal('hide');
+                vm.updateList();
+            })
+        }
+    };
+    vm.validateSave = function() {
+        if (vm.modalPro.personaFisica.telefonosA.length !== 0) {
             if (vm.modalPro.personaFisica.domicilios.length !== 0) {
-                vm.modalPro.personaFisica.telefonos = vm.modalPro.personaFisica.telefonosA.toString();
-                profesionalesService.create(vm.modalPro).then(function(data) {
-                    vm.modalPro = {};
-                    $('#newModal').modal('hide');
-                    vm.updateList();
-                })
+                return true;
             } else {
                 growl.error("Ingrese al menos una direccion.");
             }
-        else
+        } else {
             growl.error("Ingrese al menos un telefono.");
-	};
-	vm.placeChanged = function() {
+        }
+        return false;
+
+    }
+    vm.placeChanged = function() {
         var place = this.getPlace();
         var componentForm = {
             street_number: {
@@ -1174,7 +1206,7 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap) {
 
     }
 
-	vm.updateList();
+    vm.updateList();
 }
 angular.module('vimedo').factory('pacientesService', ['$rootScope', '$http', pacientesService]);
 

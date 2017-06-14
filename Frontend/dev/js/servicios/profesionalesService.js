@@ -4,7 +4,8 @@ function profesionalesService(r, h) {
     var service = {
         getList: getList,
         coordenadas: coordenadas,
-        create: create
+        create: create,
+        update: update
     };
     return service;
 
@@ -23,6 +24,11 @@ function profesionalesService(r, h) {
     function create(obj) {
         obj.isProfesional = true;
         return h.post(apiRoute + '/users/register',obj).then(function(resp) {
+            return resp.data;
+        });
+    }
+    function update(obj) {
+        return h.put(apiRoute + '/profesionales/',obj).then(function(resp) {
             return resp.data;
         });
     }
