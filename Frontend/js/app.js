@@ -1122,6 +1122,8 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
         vm.modalPro = angular.copy(item);
         if (vm.modalPro.personaFisica.telefonos)
             vm.modalPro.personaFisica.telefonosA = vm.modalPro.personaFisica.telefonos.split(',');
+        else
+            vm.modalPro.personaFisica.telefonosA = [];
         if (vm.modalPro.personaFisica.fechaNacimiento)
             vm.modalPro.personaFisica.nacimiento = new Date(vm.modalPro.personaFisica.fechaNacimiento);
         $('#editModal').modal();
