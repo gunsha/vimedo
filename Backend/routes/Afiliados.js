@@ -26,7 +26,7 @@ router.post('/', function (req, res) {
 /*
  * PUT
  */
-router.put('/:id', function (req, res) {
+router.put('/', function (req, res) {
     AfiliadoController.update(req, res);
 });
 
