@@ -77,7 +77,9 @@ module.exports = {
         var Profesional = new ProfesionalModel({
             matricula: req.body.matricula,
             id_usuario: req.body.id_usuario,
-            id_persona_fisica: req.body.id_persona_fisica
+            id_persona_fisica: req.body.id_persona_fisica,
+            latitud: req.body.personaFisica.domicilios[0].latitud,
+            longitud: req.body.personaFisica.domicilios[0].longitud
         });
 
         Profesional.save(function(err, Profesional) {
@@ -106,6 +108,7 @@ module.exports = {
                 });
             }
             Usuario.email = Usuario.email === req.body.usuario.email ? Usuario.email : req.body.usuario.email;
+            Usuario.activo = req.body.usuario.activo;
             Usuario.save(function(err, Usuario) {
                 if (err) {
                     return res.status(500).json({

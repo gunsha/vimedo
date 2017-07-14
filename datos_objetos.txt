@@ -1,0 +1,57 @@
+Afiliado
+	credencial
+	usuario
+	personaFisica
+	grupoFamiliar
+	prepagas
+
+Profesional
+	matricula
+	perfil
+	usuario
+	personaFisica
+	especialidades
+	generalRating
+	amabilidadRating
+	claridadRating
+	puntualidadRating
+
+PersonaFisica
+	nombre
+	apellido
+	fechaNacimiento
+	tipoDocumento
+	nroDocumento
+	imagen
+	telefonos
+	domicilios
+
+Domicilio
+	calle
+	numero
+	localidad
+	cp
+	entrecalles
+	latitud
+	longitud
+	coordenadas
+	provincia
+	extra
+
+SolicitudMedica
+	sintomas
+	sintomasCie
+	horasSintomas
+	minutosSintomas
+	usuario
+	afiliado
+	antecedentesMedicos
+	antecedentesMedicosCie
+	domicilio
+	fechaAlta
+	fechaModificacion
+	latitud
+	longitud
+	profesional
+	fechaBaja
+	estado

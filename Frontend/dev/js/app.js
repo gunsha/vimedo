@@ -71,7 +71,7 @@ moment.defineLocale('es', {
     }
 });
 
-angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table', 'ngAvatar', 'blockUI', 'ngMap','ngAnimate','ui.bootstrap.datetimepicker','ui.bootstrap'])
+angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table', 'ngAvatar', 'blockUI', 'ngMap','ngAnimate','ui.bootstrap.datetimepicker','ui.bootstrap','angularMoment'])
     .run(['$rootScope', '$state', 'authManager', 'jwtHelper', '$anchorScroll', 'growl', function(r, s, authManager, jwtHelper, $anchorScroll, growl) {
         r.hideNav = false;
         r.navTitle = '';
@@ -166,7 +166,7 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
                 r.navTitle = toState.data.pageTitle;
             r.active = s.current.name;
             $('body').removeClass('sidebar-open');
-            if (!r.user)
+            if (!r.user && s.current.name !== 'app.signup')
                 s.go('app.login');
         });
 
@@ -196,7 +196,7 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
             responseError: function(response) {
                 var msg;
                 if (response.status == 406) {
-                    msg = response.data;
+                    msg = response.data.message;
                 } else if (response.status == 403) {
                     r.logout();
                 } else {
@@ -299,7 +299,20 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
                 }
             });
         };
-    });
+    })
+    .directive('convertToNumber', function() {
+  return {
+    require: 'ngModel',
+    link: function(scope, element, attrs, ngModel) {
+      ngModel.$parsers.push(function(val) {
+        return val != null ? parseInt(val, 10) : null;
+      });
+      ngModel.$formatters.push(function(val) {
+        return val != null ? '' + val : null;
+      });
+    }
+  };
+});
 //FIX PARA MODALES EN TEMPLATES
 function appendModal() {
     var checkeventcount = 1,

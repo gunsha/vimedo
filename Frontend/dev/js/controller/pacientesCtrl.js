@@ -2,7 +2,6 @@ angular.module('vimedo').controller('pacientesCtrl', ['$rootScope', 'pacientesSe
 
 function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     var vm = this;
-    vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDoIklkBzmZOHP28l2znHtu3vxzjcaLqXI&libraries=places';
 
     vm.afiliados = [];
     vm.afiliadosOrg = [];
@@ -22,14 +21,14 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     vm.filterList = function() {
         var lower = vm.query.toLowerCase();
         vm.afiliados = vm.afiliadosOrg
-            .filter(function(i) {
-                if (i.personaFisica &&
-                    (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
-                        i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
-                        i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
-                    return i;
-                }
-            });
+        .filter(function(i) {
+            if (i.personaFisica &&
+                (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
+                    i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                    i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
+                return i;
+        }
+    });
     }
 
     vm.updateList = function() {
@@ -47,73 +46,76 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
 
     vm.addTel = function() {
         if (vm.modalAfil.afiliado) {
-            vm.modalAfil.afiliado.telefonosA.push(vm.modalAfil.afiliado.telefono);
-            vm.modalAfil.afiliado.telefono = '';
-        } else {
-            vm.afilSel.personaFisica.telefonosA.push(vm.afilSel.personaFisica.telefono);
-            vm.afilSel.personaFisica.telefono = '';
-        }
-    };
-
-    vm.removeTel = function(index) {
-        if (vm.modalAfil.afiliado)
-            vm.modalAfil.afiliado.telefonosA.splice(index, 1);
-        else
-            vm.afilSel.personaFisica.telefonosA.splice(index, 1);
-    };
-
-    vm.viewAfil = function(afil) {
-        vm.afilSel = afil;
-        $('#viewModal').modal();
-    };
-
-    vm.edit = function(item) {
-        vm.afilSel = angular.copy(item);
-        if (vm.afilSel.personaFisica.telefonos)
-            vm.afilSel.personaFisica.telefonosA = vm.afilSel.personaFisica.telefonos.split(',');
-        else
-            vm.afilSel.personaFisica.telefonosA = [];
-        if (vm.afilSel.personaFisica.fechaNacimiento)
-            vm.afilSel.personaFisica.nacimiento = new Date(vm.afilSel.personaFisica.fechaNacimiento);
-        $('#editModal').modal();
-    };
-    vm.saveEdit = function() {
-        if (vm.validateSave()) {
-            vm.afilSel.personaFisica.telefonos = vm.afilSel.personaFisica.telefonosA.toString();
-            vm.afilSel.personaFisica.fechaNacimiento = vm.afilSel.personaFisica.nacimiento;
-            pacientesService.update(vm.afilSel).then(function() {
-                vm.afilSel = {};
-                $('#editModal').modal('hide');
-                vm.updateList();
-            })
-        }
-    };
-    vm.validateSave = function() {
-        if (vm.afilSel.personaFisica.telefonosA.length !== 0) {
-            if (vm.afilSel.personaFisica.domicilios.length !== 0) {
-                return true;
-            } else {
-                growl.error("Ingrese al menos una direccion.");
+            if(vm.modalAfil.afiliado.telefono && vm.modalAfil.afiliado.telefono !== ''){    
+                vm.modalAfil.afiliado.telefonosA.push(vm.modalAfil.afiliado.telefono);
+                vm.modalAfil.afiliado.telefono = '';
             }
-        } else {
-            growl.error("Ingrese al menos un telefono.");
+        } else{
+            if(vm.afilSel.personaFisica.telefono && vm.afilSel.personaFisica.telefono !== ''){
+                vm.afilSel.personaFisica.telefonosA.push(vm.afilSel.personaFisica.telefono);
+                vm.afilSel.personaFisica.telefono = '';}
+            }
+        };
+
+        vm.removeTel = function(index) {
+            if (vm.modalAfil.afiliado)
+                vm.modalAfil.afiliado.telefonosA.splice(index, 1);
+            else
+                vm.afilSel.personaFisica.telefonosA.splice(index, 1);
+        };
+
+        vm.viewAfil = function(afil) {
+            vm.afilSel = afil;
+            $('#viewModal').modal();
+        };
+
+        vm.edit = function(item) {
+            vm.afilSel = angular.copy(item);
+            if (vm.afilSel.personaFisica.telefonos)
+                vm.afilSel.personaFisica.telefonosA = vm.afilSel.personaFisica.telefonos.split(',');
+            else
+                vm.afilSel.personaFisica.telefonosA = [];
+            if (vm.afilSel.personaFisica.fechaNacimiento)
+                vm.afilSel.personaFisica.nacimiento = new Date(vm.afilSel.personaFisica.fechaNacimiento);
+            $('#editModal').modal();
+        };
+        vm.saveEdit = function() {
+            if (vm.validateSave()) {
+                vm.afilSel.personaFisica.telefonos = vm.afilSel.personaFisica.telefonosA.toString();
+                vm.afilSel.personaFisica.fechaNacimiento = vm.afilSel.personaFisica.nacimiento;
+                pacientesService.update(vm.afilSel).then(function() {
+                    vm.afilSel = {};
+                    $('#editModal').modal('hide');
+                    vm.updateList();
+                })
+            }
+        };
+        vm.validateSave = function() {
+            if (vm.afilSel.personaFisica.telefonosA.length !== 0) {
+                if (vm.afilSel.personaFisica.domicilios.length !== 0) {
+                    return true;
+                } else {
+                    growl.error("Ingrese al menos una direccion.");
+                }
+            } else {
+                growl.error("Ingrese al menos un telefono.");
+            }
+            return false;
+
         }
-        return false;
 
-    }
+        vm.saveAfil = function() {
+            if (vm.validateSave()) {
+                vm.modalAfil.afiliado.telefonos = vm.modalAfil.afiliado.telefonosA.toString();
+                pacientesService.create(vm.modalAfil).then(function(data) {
+                    vm.modalAfil = {};
+                    $('#newModal').modal('hide');
+                    vm.updateList();
+                })
+            }
+        };
 
-    vm.saveAfil = function() {
-        if (vm.validateSave()) {
-            vm.modalAfil.afiliado.telefonos = vm.modalAfil.afiliado.telefonosA.toString();
-            pacientesService.create(vm.modalAfil).then(function(data) {
-                vm.modalAfil = {};
-                $('#newModal').modal('hide');
-                vm.updateList();
-            })
-        }
-    };
-
-    vm.newAfil = function() {
+        vm.newAfil = function() {
         // MapManager.autocomplete('newDireccion');
         vm.modalAfil = {
             afiliado: {

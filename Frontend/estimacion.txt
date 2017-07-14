@@ -17,10 +17,6 @@ VISTA MEDICOS - FE(16hs) - BE(10hs) (26)
 #-ALTA MEDICOS
 #-EDICION MEDICOS
 
-VISTA ESTADISTICAS -- A DEFINIR
--ESTADISTICAS A DEFINIR
-	-SOLICITUDES DIARIAS, SEMANALES, MENSUALES, ANUALES
-
 VISTA HISTORIAL SOLICITUDES - FE(20hs) - BE(12hs) (32)
 #-LISTADO DE SOLICITUDES (PENDIENTES Y FINALIZADAS)
 #-DETALLE SOLICITUD
@@ -29,8 +25,7 @@ VISTA HISTORIAL SOLICITUDES - FE(20hs) - BE(12hs) (32)
 
 TOTAL - FE(80) - BE(48) (128)
 
-
-
+extras de la call del viernes 09/06
 inicio 
 #-agregar boton de solicitud
 #-listado profesionales 
@@ -39,10 +34,20 @@ inicio
 #-puede cerrar admin o profesional
 #-diagnostico-indicaciones-observaciones
 
+//
 -inicio solo las del dia
-
-
-
--habilitar afiliados-profesionales desde la web
-
+#-habilitar/inhabilitar afiliados-profesionales desde la web
+#-boton + para telefonos
+-al modificar perfil inhabilitar
 tiempo estimado -viajes+tiempo de atencion
+
+inicio
+#-ordenar pendiente por hora y despues activos
+#-mostrar hora al lado del nombre (hace cuanto)
+#-mostrar domicilio de paciente
+#-achicar espacios en listas de inicio
+-destacar icono en mapa al hacer click
+-poner medicos en verde los que no tienen solicitudes y rojo los que tienen
+-al hacerle click mostar cantidad de pacientes
+
+#-armar registro web de medicos y pacientes

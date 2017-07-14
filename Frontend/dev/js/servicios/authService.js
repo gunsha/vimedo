@@ -16,8 +16,13 @@ function authService(r,h) {
       });
     }
 
-    function signUp(cred) {  
-      return h({method:'POST',url:apiRoute+'/api/auth/signUp',data:cred,skipAuthorization: true}).then(function(resp){
+    function signUp(cred,isPro) {  
+      if(isPro){
+        cred.isProfesional = isPro;
+      }else{
+        cred.afiliado = cred.personaFisica;  
+      }      
+      return h({method:'POST',url:apiRoute+'/users/register',data:cred,skipAuthorization: true}).then(function(resp){
           return resp.data;
       });
     }

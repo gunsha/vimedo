@@ -77,7 +77,7 @@ module.exports = {
         });
     },
     listActive:function(req,res){
-        SolicitudMedicaModel.find({fechaBaja:null, estado:[0,1]}).deepPopulate(["usuario","afiliado.personaFisica","domicilio","profesional.personaFisica","sintomasCie","antecedentesMedicosCie"]).exec(function (err, solicitudesMedicas) {
+        SolicitudMedicaModel.find({fechaBaja:null, estado:[0,1]}).sort({estado:1,fechaAlta:-1}).deepPopulate(["usuario","afiliado.personaFisica","domicilio","profesional.personaFisica","sintomasCie","antecedentesMedicosCie"]).exec(function (err, solicitudesMedicas) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting SolicitudesMedicas.',

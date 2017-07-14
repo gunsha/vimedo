@@ -17,7 +17,8 @@ var UsuarioSchema = new Schema({
 	'fechaLogin' : { type: Date},
 	'fechaLogout' : { type: Date},
 	'password' : { type: String, required: [true,'El password es obligatorio.'] },
-	'fechaAlta' : { type: Date} 
+	'fechaAlta' : { type: Date},
+    'activo' : { type: Number}
 });
 /*
 UsuarioSchema.virtual('fechaAlta').get(function() {

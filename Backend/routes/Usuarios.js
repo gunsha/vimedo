@@ -37,6 +37,7 @@ router.put('/calificar/:idCalificacion', function (req, res) {
  */
 router.post('/register', function (req, res) {
     // UsuarioController.testfunc(req, res);
+    req.body.activo = 0;
 	if(req.body.isProfesional){
 		UsuarioController.createProfesional(req, res);
 	}

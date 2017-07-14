@@ -294,13 +294,13 @@ module.exports = {
             credencial: req.body.credencial
         }, function(err, afiliado) {
             if (err) {
-                return res.status(404).json({
+                return res.status(406).json({
                     message: 'Error al crear el usuario.',
                     error: err
                 });
             }
             if (afiliado && afiliado.usuario != null) {
-                return res.status(404).json({
+                return res.status(406).json({
                     message: 'La credencial ya se encuentra registrada.'
                 });
             } else {
@@ -325,8 +325,8 @@ module.exports = {
                 if (afiliadoRest) {
                     Usuario.save(function(err, usuario) {
                         if (err) {
-                            return res.status(404).json({
-                                message: err
+                            return res.status(406).json({
+                                message: err.errors.email.message
                             });
                         } else {
                             var afiliadoData = {
@@ -526,7 +526,9 @@ module.exports = {
                                             generalRating: 4,
                                             amabilidadRating: 2,
                                             claridadRating: 4,
-                                            puntualidadRating: 4
+                                            puntualidadRating: 4,
+                                            latitud: personaFisicaRest.domicilios[0].latitud,
+                                            longitud: personaFisicaRest.domicilios[0].longitud
                                         });
                                         EspecialidadModel.find({}, function(err, especialidades) {
                                             if (especialidades) {
@@ -629,6 +631,7 @@ module.exports = {
             Usuario.fechaLogout = req.body.fechaLogout ? req.body.fechaLogout : Usuario.fechaLogout;
             Usuario.password = req.body.password ? req.body.password : Usuario.password;
             Usuario.fechaAlta = req.body.fechaAlta ? req.body.fechaAlta : Usuario.fechaAlta;
+            Usuario.activo = req.body.activo ? req.body.activo : Usuario.activo;
 
             Usuario.save(function(err, Usuario) {
                 if (err) {
@@ -667,19 +670,24 @@ module.exports = {
             email: email
         }, function(err, usuario) {
             if (err) {
-                return res.status(404).json({
+                return res.status(406).json({
                     message: 'Error al loguear el usuario.',
                     error: err
                 });
             }
             if (!usuario) {
-                return res.status(404).json({
+                return res.status(406).json({
                     message: 'El email/password no se encuentra registrado.'
+                });
+            }
+            if (usuario.activo != 1) {
+                return res.status(406).json({
+                    message: 'El usuario no se encuentra activo.'
                 });
             }
             usuario.comparePassword(password, function(err, isMatch) {
                 if (err || !isMatch) {
-                    return res.status(404).json({
+                    return res.status(406).json({
                         message: 'El email/password no se encuentra registrado.',
                         error: err
                     });

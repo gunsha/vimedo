@@ -31,11 +31,11 @@ angular.module('vimedo')
                     }
                 }
             })
-            .state('app.registro', {
+            .state('app.signup', {
                 url: 'registro',
                 views: {
-                    'contentView@app': {
-                        templateUrl: 'templates/registro.html',
+                    'loginView@app': {
+                        templateUrl: 'templates/signup.html',
                         controller: 'authCtrl as ctrl'
                     }
                 }

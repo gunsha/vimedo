@@ -27,7 +27,8 @@
         "typeahead.min",
         "typeahead-tpls.min",
         "angular-bootstrap-datetimepicker/src/js/datetimepicker",
-        "angular-bootstrap-datetimepicker/src/js/datetimepicker.templates"
+        "angular-bootstrap-datetimepicker/src/js/datetimepicker.templates",
+        "angular-moment.min"
     ],
     "components": [
         "modal-nueva-solicitud"

@@ -128,6 +128,9 @@ gulp.task('watch', function () {
     watch(['dev/js/**/*.js','dev/js/**/*.css','dev/js/**/*.html'], batch(function (events, done) {
         gulp.start('core', done);
     }));
+    watch(['dev/css/*.css'], batch(function (events, done) {
+        gulp.start('css', done);
+    }));
     
 });
 

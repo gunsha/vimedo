@@ -7,8 +7,6 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
     vm.profesionalesOrig = [];
     vm.modalPro = {};
 
-    vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDoIklkBzmZOHP28l2znHtu3vxzjcaLqXI&libraries=places';
-
     vm.tableConfig = {
         maxPages: "10",
         itemsPerPage: "8"

@@ -81,6 +81,7 @@ module.exports = {
                 });
             }
             Usuario.email = Usuario.email === req.body.usuario.email ? Usuario.email : req.body.usuario.email;
+            Usuario.activo = req.body.usuario.activo;
             Usuario.save(function(err, Usuario) {
                 if (err) {
                     return res.status(500).json({

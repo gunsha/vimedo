@@ -57,13 +57,13 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     };
 
     vm.centerAndZoom = function() {
-        NgMap.getMap("map").then(function(map) {
+        // NgMap.getMap("map").then(function(map) {
             var bounds = new google.maps.LatLngBounds();
-            for (var i = 0, LtLgLen = vm.latlngArray.length; i < LtLgLen; i++) {
+            for (var i = 0; i < vm.latlngArray.length; i++) {
                 bounds.extend(vm.latlngArray[i]);
             }
-            map.fitBounds(bounds);
-        });
+            vm.map.fitBounds(bounds);
+        // });
     };
 
     vm.ocultarInfoWindows = function() {
@@ -175,66 +175,64 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
             vm.profesionales = data;
             vm.profesionalesD = data;
             vm.profesionalesOrig = data;
-        });
-        profesionalesService.coordenadas().then(function(response) {
-            vm.coordenadas = response;
-            NgMap.getMap("map").then(function(map) {
-
-                for (var i = 0; i < vm.coordenadas.length; i++) {
-                    var coordenada = vm.coordenadas[i];
-
-                    var latlng = new google.maps.LatLng(coordenada.latitud, coordenada.longitud);
-                    vm.latlngArray.push(latlng);
-                    var mark = new google.maps.Marker({
-                        icon: client + "/img/doctor.png",
-                        profesional: coordenada.profesional
-                    });
 
 
-                    //finally call the explicit infowindow object
-                    mark.addListener('click', function() {
-                        vm.ocultarInfoWindows();
-                        if (vm.asignandoProfesional) {
-                            var contentString = '<div id="content"><h5>' +
-                                this.profesional.personaFisica.nombre + ' ' + this.profesional.personaFisica.apellido +
-                                '</h5>' +
-                                '<button type="button" class="btn btn-primary btn-xs" onclick="confirmarProfesional(&quot;' + this.profesional._id + '&quot;)">Aceptar</button></div>'; +
-                            '</div>';
-                            var compiledContent = $compile(contentString)(s);
-                            var infowindow = new google.maps.InfoWindow({
-                                content: contentString
-                            });
-                            vm.infowindows.push(infowindow);
-                            this.infowindow = infowindow;
-                            this.infowindow.setContent(compiledContent);
-                            return this.infowindow.open(map, this);
-                        } else {
-                            var contentString = '<div id="content"><h5>' +
-                                this.profesional.personaFisica.nombre + ' ' + this.profesional.personaFisica.apellido +
-                                '</h5></div>';
 
-                            var compiledContent = $compile(contentString)(s);
-                            var infowindow = new google.maps.InfoWindow({
-                                content: contentString
-                            });
-                            vm.infowindows.push(infowindow);
-                            this.infowindow = infowindow;
-                            this.infowindow.setContent(compiledContent);
-                            vm.calcularRutaProfesional(this.profesional._id);
-                            return this.infowindow.open(map, this);
-                        }
+            for (var i = 0; i < vm.profesionalesOrig.length; i++) {
+                vm.profesionalesOrig[i];
 
-                    })
+                var latlng = new google.maps.LatLng(vm.profesionalesOrig[i].latitud, vm.profesionalesOrig[i].longitud);
+                vm.latlngArray.push(latlng);
+                var mark = new google.maps.Marker({
+                    icon: client + "/img/doctor.png",
+                    profesional: vm.profesionalesOrig[i]
+                });
 
-                    mark.setPosition(latlng);
-                    mark.setMap(map);
 
-                    vm.profesionalMark.push(mark);
+                //finally call the explicit infowindow object
+                mark.addListener('click', function() {
+                    vm.ocultarInfoWindows();
+                    if (vm.asignandoProfesional) {
+                        var contentString = '<div id="content"><h5>' +
+                            this.profesional.personaFisica.nombre + ' ' + this.profesional.personaFisica.apellido +
+                            '</h5>' +
+                            '<button type="button" class="btn btn-primary btn-xs" onclick="confirmarProfesional(&quot;' + this.profesional._id + '&quot;)">Aceptar</button></div>'; +
+                        '</div>';
+                        var compiledContent = $compile(contentString)(s);
+                        var infowindow = new google.maps.InfoWindow({
+                            content: contentString
+                        });
+                        vm.infowindows.push(infowindow);
+                        this.infowindow = infowindow;
+                        this.infowindow.setContent(compiledContent);
+                        return this.infowindow.open(vm.map, this);
+                    } else {
+                        var contentString = '<div id="content"><h5>' +
+                            this.profesional.personaFisica.nombre + ' ' + this.profesional.personaFisica.apellido +
+                            '</h5></div>';
 
-                    vm.centerAndZoom();
-                }
+                        var compiledContent = $compile(contentString)(s);
+                        var infowindow = new google.maps.InfoWindow({
+                            content: contentString
+                        });
+                        vm.infowindows.push(infowindow);
+                        this.infowindow = infowindow;
+                        this.infowindow.setContent(compiledContent);
+                        vm.calcularRutaProfesional(this.profesional._id);
+                        return this.infowindow.open(vm.map, this);
+                    }
 
-            });
+                })
+
+                mark.setPosition(latlng);
+                mark.setMap(vm.map);
+
+                vm.profesionalMark.push(mark);
+
+                
+            }
+            vm.centerAndZoom();
+
         });
     };
     vm.calcularRutaSolicitud = function(solicitud) {

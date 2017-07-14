@@ -28,6 +28,7 @@
                   <td at-implicit at-sortable at-attribute="personaFisica.apellido" at-title="Apellido"></td>
                   <td at-implicit at-sortable at-attribute="personaFisica.nroDocumento" at-title="DNI / LC / LE N°"></td>
                   <td at-implicit at-attribute="credencial" at-title="Credencial"></td>
+                  <td at-attribute="usuario.activo" at-title="Estado"> {{item.usuario.activo ? 'Activo':'Inactivo'}}</td>
                   <td at-title="Ver / Editar">
                     <a href="#" class="btn btn-success" ng-click="ctrl.viewAfil(item);"><span class="glyphicon glyphicon-zoom-in"></span> </a>
                     <a href="#" class="btn btn-warning" ng-click="ctrl.edit(item);"><span class="glyphicon glyphicon-edit"></span> </a>
@@ -105,14 +106,21 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="newTelefono">Telefono</label>
               <div class="col-md-5">
+              <div class="col-md-10">
                 <input id="telefono" ng-model="ctrl.modalAfil.afiliado.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
+                </div>
+                <div class="col-md-2">
+                <a href="#" class="btn btn-xs btn-primary" ng-click="ctrl.addTel();" style="margin-top: 5px;"><span class="glyphicon glyphicon-plus"></span></a>
+                </div>
+                <div class="col-md-12">
                 <p class="form-control-static" ng-repeat="tel in ctrl.modalAfil.afiliado.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
+                </div>
               </div>
             </div>
             <div class="form-group">
               <label class="col-md-4 control-label" for="newDireccion">Direccion</label>
               <div class="col-md-5">
-                <div map-lazy-load="https://maps.google.com/maps/api/js" map-lazy-load-params="{{ctrl.googleMapsUrl}}">
+                <div>
                   <input id="newDireccion" places-auto-complete size=80 ng-model="ctrl.afilDir" component-restrictions="{country:'ar'}"  on-place-changed="ctrl.placeChanged()" ng-enter="" class="form-control input-md" >
                 </div>
                 <p class="form-control-static" ng-repeat="dom in ctrl.modalAfil.afiliado.domicilios"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeDom($index)">x</button> {{dom.calle + ' ' + dom.numero + ', ' + dom.localidad + ', ' + dom.provincia}} <input ng-model="dom.extra" placeholder="Datos extra" class="form-control input-md"> </p>
@@ -189,6 +197,15 @@
       <div class="modal-body">
         <form class="form-horizontal" ng-submit="ctrl.saveEdit();">
           <fieldset>
+          <div class="form-group">
+              <label class="col-md-4 control-label" for="estado">Estado</label>
+              <div class="col-md-5">
+                <select ng-model="ctrl.afilSel.usuario.activo" convert-to-number class="form-control">
+                  <option value="0">Inactivo</option>
+                  <option value="1">Activo</option>
+                </select>
+              </div>
+            </div>
           <div class="form-group">
               <label class="col-md-4 control-label" for="newCredencial">Credencial</label>
               <div class="col-md-5">

@@ -72,7 +72,7 @@ moment.defineLocale('es', {
     }
 });
 
-angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table', 'ngAvatar', 'blockUI', 'ngMap','ngAnimate','ui.bootstrap.datetimepicker','ui.bootstrap'])
+angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table', 'ngAvatar', 'blockUI', 'ngMap','ngAnimate','ui.bootstrap.datetimepicker','ui.bootstrap','angularMoment'])
     .run(['$rootScope', '$state', 'authManager', 'jwtHelper', '$anchorScroll', 'growl', function(r, s, authManager, jwtHelper, $anchorScroll, growl) {
         r.hideNav = false;
         r.navTitle = '';
@@ -167,7 +167,7 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
                 r.navTitle = toState.data.pageTitle;
             r.active = s.current.name;
             $('body').removeClass('sidebar-open');
-            if (!r.user)
+            if (!r.user && s.current.name !== 'app.signup')
                 s.go('app.login');
         });
 
@@ -197,7 +197,7 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
             responseError: function(response) {
                 var msg;
                 if (response.status == 406) {
-                    msg = response.data;
+                    msg = response.data.message;
                 } else if (response.status == 403) {
                     r.logout();
                 } else {
@@ -300,7 +300,20 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
                 }
             });
         };
-    });
+    })
+    .directive('convertToNumber', function() {
+  return {
+    require: 'ngModel',
+    link: function(scope, element, attrs, ngModel) {
+      ngModel.$parsers.push(function(val) {
+        return val != null ? parseInt(val, 10) : null;
+      });
+      ngModel.$formatters.push(function(val) {
+        return val != null ? '' + val : null;
+      });
+    }
+  };
+});
 //FIX PARA MODALES EN TEMPLATES
 function appendModal() {
     var checkeventcount = 1,
@@ -349,11 +362,11 @@ angular.module('vimedo')
                     }
                 }
             })
-            .state('app.registro', {
+            .state('app.signup', {
                 url: 'registro',
                 views: {
-                    'contentView@app': {
-                        templateUrl: 'templates/registro.html',
+                    'loginView@app': {
+                        templateUrl: 'templates/signup.html',
                         controller: 'authCtrl as ctrl'
                     }
                 }
@@ -488,13 +501,13 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     };
 
     vm.centerAndZoom = function() {
-        NgMap.getMap("map").then(function(map) {
+        // NgMap.getMap("map").then(function(map) {
             var bounds = new google.maps.LatLngBounds();
-            for (var i = 0, LtLgLen = vm.latlngArray.length; i < LtLgLen; i++) {
+            for (var i = 0; i < vm.latlngArray.length; i++) {
                 bounds.extend(vm.latlngArray[i]);
             }
-            map.fitBounds(bounds);
-        });
+            vm.map.fitBounds(bounds);
+        // });
     };
 
     vm.ocultarInfoWindows = function() {
@@ -606,66 +619,64 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
             vm.profesionales = data;
             vm.profesionalesD = data;
             vm.profesionalesOrig = data;
-        });
-        profesionalesService.coordenadas().then(function(response) {
-            vm.coordenadas = response;
-            NgMap.getMap("map").then(function(map) {
-
-                for (var i = 0; i < vm.coordenadas.length; i++) {
-                    var coordenada = vm.coordenadas[i];
-
-                    var latlng = new google.maps.LatLng(coordenada.latitud, coordenada.longitud);
-                    vm.latlngArray.push(latlng);
-                    var mark = new google.maps.Marker({
-                        icon: client + "/img/doctor.png",
-                        profesional: coordenada.profesional
-                    });
 
 
-                    //finally call the explicit infowindow object
-                    mark.addListener('click', function() {
-                        vm.ocultarInfoWindows();
-                        if (vm.asignandoProfesional) {
-                            var contentString = '<div id="content"><h5>' +
-                                this.profesional.personaFisica.nombre + ' ' + this.profesional.personaFisica.apellido +
-                                '</h5>' +
-                                '<button type="button" class="btn btn-primary btn-xs" onclick="confirmarProfesional(&quot;' + this.profesional._id + '&quot;)">Aceptar</button></div>'; +
-                            '</div>';
-                            var compiledContent = $compile(contentString)(s);
-                            var infowindow = new google.maps.InfoWindow({
-                                content: contentString
-                            });
-                            vm.infowindows.push(infowindow);
-                            this.infowindow = infowindow;
-                            this.infowindow.setContent(compiledContent);
-                            return this.infowindow.open(map, this);
-                        } else {
-                            var contentString = '<div id="content"><h5>' +
-                                this.profesional.personaFisica.nombre + ' ' + this.profesional.personaFisica.apellido +
-                                '</h5></div>';
 
-                            var compiledContent = $compile(contentString)(s);
-                            var infowindow = new google.maps.InfoWindow({
-                                content: contentString
-                            });
-                            vm.infowindows.push(infowindow);
-                            this.infowindow = infowindow;
-                            this.infowindow.setContent(compiledContent);
-                            vm.calcularRutaProfesional(this.profesional._id);
-                            return this.infowindow.open(map, this);
-                        }
+            for (var i = 0; i < vm.profesionalesOrig.length; i++) {
+                vm.profesionalesOrig[i];
 
-                    })
+                var latlng = new google.maps.LatLng(vm.profesionalesOrig[i].latitud, vm.profesionalesOrig[i].longitud);
+                vm.latlngArray.push(latlng);
+                var mark = new google.maps.Marker({
+                    icon: client + "/img/doctor.png",
+                    profesional: vm.profesionalesOrig[i]
+                });
 
-                    mark.setPosition(latlng);
-                    mark.setMap(map);
 
-                    vm.profesionalMark.push(mark);
+                //finally call the explicit infowindow object
+                mark.addListener('click', function() {
+                    vm.ocultarInfoWindows();
+                    if (vm.asignandoProfesional) {
+                        var contentString = '<div id="content"><h5>' +
+                            this.profesional.personaFisica.nombre + ' ' + this.profesional.personaFisica.apellido +
+                            '</h5>' +
+                            '<button type="button" class="btn btn-primary btn-xs" onclick="confirmarProfesional(&quot;' + this.profesional._id + '&quot;)">Aceptar</button></div>'; +
+                        '</div>';
+                        var compiledContent = $compile(contentString)(s);
+                        var infowindow = new google.maps.InfoWindow({
+                            content: contentString
+                        });
+                        vm.infowindows.push(infowindow);
+                        this.infowindow = infowindow;
+                        this.infowindow.setContent(compiledContent);
+                        return this.infowindow.open(vm.map, this);
+                    } else {
+                        var contentString = '<div id="content"><h5>' +
+                            this.profesional.personaFisica.nombre + ' ' + this.profesional.personaFisica.apellido +
+                            '</h5></div>';
 
-                    vm.centerAndZoom();
-                }
+                        var compiledContent = $compile(contentString)(s);
+                        var infowindow = new google.maps.InfoWindow({
+                            content: contentString
+                        });
+                        vm.infowindows.push(infowindow);
+                        this.infowindow = infowindow;
+                        this.infowindow.setContent(compiledContent);
+                        vm.calcularRutaProfesional(this.profesional._id);
+                        return this.infowindow.open(vm.map, this);
+                    }
 
-            });
+                })
+
+                mark.setPosition(latlng);
+                mark.setMap(vm.map);
+
+                vm.profesionalMark.push(mark);
+
+                
+            }
+            vm.centerAndZoom();
+
         });
     };
     vm.calcularRutaSolicitud = function(solicitud) {
@@ -943,8 +954,13 @@ function authService(r,h) {
       });
     }
 
-    function signUp(cred) {  
-      return h({method:'POST',url:apiRoute+'/api/auth/signUp',data:cred,skipAuthorization: true}).then(function(resp){
+    function signUp(cred,isPro) {  
+      if(isPro){
+        cred.isProfesional = isPro;
+      }else{
+        cred.afiliado = cred.personaFisica;  
+      }      
+      return h({method:'POST',url:apiRoute+'/users/register',data:cred,skipAuthorization: true}).then(function(resp){
           return resp.data;
       });
     }
@@ -961,12 +977,27 @@ function authService(r,h) {
       });
     }
 }
-angular.module('vimedo').controller('authCtrl', ['$scope', '$rootScope', 'authService', '$state', 'jwtHelper', '$timeout', authCtrl]);
+angular.module('vimedo').controller('authCtrl', ['$scope', '$rootScope', 'authService', '$state', 'jwtHelper', '$timeout', 'NgMap', 'growl', authCtrl]);
 
-function authCtrl(s, r, authService, state, jwtHelper, t) {
+function authCtrl(s, r, authService, state, jwtHelper, t, NgMap, growl) {
 
     var vm = this;
     vm.wrongUserError = false;
+
+    vm.isPro = false;
+
+    vm.done = false;
+
+    vm.newUser = {
+        personaFisica: {
+            telefonosA: [],
+            domicilios: []
+        }
+    };
+
+    NgMap.getMap().then(function(map) {
+        vm.map = map;
+    });
 
     vm.login = function() {
         authService.login(vm.credenciales).then(function(data) {
@@ -982,7 +1013,7 @@ function authCtrl(s, r, authService, state, jwtHelper, t) {
             } else {
                 profile = r.user.afiliado.personaFisica;
             }
-            profile.initials = profile.nombre[0].toUpperCase()+profile.apellido[0].toUpperCase();
+            profile.initials = profile.nombre[0].toUpperCase() + profile.apellido[0].toUpperCase();
             r.setStorage('profile', profile);
             if (r.hasRole('ADMIN')) {
                 state.go('admin');
@@ -1005,6 +1036,88 @@ function authCtrl(s, r, authService, state, jwtHelper, t) {
             state.go('app');
         });
     };
+
+    vm.removeDom = function(index) {
+        vm.newUser.personaFisica.domicilios.splice(index, 1);
+    };
+
+    vm.addTel = function() {
+        if (vm.newUser.personaFisica.telefono && vm.newUser.personaFisica.telefono !== '') {
+            vm.newUser.personaFisica.telefonosA.push(vm.newUser.personaFisica.telefono);
+            vm.newUser.personaFisica.telefono = '';
+        }
+    };
+
+    vm.removeTel = function(index) {
+        vm.newUser.personaFisica.telefonosA.splice(index, 1);
+    };
+
+    vm.validateSave = function() {
+        if (vm.newUser.personaFisica.telefonosA.length !== 0) {
+            if (vm.newUser.personaFisica.domicilios.length !== 0) {
+                return true;
+            } else {
+                growl.error("Ingrese al menos una direccion.");
+            }
+        } else {
+            growl.error("Ingrese al menos un telefono.");
+        }
+        return false;
+
+    }
+
+    vm.saveNew = function() {
+        vm.newUser.personaFisica.telefonos = vm.newUser.personaFisica.telefonosA.toString();
+        if(vm.validateSave()){            
+            authService.signUp(vm.newUser, Boolean(vm.isPro)).then(function() {
+                vm.done = true;
+            });
+        }
+    };
+
+    vm.placeChanged = function() {
+        var place = this.getPlace();
+        var componentForm = {
+            street_number: {
+                type: 'short_name',
+                name: 'numero'
+            },
+            route: {
+                type: 'long_name',
+                name: 'calle'
+            },
+            locality: {
+                type: 'short_name',
+                name: 'localidad'
+            },
+            administrative_area_level_1: {
+                type: 'long_name',
+                name: 'provincia'
+            },
+            country: {
+                type: 'long_name',
+                name: 'pais'
+            },
+            postal_code: {
+                type: 'short_name',
+                name: 'cp'
+            }
+        };
+        var direccion = {};
+        for (var i = 0; i < place.address_components.length; i++) {
+            var addressType = place.address_components[i].types[0];
+            if (componentForm[addressType]) {
+                var val = place.address_components[i][componentForm[addressType].type];
+                direccion[componentForm[addressType].name] = val;
+            }
+        }
+        direccion.latitud = place.geometry.location.lat();
+        direccion.longitud = place.geometry.location.lng();
+        direccion.coordenadas = place.geometry.location.lat() + ',' + place.geometry.location.lng();
+        vm.newUser.personaFisica.domicilios.push(direccion);
+        vm.afilDir = '';
+
+    }
 
     vm.registrarse = function() {
         authService.signUp(vm.credenciales).then(function(data) {
@@ -1061,8 +1174,6 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
     vm.profesionales = [];
     vm.profesionalesOrig = [];
     vm.modalPro = {};
-
-    vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDoIklkBzmZOHP28l2znHtu3vxzjcaLqXI&libraries=places';
 
     vm.tableConfig = {
         maxPages: "10",
@@ -1257,7 +1368,6 @@ angular.module('vimedo').controller('pacientesCtrl', ['$rootScope', 'pacientesSe
 
 function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     var vm = this;
-    vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDoIklkBzmZOHP28l2znHtu3vxzjcaLqXI&libraries=places';
 
     vm.afiliados = [];
     vm.afiliadosOrg = [];
@@ -1277,14 +1387,14 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     vm.filterList = function() {
         var lower = vm.query.toLowerCase();
         vm.afiliados = vm.afiliadosOrg
-            .filter(function(i) {
-                if (i.personaFisica &&
-                    (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
-                        i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
-                        i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
-                    return i;
-                }
-            });
+        .filter(function(i) {
+            if (i.personaFisica &&
+                (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
+                    i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                    i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
+                return i;
+        }
+    });
     }
 
     vm.updateList = function() {
@@ -1302,73 +1412,76 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
 
     vm.addTel = function() {
         if (vm.modalAfil.afiliado) {
-            vm.modalAfil.afiliado.telefonosA.push(vm.modalAfil.afiliado.telefono);
-            vm.modalAfil.afiliado.telefono = '';
-        } else {
-            vm.afilSel.personaFisica.telefonosA.push(vm.afilSel.personaFisica.telefono);
-            vm.afilSel.personaFisica.telefono = '';
-        }
-    };
-
-    vm.removeTel = function(index) {
-        if (vm.modalAfil.afiliado)
-            vm.modalAfil.afiliado.telefonosA.splice(index, 1);
-        else
-            vm.afilSel.personaFisica.telefonosA.splice(index, 1);
-    };
-
-    vm.viewAfil = function(afil) {
-        vm.afilSel = afil;
-        $('#viewModal').modal();
-    };
-
-    vm.edit = function(item) {
-        vm.afilSel = angular.copy(item);
-        if (vm.afilSel.personaFisica.telefonos)
-            vm.afilSel.personaFisica.telefonosA = vm.afilSel.personaFisica.telefonos.split(',');
-        else
-            vm.afilSel.personaFisica.telefonosA = [];
-        if (vm.afilSel.personaFisica.fechaNacimiento)
-            vm.afilSel.personaFisica.nacimiento = new Date(vm.afilSel.personaFisica.fechaNacimiento);
-        $('#editModal').modal();
-    };
-    vm.saveEdit = function() {
-        if (vm.validateSave()) {
-            vm.afilSel.personaFisica.telefonos = vm.afilSel.personaFisica.telefonosA.toString();
-            vm.afilSel.personaFisica.fechaNacimiento = vm.afilSel.personaFisica.nacimiento;
-            pacientesService.update(vm.afilSel).then(function() {
-                vm.afilSel = {};
-                $('#editModal').modal('hide');
-                vm.updateList();
-            })
-        }
-    };
-    vm.validateSave = function() {
-        if (vm.afilSel.personaFisica.telefonosA.length !== 0) {
-            if (vm.afilSel.personaFisica.domicilios.length !== 0) {
-                return true;
-            } else {
-                growl.error("Ingrese al menos una direccion.");
+            if(vm.modalAfil.afiliado.telefono && vm.modalAfil.afiliado.telefono !== ''){    
+                vm.modalAfil.afiliado.telefonosA.push(vm.modalAfil.afiliado.telefono);
+                vm.modalAfil.afiliado.telefono = '';
             }
-        } else {
-            growl.error("Ingrese al menos un telefono.");
+        } else{
+            if(vm.afilSel.personaFisica.telefono && vm.afilSel.personaFisica.telefono !== ''){
+                vm.afilSel.personaFisica.telefonosA.push(vm.afilSel.personaFisica.telefono);
+                vm.afilSel.personaFisica.telefono = '';}
+            }
+        };
+
+        vm.removeTel = function(index) {
+            if (vm.modalAfil.afiliado)
+                vm.modalAfil.afiliado.telefonosA.splice(index, 1);
+            else
+                vm.afilSel.personaFisica.telefonosA.splice(index, 1);
+        };
+
+        vm.viewAfil = function(afil) {
+            vm.afilSel = afil;
+            $('#viewModal').modal();
+        };
+
+        vm.edit = function(item) {
+            vm.afilSel = angular.copy(item);
+            if (vm.afilSel.personaFisica.telefonos)
+                vm.afilSel.personaFisica.telefonosA = vm.afilSel.personaFisica.telefonos.split(',');
+            else
+                vm.afilSel.personaFisica.telefonosA = [];
+            if (vm.afilSel.personaFisica.fechaNacimiento)
+                vm.afilSel.personaFisica.nacimiento = new Date(vm.afilSel.personaFisica.fechaNacimiento);
+            $('#editModal').modal();
+        };
+        vm.saveEdit = function() {
+            if (vm.validateSave()) {
+                vm.afilSel.personaFisica.telefonos = vm.afilSel.personaFisica.telefonosA.toString();
+                vm.afilSel.personaFisica.fechaNacimiento = vm.afilSel.personaFisica.nacimiento;
+                pacientesService.update(vm.afilSel).then(function() {
+                    vm.afilSel = {};
+                    $('#editModal').modal('hide');
+                    vm.updateList();
+                })
+            }
+        };
+        vm.validateSave = function() {
+            if (vm.afilSel.personaFisica.telefonosA.length !== 0) {
+                if (vm.afilSel.personaFisica.domicilios.length !== 0) {
+                    return true;
+                } else {
+                    growl.error("Ingrese al menos una direccion.");
+                }
+            } else {
+                growl.error("Ingrese al menos un telefono.");
+            }
+            return false;
+
         }
-        return false;
 
-    }
+        vm.saveAfil = function() {
+            if (vm.validateSave()) {
+                vm.modalAfil.afiliado.telefonos = vm.modalAfil.afiliado.telefonosA.toString();
+                pacientesService.create(vm.modalAfil).then(function(data) {
+                    vm.modalAfil = {};
+                    $('#newModal').modal('hide');
+                    vm.updateList();
+                })
+            }
+        };
 
-    vm.saveAfil = function() {
-        if (vm.validateSave()) {
-            vm.modalAfil.afiliado.telefonos = vm.modalAfil.afiliado.telefonosA.toString();
-            pacientesService.create(vm.modalAfil).then(function(data) {
-                vm.modalAfil = {};
-                $('#newModal').modal('hide');
-                vm.updateList();
-            })
-        }
-    };
-
-    vm.newAfil = function() {
+        vm.newAfil = function() {
         // MapManager.autocomplete('newDireccion');
         vm.modalAfil = {
             afiliado: {

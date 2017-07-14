@@ -1,13 +1,5 @@
 <div class="wrapper" ng-if="user">
 	<div ui-view="navView" ng-if="!hideNav"></div>
-	<div ui-view="contentView" class="content-wrapper" style="min-height: calc(100vh - 51px);"></div>
-	<!-- Footer -->
-	<footer class="main-footer">
-		<!-- To the right -->
-		<div class="pull-right hidden-xs">
-		</div>
-		<!-- Default to the left -->
-		<strong>2017 <a href="#">Vimedo</a>.</strong>
-	</footer>
+	<div ui-view="contentView" class="content-wrapper" style="height: 100vh;"></div>
 </div>
 <div ui-view="loginView" ng-if="!user"></div>
