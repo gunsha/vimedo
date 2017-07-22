@@ -34,20 +34,23 @@ inicio
 #-puede cerrar admin o profesional
 #-diagnostico-indicaciones-observaciones
 
-//
--inicio solo las del dia
-#-habilitar/inhabilitar afiliados-profesionales desde la web
-#-boton + para telefonos
--al modificar perfil inhabilitar
-tiempo estimado -viajes+tiempo de atencion
-
-inicio
+(2hrs)
 #-ordenar pendiente por hora y despues activos
 #-mostrar hora al lado del nombre (hace cuanto)
 #-mostrar domicilio de paciente
 #-achicar espacios en listas de inicio
+#-boton + para telefonos
+(6hrs)
+#-armar registro web de medicos y pacientes
+#-habilitar/inhabilitar afiliados-profesionales desde la web
+
 -destacar icono en mapa al hacer click
 -poner medicos en verde los que no tienen solicitudes y rojo los que tienen
 -al hacerle click mostar cantidad de pacientes
+-inicio solo las del dia
+-al modificar perfil inhabilitar
+tiempo estimado -viajes+tiempo de atencion
 
-#-armar registro web de medicos y pacientes
+horas total 128 + 8
+horas pagadas 50 (al 14/7)
+horas restantes 86
