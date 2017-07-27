@@ -1,6 +1,5 @@
 import { Injectable, Inject } from '@angular/core';
 import {Http} from '@angular/http';
-import 'rxjs/add/observable/throw';
 import 'rxjs/add/operator/map';
 import {JwtHelper} from "angular2-jwt";
 import {tokenNotExpired} from 'angular2-jwt';
@@ -11,7 +10,7 @@ import { APP_CONFIG, IAppConfig } from '../app/app.config';
 export class AuthService {
   error: string;
   jwtHelper = new JwtHelper();
-  user: object = null;
+  user: any = null;
 
   constructor(@Inject(APP_CONFIG) private config: IAppConfig,private http: Http) {
 
@@ -34,9 +33,24 @@ export class AuthService {
   }
  
   public logout() {
-    localStorage.remove('token');
-    localStorage.remove('profile');
+    localStorage.removeItem('token');
+    localStorage.removeItem('profile');
     this.user = null;
+  }
+
+  public getUser(){
+    return this.user;
+  }
+
+  public getProfileId(){
+    if(this.isPro())
+      return this.user.profesional._id
+    else
+      return this.user.afiliado._id
+  }
+
+  public isPro(){
+    return this.user.afiliado ? false:true;
   }
 
   authSuccess(token) {
@@ -51,13 +65,11 @@ export class AuthService {
     } else {
       user.profile = user.afiliado.personaFisica;
     }
-    console.log(user);
     this.user = user;
     localStorage.setItem('profile', JSON.stringify(this.user));
   }
 
   public static authenticated() {
-    console.log(tokenNotExpired('token'))
     return tokenNotExpired('token');
   }
 }

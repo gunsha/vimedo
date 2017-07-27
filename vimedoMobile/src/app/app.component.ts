@@ -6,7 +6,11 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { AuthService } from '../providers/auth-service';
 
 import { HomePage } from '../pages/home/home';
-import { ListPage } from '../pages/list/list';
+import { PerfilPage } from '../pages/perfil/perfil';
+import { MensajesPage } from '../pages/mensajes/mensajes';
+import { HistorialPage } from '../pages/historial/historial';
+import { SolicitudesPage } from '../pages/solicitudes/solicitudes';
+
 import { LoginPage } from '../pages/login/login';
 
 @Component({
@@ -25,10 +29,10 @@ export class MyApp {
 
     this.pages = [
       { title: 'Inicio', component: HomePage },
-      { title: 'Perfil', component: HomePage },
-      { title: 'Mensajes', component: HomePage },
-      { title: 'Solicitudes', component: HomePage },
-      { title: 'Historial', component: ListPage }
+      { title: 'Perfil', component: PerfilPage },
+      { title: 'Mensajes', component: MensajesPage },
+      { title: 'Solicitudes', component: SolicitudesPage },
+      { title: 'Historial', component: HistorialPage }
     ];
 
   }

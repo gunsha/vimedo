@@ -51,7 +51,7 @@
 									<div class="row-fluid">
 										<b>Antecedentes Medicos</b>:
 										<ul>
-											<li ng-if="s.antecedentesCie.length != 0" ng-repeat="antecedentes in s.antecedentesMedicosCie"> {{antecedentes.dec10}}</li>
+											<li ng-if="s.antecedentesMedicosCie.length != 0" ng-repeat="antecedentes in s.antecedentesMedicosCie"> {{antecedentes.dec10}}</li>
 											<li ng-if="s.antecedentesMedicos != ''" ng-repeat="antecedentes in s.antecedentesMedicos.split(',')"> {{antecedentes}}</li>
 											<li ng-if="s.antecedentesMedicos == '' && s.antecedentesMedicosCie.length == 0">No se presentan antecedentes.</li>
 										</ul>

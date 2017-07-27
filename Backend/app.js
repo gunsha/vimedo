@@ -20,6 +20,7 @@ var imagenes = require('./routes/Imagens');
 var solicitudesMedicas = require('./routes/SolicitudesMedicas');
 var especialidades = require('./routes/Especialidades');
 var coordenadas = require('./routes/CoordenadasProfesionales');
+var mensajes = require('./routes/Mensajes');
 var app = express();
 
 // view engine setup
@@ -56,6 +57,7 @@ app.use('/img', imagenes);
 app.use('/solicitudesMedicas', solicitudesMedicas);
 app.use('/especialidades', especialidades);
 app.use('/coordenadas', coordenadas);
+app.use('/mensajeria',mensajes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

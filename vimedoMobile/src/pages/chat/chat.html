@@ -1,0 +1,51 @@
+<!--
+  Generated template for the ChatPage page.
+
+  See http://ionicframework.com/docs/components/#navigation for more info on
+  Ionic pages and navigation.
+-->
+<ion-header>
+
+  <ion-navbar>
+    <ion-title>chat</ion-title>
+  </ion-navbar>
+
+</ion-header>
+
+
+<ion-content>
+  <ion-grid>
+    <ion-row *ngFor="let m of c.msgs">
+      <ion-col col-2 *ngIf="id == m.from"></ion-col>
+      <ion-col col-10>
+        <ion-card>
+          <ion-card-content>
+            {{m.message}}
+            <p text-right><small>{{m.send | date:'HH:mm'}}</small><ion-icon name="checkmark" *ngIf="m.read && m.from === id"></ion-icon></p>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+    <ion-row *ngIf="c.estado==2">
+      <ion-col col-12>
+        <ion-card>
+          <ion-card-content text-center>
+            No puede enviar mas mensajes una vez completada la solicitud.
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+
+</ion-content>
+<ion-footer no-border>
+  <ion-toolbar position="bottom">
+
+    <form (ngSubmit)="send()" #f="ngForm" class="message-form">
+      <input type="text" placeholder="Type a message..." [(ngModel)]="chatBox" name="chatBox" required [disabled]="c.estado==2">
+      <button type="submit" small class="message-form-button" [disabled]="c.estado==2"><ion-icon name="send"></ion-icon></button>
+    </form>
+
+  </ion-toolbar>
+</ion-footer>

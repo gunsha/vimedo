@@ -8,11 +8,25 @@
 </ion-header>
 
 <ion-content padding>
-  <h3>Ionic Menu Starter</h3>
+  <ion-refresher (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content
+      pullingIcon="arrow-dropdown"
+      pullingText="Actualizaa"
+      refreshingSpinner="circles"
+      refreshingText="Actualizando...">
+    </ion-refresher-content>
+  </ion-refresher>
+  
+<ng-container *ngIf="isPro">
+  <ion-card (click)="openPage(0)">
+  <ion-card-content>
+  <ion-item>
+  <ion-icon name="medical" item-start></ion-icon>
+  Solicitudes Pendientes
+  <ion-badge item-end>{{solicitudes.length}}</ion-badge>
+</ion-item>
+  </ion-card-content>
 
-  <p>
-    If you get lost, the <a href="http://ionicframework.com/docs/v2">docs</a> will show you the way.
-  </p>
-
-  <button ion-button secondary menuToggle>Toggle Menu</button>
+</ion-card>
+</ng-container>
 </ion-content>

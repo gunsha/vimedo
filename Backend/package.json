@@ -12,7 +12,7 @@
     "express": "~4.13.4",
     "jade": "~1.11.0",
     "moment": "^2.17.0",
-    "mongoose": "^4.9.7",
+    "mongoose": "^4.11.4",
     "mongoose-auto-increment": "^5.0.1",
     "mongoose-beautiful-unique-validation": "^5.1.1",
     "mongoose-deep-populate": "^3.0.0",

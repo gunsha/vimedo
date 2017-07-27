@@ -1,0 +1,33 @@
+<ion-header>
+
+  <ion-navbar>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title>Mensajes</ion-title>
+  </ion-navbar>
+
+</ion-header>
+
+
+<ion-content>
+  <ion-refresher (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content
+      pullingIcon="arrow-dropdown"
+      pullingText="Actualizaa"
+      refreshingSpinner="circles"
+      refreshingText="Actualizando...">
+    </ion-refresher-content>
+  </ion-refresher>
+<ion-list>
+    <button ion-item *ngFor="let item of chats" (click)="openChat(item)">
+      {{item.afiliado.personaFisica.nombre}} {{item.afiliado.personaFisica.apellido}}
+      <p *ngIf="item.lastMsg">{{item.lastMsg.message}}</p>
+      <div class="item-note" item-right>
+      <ng-container *ngIf="item.lastMsg">
+        {{item.lastMsg.send | date: 'HH:mm'}}
+      </ng-container>
+      </div>
+    </button>
+  </ion-list>
+</ion-content>

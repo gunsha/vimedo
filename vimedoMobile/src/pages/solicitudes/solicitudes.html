@@ -1,0 +1,28 @@
+<ion-header>
+  <ion-navbar>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title>Solicitudes</ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content
+      pullingIcon="arrow-dropdown"
+      pullingText="Actualizar"
+      refreshingSpinner="circles"
+      refreshingText="Actualizando...">
+    </ion-refresher-content>
+  </ion-refresher>
+  <ion-list>
+    <button ion-item *ngFor="let item of solicitudes" (click)="openDetail(item)">
+      {{item.afiliado.personaFisica.nombre}} {{item.afiliado.personaFisica.apellido}}
+      <div class="item-note" item-right>
+        {{item.fechaAlta | date: 'HH:mm'}}
+      </div>
+    </button>
+  </ion-list>
+
+</ion-content>

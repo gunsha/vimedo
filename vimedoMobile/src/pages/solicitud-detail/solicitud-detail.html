@@ -1,0 +1,45 @@
+<ion-header>
+	<ion-navbar>
+		<ion-title>SolicitudDetail</ion-title>
+	</ion-navbar>
+</ion-header>
+<ion-content padding>
+
+	<div class="row-fluid">
+		<b>Creado el</b>: {{s.fechaAlta | date: 'dd-MM-yyyy HH:MM'}}
+	</div>
+	<div class="row-fluid">
+		<b>Domicilio</b>: {{s.domicilio.calle + ' ' + s.domicilio.numero + ', ' + s.domicilio.localidad + ', ' + s.domicilio.provincia}}
+	</div>
+  
+  <div class="row-fluid">
+		<b>Sintomas</b>:
+		<ul>
+			<ng-container *ngIf="s.sintomasCie.length != 0">
+				<li *ngFor="let sintoma of s.sintomasCie"> {{sintoma.dec10}}</li>
+			</ng-container>
+			<ng-container *ngIf="s.sintomas != '' ">
+				<li *ngFor="let sintoma of s.sintomas.split(',')"> {{sintoma}}</li>
+			</ng-container>
+			<li *ngIf="s.sintomasCie.length == 0 && s.sintomas == ''">No se presentan sintomas.</li>
+		</ul>
+  </div>
+	<div class="row-fluid">
+		<b>Tiempo de sintomas</b>: {{s.horasSintomas}} hs. {{s.minutosSintomas}} min.
+	</div>
+
+	<div class="row-fluid">
+		<b>Antecedentes Medicos</b>:
+		<ul>
+			<ng-container *ngIf="s.antecedentesMedicosCie.length != 0">
+				<li *ngFor="let antecedentes of s.antecedentesMedicosCie"> {{antecedentes.dec10}}</li>
+			</ng-container>
+			<ng-container *ngIf="s.antecedentesMedicos != ''">
+				<li *ngFor="let antecedentes of s.antecedentesMedicos.split(',')"> {{antecedentes}}</li>
+			</ng-container>
+      <li *ngIf="s.antecedentesMedicos == '' && s.antecedentesMedicosCie.length == 0">No se presentan antecedentes.</li>
+		</ul>
+  </div>
+
+
+</ion-content>
