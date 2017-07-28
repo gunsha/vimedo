@@ -43,8 +43,15 @@
   <ion-toolbar position="bottom">
 
     <form (ngSubmit)="send()" #f="ngForm" class="message-form">
-      <input type="text" placeholder="Type a message..." [(ngModel)]="chatBox" name="chatBox" required [disabled]="c.estado==2">
-      <button type="submit" small class="message-form-button" [disabled]="c.estado==2"><ion-icon name="send"></ion-icon></button>
+
+      <input type="text" placeholder="Escriba un mensaje aquí..." [(ngModel)]="chatBox" name="chatBox" required [disabled]="c.estado==2" style="width: 69%;
+    height: 2.8em;">
+
+      <button type="submit" ion-button icon-right [disabled]="c.estado==2">
+        Enviar
+        <ion-icon name="send"></ion-icon>
+      </button>
+
     </form>
 
   </ion-toolbar>

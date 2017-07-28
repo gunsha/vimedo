@@ -304,9 +304,11 @@ module.exports = {
                     message: 'La credencial ya se encuentra registrada.'
                 });
             } else {
+                var afiliadoRest = req.body.afiliado;
+
                 var Usuario = new UsuarioModel({
-                    email: req.body.email,
-                    password: req.body.password ? req.body.password : req.body.credencial,
+                    email: req.body.email.toLowerCase(),
+                    password: req.body.password ? req.body.password : afiliadoRest.nro_documento,
                     fechaAlta: Date.now()
                 });
                 var url = "http://localhost:8008/socios/" + req.body.credencial;
@@ -321,7 +323,6 @@ module.exports = {
                 // response.on('end', function() {
                 // if (statusCode == 200) {
                 // var afiliadoRest = JSON.parse(body);
-                var afiliadoRest = req.body.afiliado;
                 if (afiliadoRest) {
                     Usuario.save(function(err, usuario) {
                         if (err) {
@@ -469,8 +470,8 @@ module.exports = {
                 });
             } else {
                 var usuario = new UsuarioModel({
-                    email: req.body.email,
-                    password: req.body.personaFisica.nro_documento,
+                    email: req.body.email.toLowerCase(),
+                    password: req.body.password ? req.body.password : req.body.personaFisica.nro_documento,
                     fechaAlta: Date.now()
                 });
 
@@ -625,7 +626,7 @@ module.exports = {
                 });
             }
 
-            Usuario.email = req.body.email ? req.body.email : Usuario.email;
+            Usuario.email = req.body.email ? req.body.email.toLowerCase() : Usuario.email;
             Usuario.token = req.body.token ? req.body.token : Usuario.token;
             Usuario.fechaLogin = req.body.fechaLogin ? req.body.fechaLogin : Usuario.fechaLogin;
             Usuario.fechaLogout = req.body.fechaLogout ? req.body.fechaLogout : Usuario.fechaLogout;
@@ -664,7 +665,7 @@ module.exports = {
 
     login: function(req, res) {
         var self = this;
-        var email = req.body.email;
+        var email = req.body.email.toLowerCase();
         var password = req.body.password;
         UsuarioModel.findOne({
             email: email

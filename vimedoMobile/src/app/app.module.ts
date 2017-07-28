@@ -13,6 +13,7 @@ import { SolicitudesPage } from '../pages/solicitudes/solicitudes';
 import {SolicitudDetailPage} from '../pages/solicitud-detail/solicitud-detail';
 import { SolicitudesListaPage } from '../pages/solicitudes-lista/solicitudes-lista';
 import { SolicitudesMapaPage } from '../pages/solicitudes-mapa/solicitudes-mapa';
+import { NuevaSolicitudPage } from '../pages/nueva-solicitud/nueva-solicitud';
 import { ChatPage } from '../pages/chat/chat';
 import { LoginPage } from '../pages/login/login';
 import { RegisterPage } from '../pages/register/register';
@@ -23,6 +24,7 @@ import { AuthService } from './../providers/auth-service';
 import { ProfessionalService } from '../providers/professional/professional';
 import { APP_CONFIG, AppConfig } from './app.config';
 import { MessagesProvider } from '../providers/messages/messages';
+import { AgmCoreModule } from '@agm/core';
 
 @NgModule({
   declarations: [
@@ -35,6 +37,7 @@ SolicitudesPage,
 SolicitudDetailPage,
 SolicitudesListaPage,
 SolicitudesMapaPage,
+NuevaSolicitudPage,
 ChatPage,
 LoginPage,
 RegisterPage
@@ -43,7 +46,11 @@ RegisterPage
     BrowserModule,
     HttpModule,
     IonicModule.forRoot(MyApp),
-    IonicStorageModule.forRoot()
+    IonicStorageModule.forRoot(),
+    AgmCoreModule.forRoot({
+      apiKey: 'AIzaSyDoIklkBzmZOHP28l2znHtu3vxzjcaLqXI',
+      libraries: ["places"]
+    })
   ],
   bootstrap: [IonicApp],
   entryComponents: [
@@ -56,6 +63,7 @@ SolicitudesPage,
 SolicitudDetailPage,
 SolicitudesListaPage,
 SolicitudesMapaPage,
+NuevaSolicitudPage,
 ChatPage,
 LoginPage,
 RegisterPage

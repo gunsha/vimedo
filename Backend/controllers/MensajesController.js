@@ -101,10 +101,6 @@ module.exports = {
         });
     },
     markAsRead: function(req, res) {
-    	// req.body = req.body.map(function(item){
-    	// 	return mongoose.Types.ObjectId((item._id));
-    	// });
-
         MensajeModel.update({
             _id: {
                 $in: req.body

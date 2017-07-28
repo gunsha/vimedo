@@ -9,24 +9,34 @@
 
 <ion-content padding>
   <ion-refresher (ionRefresh)="doRefresh($event)">
-    <ion-refresher-content
-      pullingIcon="arrow-dropdown"
-      pullingText="Actualizaa"
-      refreshingSpinner="circles"
-      refreshingText="Actualizando...">
+    <ion-refresher-content pullingIcon="arrow-dropdown" pullingText="Actualizaa" refreshingSpinner="circles" refreshingText="Actualizando...">
     </ion-refresher-content>
   </ion-refresher>
-  
-<ng-container *ngIf="isPro">
-  <ion-card (click)="openPage(0)">
-  <ion-card-content>
-  <ion-item>
-  <ion-icon name="medical" item-start></ion-icon>
-  Solicitudes Pendientes
-  <ion-badge item-end>{{solicitudes.length}}</ion-badge>
-</ion-item>
-  </ion-card-content>
+  <ng-container *ngIf="!isPro">
+    <button ion-button full round icon-left (click)="newSol()">
+    <ion-icon name="add"></ion-icon>
+    Nueva Solicitud
+  </button>
+  </ng-container>
+  <ng-container *ngIf="isPro">
+    <ion-card (click)="openPage(0)">
+      <ion-card-content>
+        <ion-item>
+          <ion-icon name="medical" item-start></ion-icon>
+          Solicitudes Pendientes
+          <ion-badge item-end>{{solicitudes.length}}</ion-badge>
+        </ion-item>
+      </ion-card-content>
+      </ion-card>
+      <ion-card (click)="openPage(1)">
+      <ion-card-content>
+        <ion-item>
+          <ion-icon name="chatbubbles"></ion-icon>
+          Mensajes nuevos
+          <ion-badge item-end>{{mensajes}}</ion-badge>
+        </ion-item>
+      </ion-card-content>
 
-</ion-card>
-</ng-container>
+    </ion-card>
+  </ng-container>
 </ion-content>

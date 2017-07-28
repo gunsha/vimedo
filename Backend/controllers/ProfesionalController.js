@@ -108,7 +108,8 @@ module.exports = {
                 });
             }
             Usuario.email = Usuario.email === req.body.usuario.email ? Usuario.email : req.body.usuario.email;
-            Usuario.activo = req.body.usuario.activo;
+            Usuario.password = (!req.body.usuario.password || Usuario.password === req.body.usuario.password) ? Usuario.password : req.body.usuario.password;
+            Usuario.activo = req.body.usuario.activo ? req.body.usuario.activo : Usuario.activo;
             Usuario.save(function(err, Usuario) {
                 if (err) {
                     return res.status(500).json({

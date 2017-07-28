@@ -23,7 +23,7 @@ export class MessagesProvider {
 	}
 	getChats(id,t){
 		var url = this.config.apiEndpoint + 'mensajeria/'+(t?'solicitudesPro':'solicitudesAfil')+'/'+id;
-		return new Promise((resolve, reject) => {
+		return new Promise<any[]>((resolve, reject) => {
 			this.http.get(url)
 				.map(res => res.json())
 				.subscribe(data => {
