@@ -77,4 +77,12 @@ router.post('/login', function (req, res) {
     UsuarioController.login(req, res);
 });
 
+router.post('/mobile/login', function (req, res) {
+    var jwt = UsuarioController.loginMobile(req, res).then(function(data){
+        return res.json(data);
+    },function(error){
+        return res.status(406).json(error);
+    });
+});
+
 module.exports = router;

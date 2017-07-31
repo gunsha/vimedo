@@ -2,9 +2,9 @@ import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { AuthService } from '../../providers/auth-service';
 import { ProfessionalService } from '../../providers/professional/professional';
+import {AfiliadoService} from '../../providers/afiliado/afiliado';
 import { SolicitudDetailPage } from '../solicitud-detail/solicitud-detail';
 import { MapsAPILoader } from '@agm/core';
-
 
 declare var google: any;
 @Component({
@@ -24,13 +24,18 @@ export class SolicitudesPage {
   longitude: number;
   zoom: number;
 
-  constructor(public navCtrl: NavController, private auth: AuthService, private pro: ProfessionalService, private mapsAPILoader: MapsAPILoader) {
+  constructor(public navCtrl: NavController, private auth: AuthService, private pro: ProfessionalService, private mapsAPILoader: MapsAPILoader, private afil: AfiliadoService) {
     this.getSolicitudesPro();
     this.setCurrentPosition();
   }
 
   getSolicitudesPro() {
-    return this.pro.solicitudes(this.auth.user.profesional._id).then((data) => {
+    if(this.auth.isPro())
+    return this.pro.solicitudes(this.auth.getProfileId()).then((data)=>{
+      this.solicitudes = data;
+    });
+    else
+      return this.afil.solicitudes(this.auth.getProfileId()).then((data)=>{
       this.solicitudes = data;
     });
   }

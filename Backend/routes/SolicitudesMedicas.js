@@ -25,6 +25,15 @@ router.get('/profesional/:idProfesional', function (req, res) {
     SolicitudMedicaController.listByProfesional(req, res);
 });
 
+router.get('/afiliado/:id', function (req, res) {
+    req.params.only_actives = true;
+    SolicitudMedicaController.listByAfiliado(req, res);
+});
+
+router.get('/afiliado/:id/historial', function (req, res) {
+    req.params.only_actives = false;
+    SolicitudMedicaController.listByAfiliado(req, res);
+});
 router.get('/profesional/:idProfesional/historial', function (req, res) {
     req.params.only_actives = false;
     SolicitudMedicaController.listByProfesional(req, res);

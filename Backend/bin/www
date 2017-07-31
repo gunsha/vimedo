@@ -8,6 +8,9 @@ var app = require('../app');
 var debug = require('debug')('VIMEDO:server');
 var http = require('http');
 
+var io = require('socket.io');
+var MensajesController = require('../controllers/MensajesController.js');
+
 /**
  * Get port from environment and store in Express.
  */
@@ -20,6 +23,37 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+
+io = io.listen(server);
+var clients = {};
+io.on('connection', function(socket) {
+    
+    if(socket.handshake.query.id && socket.handshake.query.idu)
+    clients[socket.handshake.query.id+''+socket.handshake.query.idu] = socket;
+    if(socket.handshake.query.idu)
+    clients[socket.handshake.query.idu] = socket;
+    
+    socket.on('socket/mensajeria/send', function(msg){
+        if(clients[msg.solicitud+''+msg.to]){
+          msg.read = true;
+          clients[msg.solicitud+''+msg.to].emit('socket/mensajeria/receive', msg);
+        }
+        if(clients[msg.to])
+          clients[msg.to].emit('socket/mensajeria/newMsg', msg);
+        MensajesController.createSocket(msg);
+      clients[msg.solicitud+''+msg.from].emit('socket/mensajeria/sended', msg);
+    });
+    
+    socket.on('socket/mensajeria/read', function() {
+      MensajesController.markAsReadSocket(socket.handshake.query.id,socket.handshake.query.idu);
+      if(clients[socket.handshake.query.id+''+socket.handshake.query.iduTo])
+      clients[socket.handshake.query.id+''+socket.handshake.query.iduTo].emit('socket/mensajeria/markRead');
+    });
+
+    socket.on('disconnect', function() {
+        clients[socket.handshake.query.id+''+socket.handshake.query.idu] = false;
+    });
+});
 
 /**
  * Listen on provided port, on all network interfaces.

@@ -25,6 +25,7 @@ import { ProfessionalService } from '../providers/professional/professional';
 import { APP_CONFIG, AppConfig } from './app.config';
 import { MessagesProvider } from '../providers/messages/messages';
 import { AgmCoreModule } from '@agm/core';
+import { AfiliadoService } from '../providers/afiliado/afiliado';
 
 @NgModule({
   declarations: [
@@ -75,7 +76,8 @@ RegisterPage
     AuthService,
     ProfessionalService,
     { provide: APP_CONFIG, useValue: AppConfig },
-    MessagesProvider
+    MessagesProvider,
+    AfiliadoService
   ]
 })
 export class AppModule {}

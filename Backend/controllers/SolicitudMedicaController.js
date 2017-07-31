@@ -37,7 +37,33 @@ module.exports = {
             return res.json(result);
         });
     },
-
+     listByAfiliado: function (req, res) {
+        var estados = req.params.only_actives ? [0,1] : [0,1,2];
+        SolicitudMedicaModel.find({afiliado:req.params.id,fechaBaja:null, estado:estados})
+        .deepPopulate(["usuario","profesional.personaFisica","profesional.personaFisica.domicilios","profesional.personaFisica.telefonos","domicilio","sintomasCie","antecedentesMedicosCie","profesional.especialidades"])
+        .exec(function (err, solicitudesMedicas) {
+            if (err) {
+                return res.status(500).json({
+                    message: 'Error when getting SolicitudesMedicas.',
+                    error: err
+                });
+            }
+            var result=[];
+            if(solicitudesMedicas){
+                for(var i=0;i<solicitudesMedicas.length;i++){
+                    solicitudesMedicas[i].afiliado.usuario=null;
+                    if(solicitudesMedicas[i].profesional){
+                        solicitudesMedicas[i].profesional.usuario=null;
+                    }
+                    
+                    result.push(solicitudesMedicas[i]);
+                }
+            }
+            
+            
+            return res.json(result);
+        });
+    },
     listByProfesional: function (req, res) {
         var estados = req.params.only_actives ? [0,1] : [0,1,2];
         SolicitudMedicaModel.find({profesional:req.params.idProfesional,fechaBaja:null, estado:estados})
@@ -49,7 +75,7 @@ module.exports = {
                     error: err
                 });
             }
-            var result=[]
+            var result=[];
             if(solicitudesMedicas){
                 for(var i=0;i<solicitudesMedicas.length;i++){
                     solicitudesMedicas[i].afiliado.usuario=null;

@@ -20,7 +20,7 @@ export class AuthService {
   }
   public login(credentials) {
     return new Promise((resolve, reject) => {
-      var url = this.config.apiEndpoint + 'users/login';
+      var url = this.config.apiEndpoint + 'users/mobile/login';
       this.http.post(url, credentials)
         .map(res => res.json())
         .subscribe(data => {

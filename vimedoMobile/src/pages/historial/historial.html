@@ -27,9 +27,14 @@
  
 <ion-list>
     <button ion-item *ngFor="let item of solicitudes" (click)="openDetail(item)">
-      {{item.afiliado.personaFisica.nombre}} {{item.afiliado.personaFisica.apellido}}
+      <ng-container *ngIf="auth.isPro()">
+      {{item.afiliado.personaFisica.nombre +' ' +item.afiliado.personaFisica.apellido}}
+      </ng-container>
+    <ng-container *ngIf="!auth.isPro()">
+      {{item.profesional.personaFisica.nombre +' ' +item.profesional.personaFisica.apellido}}
+      </ng-container>
       <div class="item-note" item-right>
-        {{item.fechaAlta | date: 'HH:mm'}}
+        {{item.fechaAlta | date: 'dd/MM/yyyy'}}
       </div>
     </button>
   </ion-list>

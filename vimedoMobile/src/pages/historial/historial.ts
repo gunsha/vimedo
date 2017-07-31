@@ -2,7 +2,8 @@ import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { AuthService } from '../../providers/auth-service';
 import { ProfessionalService } from '../../providers/professional/professional';
-import {SolicitudDetailPage} from '../solicitud-detail/solicitud-detail';
+import { AfiliadoService } from '../../providers/afiliado/afiliado';
+import { SolicitudDetailPage } from '../solicitud-detail/solicitud-detail';
 
 @Component({
   selector: 'page-historial',
@@ -10,26 +11,58 @@ import {SolicitudDetailPage} from '../solicitud-detail/solicitud-detail';
 })
 export class HistorialPage {
 
-    solicitudes: any = [];
+  solicitudes: any = [];
+  orig: any = [];
   pages: Array<any>;
 
-  constructor(public navCtrl: NavController, private auth: AuthService, private pro: ProfessionalService) {
+  constructor(public navCtrl: NavController, private auth: AuthService, private pro: ProfessionalService, private afil: AfiliadoService) {
     this.getHistorial();
   }
 
-  getHistorial(){
-    return this.pro.historial(this.auth.user.profesional._id).then((data)=>{
-      this.solicitudes = data;
-    });
+  getHistorial() {
+    if (this.auth.isPro())
+      return this.pro.historial(this.auth.getProfileId()).then((data) => {
+        this.solicitudes = data;
+        this.orig = data;
+      });
+    else
+      return this.afil.historial(this.auth.getProfileId()).then((data) => {
+        this.solicitudes = data;
+        this.orig = data;
+      });
   }
 
   openDetail(item) {
-    this.navCtrl.push(SolicitudDetailPage,{item:item});
+    this.navCtrl.push(SolicitudDetailPage, { item: item });
   }
 
-  doRefresh(refresher){
-     this.getHistorial().then( ()=> refresher.complete() )
-     
+  doRefresh(refresher) {
+    this.getHistorial().then(() => refresher.complete())
+
+  }
+
+  onInput(ev: any) {
+
+
+    // set val to the value of the searchbar
+    let val = ev.target.value;
+
+    // if the value is an empty string don't filter the items
+    if (val && val.trim() != '') {
+      this.solicitudes = this.orig.filter((item) => {
+        if (this.auth.isPro())
+          return (item.afiliado.personaFisica.nombre.toLowerCase().indexOf(val.toLowerCase()) > -1
+            || item.afiliado.personaFisica.nombre.toLowerCase().indexOf(val.toLowerCase()) > -1);
+        else
+
+          return (item.profesional.personaFisica.nombre.toLowerCase().indexOf(val.toLowerCase()) > -1
+            || item.profesional.personaFisica.apellido.toLowerCase().indexOf(val.toLowerCase()) > -1);
+      })
+    }
+  }
+
+  onCancel(ev: any) {
+    this.solicitudes = [...this.orig];
   }
 
 }

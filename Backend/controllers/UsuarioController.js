@@ -12,6 +12,7 @@ var EspecialidadModel = require('../models/EspecialidadModel.js');
 var http = require('http');
 var Moment = require('moment');
 var nJwt = require('njwt');
+var Q = require('q');
 var secureRandom = require('secure-random');
 
 var signingKey = secureRandom(256, {
@@ -775,6 +776,110 @@ module.exports = {
             });
 
         });
+    },
+    loginMobile: function(req, res) {
+        var self = this;
+        var email = req.body.email.toLowerCase();
+        var password = req.body.password;
+        var message = '';
+        var deferred = Q.defer();
+
+        UsuarioModel.findOne({
+            email: email
+        }, function(err, usuario) {
+            if (err) {
+                message = 'Error al loguear el usuario.';
+            } else if (!usuario) {
+                message = 'El email/password no se encuentra registrado.';
+            } else if (usuario.activo != 1) {
+                message = 'El usuario no se encuentra activo.';
+            }
+            if (message !== '')
+                deferred.reject({
+                    message: message
+                });
+            usuario.comparePassword(password, function(err, isMatch) {
+                if (err || !isMatch) {
+                    deferred.reject({
+                        message: 'El email/password no se encuentra registrado.',
+                        error: err
+                    });
+                } else {
+                    var map = {};
+
+                    usuario.fechaLogin = Date.now();
+
+                    usuario.save();
+                    var usuarioTemp = usuario.toObject({
+                        getters: true,
+                        virtuals: false
+                    });
+
+                    ProfesionalModel.findOne({
+                        usuario: usuario._id
+                    }).deepPopulate(["personaFisica.domicilios", "personaFisica.telefonos" /*,"personaFisica.imagen"*/ , "especialidades"]).exec(function(err, profesional) {
+                        if (!profesional) {
+                            AfiliadoModel.findOne({
+                                usuario: usuario._id
+                            }).deepPopulate(["personaFisica.domicilios" /*,"personaFisica.imagen"*/ , "grupoFamiliar"]).exec(function(err, afiliado) {
+                                if (afiliado) {
+                                    SolicitudMedicaModel.find({
+                                        usuario: usuario._id
+                                    }).deepPopulate(["domicilio", "usuario", "afiliado", "antecedentesMedicos", "profesional.especialidades"]).exec(function(err, solicitudesMedicas) {
+                                        map.ultimosDomicilios = self.getUltimosDomicilios(solicitudesMedicas);
+                                        map.solicitudesPendientes = self.getSolicitudesPendientes(solicitudesMedicas);
+                                        usuarioTemp.afiliado = afiliado.toObject({
+                                            getters: true,
+                                            virtuals: false
+                                        });
+                                        map.grupoFamiliar = afiliado.grupoFamiliar.toObject({
+                                            getters: true,
+                                            virtuals: false
+                                        });
+                                        usuarioTemp.rolName = 'USER';
+                                        AfiliadoModel.find({
+                                            _id: {
+                                                $ne: afiliado._id
+                                            },
+                                            grupoFamiliar: afiliado.grupoFamiliar._id
+                                        }).deepPopulate(["personaFisica.domicilios" /*,"personaFisica.imagen"*/ ]).exec(function(err, grupoFamiliarResult) {
+                                            map.usuario = usuarioTemp;
+                                            if (grupoFamiliarResult) {
+                                                map.grupoFamiliar.afiliados = grupoFamiliarResult;
+                                            }
+                                            deferred.resolve({
+                                                jwt: nJwt.create({
+                                                    sub: map
+                                                }, signingKey).setExpiration(new Date().getTime() + (24 * 60 * 60 * 1000 * 7)).compact()
+                                            });
+                                        });
+
+                                    });
+                                } else {
+                                    deferred.reject({
+                        message: 'Su usuario no esta habilitado para el uso de la aplicación.'
+                    });
+                                }
+                            });
+                        } else {
+                            usuarioTemp.rolName = 'PROFESSIONAL';
+                            usuarioTemp.profesional = profesional.toObject({
+                                getters: true,
+                                virtuals: false
+                            });
+                            map.usuario = usuarioTemp;
+                            deferred.resolve({
+                                jwt: nJwt.create({
+                                    sub: map
+                                }, signingKey).setExpiration(new Date().getTime() + (24 * 60 * 60 * 1000 * 7)).compact()
+                            });
+                        }
+                    });
+                }
+            });
+
+        });
+        return deferred.promise;
     },
 
     getUltimosDomicilios: function(solicitudesMedicas) {

@@ -81,6 +81,10 @@ module.exports = {
                     });
             });
     },
+    createSocket: function(msg) {
+        var mensaje = new MensajeModel(msg);
+        mensaje.save();
+    },
     create: function(req, res) {
         var mensaje = new MensajeModel({
             message: req.body.msg,
@@ -100,6 +104,19 @@ module.exports = {
             return res.status(200).json(msg);
         });
     },
+    markAsReadSocket: function(sol, user) {
+        MensajeModel.update({
+            solicitud: sol,
+            to: user,
+            read: false
+        }, {
+            $set: {
+                read: true
+            }
+        }, {
+            multi: true
+        });
+    },
     markAsRead: function(req, res) {
         MensajeModel.update({
             _id: {
@@ -109,10 +126,12 @@ module.exports = {
             $set: {
                 read: true
             }
-        }, { 
-        multi: true 
-      },function(err,msg){
-        	return res.status(200).json({message:''});
+        }, {
+            multi: true
+        }, function(err, msg) {
+            return res.status(200).json({
+                message: ''
+            });
         });
     }
 };
