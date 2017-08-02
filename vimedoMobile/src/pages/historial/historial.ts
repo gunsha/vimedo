@@ -43,18 +43,15 @@ export class HistorialPage {
 
   onInput(ev: any) {
 
-
-    // set val to the value of the searchbar
     let val = ev.target.value;
 
-    // if the value is an empty string don't filter the items
     if (val && val.trim() != '') {
       this.solicitudes = this.orig.filter((item) => {
         if (this.auth.isPro())
           return (item.afiliado.personaFisica.nombre.toLowerCase().indexOf(val.toLowerCase()) > -1
             || item.afiliado.personaFisica.nombre.toLowerCase().indexOf(val.toLowerCase()) > -1);
         else
-
+          if(item.profesional)
           return (item.profesional.personaFisica.nombre.toLowerCase().indexOf(val.toLowerCase()) > -1
             || item.profesional.personaFisica.apellido.toLowerCase().indexOf(val.toLowerCase()) > -1);
       })

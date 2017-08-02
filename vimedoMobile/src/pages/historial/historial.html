@@ -31,7 +31,12 @@
       {{item.afiliado.personaFisica.nombre +' ' +item.afiliado.personaFisica.apellido}}
       </ng-container>
     <ng-container *ngIf="!auth.isPro()">
+      <ng-container *ngIf="item.profesional">
       {{item.profesional.personaFisica.nombre +' ' +item.profesional.personaFisica.apellido}}
+      </ng-container>
+      <ng-container *ngIf="!item.profesional">
+      Pendiente
+      </ng-container>
       </ng-container>
       <div class="item-note" item-right>
         {{item.fechaAlta | date: 'dd/MM/yyyy'}}

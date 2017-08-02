@@ -6,9 +6,9 @@ registro usuario afiliado-medico		3
 #mensajeria afiliado-medico				16
 mensajeria medico-admin					5
 
-solicitud de visita afiliado 			6
+#solicitud de visita afiliado 			6
 #historial solicitudes afiliado-medico	6
-#listado/mapa de visitas medico 			6
+#listado/mapa de visitas medico 		6
 
 edicion-cerrado de visitas medico 		4 
 

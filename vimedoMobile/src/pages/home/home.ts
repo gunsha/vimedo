@@ -21,12 +21,15 @@ export class HomePage {
   mensajes = 0;
 
   constructor(public navCtrl: NavController, private auth: AuthService, private pro: ProfessionalService,public alertCtrl: AlertController, public msgs: MessagesProvider) {
-    if(this.isPro)
-      this.getSolicitudesPro();
     this.pages = [
       SolicitudesPage,
       MensajesPage
     ];
+  }
+
+  ionViewDidEnter() {
+    if(this.isPro)
+      this.getSolicitudesPro();
     this.getChats();
   }
 

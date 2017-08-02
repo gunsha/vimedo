@@ -13,6 +13,7 @@ import { SolicitudesPage } from '../pages/solicitudes/solicitudes';
 import {SolicitudDetailPage} from '../pages/solicitud-detail/solicitud-detail';
 import {SolicitudCerrarPage} from '../pages/solicitud-cerrar/solicitud-cerrar';
 import { NuevaSolicitudPage } from '../pages/nueva-solicitud/nueva-solicitud';
+import {SintomasModalPage} from '../pages/sintomas-modal/sintomas-modal';
 import { ChatPage } from '../pages/chat/chat';
 import { LoginPage } from '../pages/login/login';
 import { RegisterPage } from '../pages/register/register';
@@ -25,6 +26,7 @@ import { APP_CONFIG, AppConfig } from './app.config';
 import { MessagesProvider } from '../providers/messages/messages';
 import { AgmCoreModule } from '@agm/core';
 import { AfiliadoService } from '../providers/afiliado/afiliado';
+import { SolicitudService } from '../providers/solicitud/solicitud';
 
 @NgModule({
   declarations: [
@@ -37,6 +39,7 @@ SolicitudesPage,
 SolicitudDetailPage,
 SolicitudCerrarPage,
 NuevaSolicitudPage,
+SintomasModalPage,
 ChatPage,
 LoginPage,
 RegisterPage
@@ -63,6 +66,7 @@ SolicitudesPage,
 SolicitudDetailPage,
 SolicitudCerrarPage,
 NuevaSolicitudPage,
+SintomasModalPage,
 ChatPage,
 LoginPage,
 RegisterPage
@@ -75,7 +79,8 @@ RegisterPage
     ProfessionalService,
     { provide: APP_CONFIG, useValue: AppConfig },
     MessagesProvider,
-    AfiliadoService
+    AfiliadoService,
+    SolicitudService
   ]
 })
 export class AppModule {}

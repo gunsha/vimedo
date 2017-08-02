@@ -19,8 +19,13 @@
       {{item.afiliado.personaFisica.nombre +' ' +item.afiliado.personaFisica.apellido}}
       </ng-container>
     <ng-container *ngIf="!auth.isPro()">
+      <ng-container *ngIf="item.profesional">
       {{item.profesional.personaFisica.nombre +' ' +item.profesional.personaFisica.apellido}}
       </ng-container>
+    <ng-container *ngIf="!item.profesional">
+      Pendiente
+      </ng-container>
+    </ng-container>
       <div class="item-note" item-right>
         {{item.fechaAlta | date: 'HH:mm'}}
       </div>
@@ -28,7 +33,7 @@
     </ion-list>
   </ng-container>
   <ng-container *ngIf="vista != 'lista'">
-    <agm-map [latitude]="latitude" [longitude]="longitude" [zoom]="zoom"  [fitBounds]="mapBounds">
+    <agm-map [latitude]="latitude" [longitude]="longitude" [zoom]="zoom" [fitBounds]="mapBounds">
       <agm-marker *ngFor="let m of solicitudes; let i = index" (markerClick)="openDetail(m)" [latitude]="m.domicilio.latitud" [longitude]="m.domicilio.longitud"></agm-marker>
     </agm-map>
   </ng-container>

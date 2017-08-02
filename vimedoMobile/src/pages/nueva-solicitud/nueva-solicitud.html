@@ -1,25 +1,50 @@
 <ion-header>
 
   <ion-navbar>
-    <button ion-button menuToggle right>
+    <button ion-button menuToggle right >
       <ion-icon name="menu"></ion-icon>
     </button>
     <ion-title>nuevaSolicitud</ion-title>
   </ion-navbar>
 
 </ion-header>
-
-
-<ion-content padding>
-<ion-item>
-  <ion-label>Domicilio</ion-label>
-  <ion-select [(ngModel)]="domSelect" okText="Aceptar" cancelText="Cancelar">
-    <ion-option *ngFor="let dom of user.profile.domicilios" [value]="dom">{{dom.calle + ' ' + dom.numero }}</ion-option>
-    <!-- <ion-option [value]="currLoc">Ubicación actual</ion-option> -->
-  </ion-select>
-</ion-item>
+<ion-content>
   <ion-item>
-  <ion-label>Tiempo de sintomas</ion-label>
-  <ion-datetime displayFormat="H:mm" pickerFormat="H mm" [(ngModel)]="timeStarts" cancelText="Cancelar" doneText="Aceptar"></ion-datetime>
-</ion-item>
+    <ion-label>Domicilio</ion-label>
+    <ion-select [(ngModel)]="solicitud.domicilioSel" okText="Aceptar" cancelText="Cancelar">
+      <ion-option *ngFor="let dom of user.profile.domicilios" [value]="dom">{{dom.calle + ' ' + dom.numero }}</ion-option>
+    </ion-select>
+  </ion-item>
+  <ion-item>
+    <ion-label>Tiempo de sintomas</ion-label>
+    <ion-datetime displayFormat="H:mm" pickerFormat="H mm" [(ngModel)]="tiempoSintomas" cancelText="Cancelar" doneText="Aceptar"></ion-datetime>
+  </ion-item>
+
+  <ion-item-group>
+    <ion-item-divider color="light">
+      <ion-label>
+      Sintomas
+    </ion-label>
+      <button ion-button round (click)="buscarSintoma()" icon-only item-end> 
+        <ion-icon name="add-circle"></ion-icon>
+      </button>
+    </ion-item-divider>
+    <ion-item *ngFor="let s of solicitud.sintomas">{{s.dec10}}</ion-item>
+  </ion-item-group>
+  <ion-item-group>
+    <ion-item-divider color="light">
+      <ion-label>
+      Antecedentes
+    </ion-label>
+      <button ion-button round (click)="buscarSintoma(true)" icon-only item-end> 
+        <ion-icon name="add-circle"></ion-icon>
+      </button>
+    </ion-item-divider>
+    <ion-item *ngFor="let a of solicitud.antecedentes">{{a.dec10}}</ion-item>
+  </ion-item-group>
 </ion-content>
+  <ion-footer padding>
+    <button menuClose ion-button full round (click)="saveSol()">
+        Enviar Solicitud
+      </button>
+  </ion-footer>

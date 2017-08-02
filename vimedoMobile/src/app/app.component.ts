@@ -1,5 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
-import { Nav, Platform } from 'ionic-angular';
+import { Nav, Platform,Config } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 
@@ -24,7 +24,8 @@ export class Vimedo {
 
   pages: Array<{title: string, component: any}>;
 
-  constructor(public platform: Platform, private auth: AuthService, public statusBar: StatusBar, public splashScreen: SplashScreen) {
+  constructor(public config:Config,public platform: Platform, private auth: AuthService, public statusBar: StatusBar, public splashScreen: SplashScreen) {
+    this.config.set('ios', 'statusbarPadding', false);
     this.initializeApp();
 
     this.pages = [

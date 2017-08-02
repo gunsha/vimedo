@@ -8,10 +8,6 @@
 </ion-header>
 
 <ion-content padding>
-  <ion-refresher (ionRefresh)="doRefresh($event)">
-    <ion-refresher-content pullingIcon="arrow-dropdown" pullingText="Actualizaa" refreshingSpinner="circles" refreshingText="Actualizando...">
-    </ion-refresher-content>
-  </ion-refresher>
   <ng-container *ngIf="!isPro">
     <button ion-button full round icon-left (click)="newSol()">
     <ion-icon name="add"></ion-icon>

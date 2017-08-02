@@ -1,0 +1,37 @@
+<ion-header>
+
+  <ion-navbar>
+    <ion-buttons start>
+      <button ion-button (click)="dismiss()">Cerrar</button>
+    </ion-buttons>
+    <ion-searchbar
+  [(ngModel)]="query"
+  [showCancelButton]="true"
+  placeholder="Buscar"
+  cancelButtonText="Cancelar"
+  (ionInput)="onInput($event)"
+  (ionCancel)="onCancel($event)">
+</ion-searchbar>
+  </ion-navbar>
+
+</ion-header>
+
+
+<ion-content>
+ <ion-list-header *ngIf="query != ''">
+      Nuevo
+    </ion-list-header>
+  <ion-list>
+      <button ion-item *ngIf="query != ''" (click)="dismiss(query)">
+        {{query}}
+      </button>
+    </ion-list>
+  <ion-list-header *ngIf="sintomas.length != 0">
+      Resultados
+    </ion-list-header>
+  <ion-list>
+      <button ion-item *ngFor="let p of sintomas" (click)="dismiss(p)">
+        {{p.dec10}}
+      </button>
+    </ion-list>
+</ion-content>
