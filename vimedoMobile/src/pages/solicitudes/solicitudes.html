@@ -1,6 +1,6 @@
 <ion-header>
   <ion-navbar>
-    <button ion-button menuToggle>
+    <button ion-button menuToggle right>
       <ion-icon name="menu"></ion-icon>
     </button>
     <ion-title>Solicitudes</ion-title>
@@ -33,7 +33,7 @@
     </agm-map>
   </ng-container>
 </ion-content>
-<ion-footer>
+<ion-footer *ngIf="auth.isPro()">
   <ion-toolbar position="bottom">
     <ion-segment [(ngModel)]="vista" (ionChange)="segmentChanged($event)">
       <ion-segment-button value="lista">

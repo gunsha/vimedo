@@ -41,7 +41,7 @@ export class SolicitudesPage {
   }
 
   openDetail(item) {
-    this.navCtrl.push(SolicitudDetailPage, { item: item });
+    this.navCtrl.push(SolicitudDetailPage, { item: item, isPro: this.auth.isPro() });
   }
 
   doRefresh(refresher) {

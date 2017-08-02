@@ -17,7 +17,7 @@ import { LoginPage } from '../pages/login/login';
   templateUrl: 'app.html'
 })
 
-export class MyApp {
+export class Vimedo {
   @ViewChild(Nav) nav: Nav;
 
   rootPage: any = AuthService.authenticated() ? HomePage:LoginPage ;

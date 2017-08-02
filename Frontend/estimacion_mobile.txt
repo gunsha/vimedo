@@ -1,13 +1,14 @@
 
-login									3
+#login									3
 registro usuario afiliado-medico		3
 
-edicion de perfil afiliado-medico		3
-mensajeria afiliado-medico				16
+#edicion de perfil afiliado-medico		3
+#mensajeria afiliado-medico				16
+mensajeria medico-admin					5
 
 solicitud de visita afiliado 			6
-historial solicitudes afiliado-medico	6
-listado/mapa de visitas medico 			6
+#historial solicitudes afiliado-medico	6
+#listado/mapa de visitas medico 			6
 
 edicion-cerrado de visitas medico 		4 
 
@@ -15,4 +16,16 @@ guardado de location medico 			2
 
 alertas push solicitudes				4
 
-total 53hs
+total 58hs
+
+#login			
+#edicion de perfil afiliado-medico	
+#mensajeria afiliado-medico		
+#historial solicitudes afiliado-medico	
+#listado/mapa de visitas medico 
+
+registro usuario afiliado-medico	
+solicitud de visita afiliado 	
+edicion-cerrado de visitas medico 	
+guardado de location medico 
+alertas push solicitudes		

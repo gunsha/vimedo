@@ -17,13 +17,15 @@ VISTA MEDICOS - FE(16hs) - BE(10hs) (26)
 #-ALTA MEDICOS
 #-EDICION MEDICOS
 
+MENSAJERIA ADMIN-MEDICOS	FE(4) - BE(4) (8)
+
 VISTA HISTORIAL SOLICITUDES - FE(20hs) - BE(12hs) (32)
 #-LISTADO DE SOLICITUDES (PENDIENTES Y FINALIZADAS)
 #-DETALLE SOLICITUD
 #-ALTA SOLICITUD
 -EDICION SOLICITUD (PENDIENTES)
 
-TOTAL - FE(80) - BE(48) (128)
+TOTAL - FE(84) - BE(52) (136)
 
 extras de la call del viernes 09/06
 inicio 
@@ -51,6 +53,6 @@ inicio
 -al modificar perfil inhabilitar
 tiempo estimado -viajes+tiempo de atencion
 
-horas total 128 + 8
-horas pagadas 50 (al 14/7)
-horas restantes 86
+horas total 128 + 8 + 8
+horas pagadas 100 (al 20/7)
+horas restantes 44

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { NavController, NavParams } from 'ionic-angular';
+import { AuthService } from '../../providers/auth-service';
 
 /**
  * Generated class for the NuevaSolicitudPage page.
@@ -13,12 +14,15 @@ import { NavController, NavParams } from 'ionic-angular';
   templateUrl: 'nueva-solicitud.html',
 })
 export class NuevaSolicitudPage {
-
-  constructor(public navCtrl: NavController, public navParams: NavParams) {
+  user: any;
+  currLoc: any;
+  constructor( private auth: AuthService,public navCtrl: NavController, public navParams: NavParams) {
+    this.user = auth.getUser();
+    this.currLoc = 0;
   }
 
   ionViewDidLoad() {
-    console.log('ionViewDidLoad NuevaSolicitudPage');
+    console.log(this.user);
   }
 
 }

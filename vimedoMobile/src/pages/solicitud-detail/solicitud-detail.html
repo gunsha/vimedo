@@ -41,5 +41,9 @@
 		</ul>
   </div>
 
-
+<ng-container *ngIf="isPro">
+    <button ion-button full round icon-left (click)="confirmCloseSol()">
+    Cerrar Solicitud
+  </button>
+  </ng-container>
 </ion-content>

@@ -4,15 +4,14 @@ import { IonicApp, IonicErrorHandler, IonicModule } from 'ionic-angular';
 import { HttpModule } from '@angular/http';
 import { IonicStorageModule } from '@ionic/storage';
 
-import { MyApp } from './app.component';
+import { Vimedo } from './app.component';
 import { HomePage } from '../pages/home/home';
 import { PerfilPage } from '../pages/perfil/perfil';
 import { MensajesPage } from '../pages/mensajes/mensajes';
 import { HistorialPage } from '../pages/historial/historial';
 import { SolicitudesPage } from '../pages/solicitudes/solicitudes';
 import {SolicitudDetailPage} from '../pages/solicitud-detail/solicitud-detail';
-import { SolicitudesListaPage } from '../pages/solicitudes-lista/solicitudes-lista';
-import { SolicitudesMapaPage } from '../pages/solicitudes-mapa/solicitudes-mapa';
+import {SolicitudCerrarPage} from '../pages/solicitud-cerrar/solicitud-cerrar';
 import { NuevaSolicitudPage } from '../pages/nueva-solicitud/nueva-solicitud';
 import { ChatPage } from '../pages/chat/chat';
 import { LoginPage } from '../pages/login/login';
@@ -29,15 +28,14 @@ import { AfiliadoService } from '../providers/afiliado/afiliado';
 
 @NgModule({
   declarations: [
-    MyApp,
+    Vimedo,
     HomePage,
 PerfilPage,
 MensajesPage,
 HistorialPage,
 SolicitudesPage,
 SolicitudDetailPage,
-SolicitudesListaPage,
-SolicitudesMapaPage,
+SolicitudCerrarPage,
 NuevaSolicitudPage,
 ChatPage,
 LoginPage,
@@ -46,7 +44,8 @@ RegisterPage
   imports: [
     BrowserModule,
     HttpModule,
-    IonicModule.forRoot(MyApp),
+    IonicModule.forRoot(Vimedo,{
+      backButtonText: 'Atras'}),
     IonicStorageModule.forRoot(),
     AgmCoreModule.forRoot({
       apiKey: 'AIzaSyDoIklkBzmZOHP28l2znHtu3vxzjcaLqXI',
@@ -55,15 +54,14 @@ RegisterPage
   ],
   bootstrap: [IonicApp],
   entryComponents: [
-    MyApp,
+    Vimedo,
     HomePage,
 PerfilPage,
 MensajesPage,
 HistorialPage,
 SolicitudesPage,
 SolicitudDetailPage,
-SolicitudesListaPage,
-SolicitudesMapaPage,
+SolicitudCerrarPage,
 NuevaSolicitudPage,
 ChatPage,
 LoginPage,

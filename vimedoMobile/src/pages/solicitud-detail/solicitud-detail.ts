@@ -1,12 +1,6 @@
 import { Component } from '@angular/core';
-import { NavController, NavParams } from 'ionic-angular';
-
-/**
- * Generated class for the SolicitudDetailPage page.
- *
- * See http://ionicframework.com/docs/components/#navigation for more info
- * on Ionic pages and navigation.
- */
+import { NavController, NavParams,AlertController } from 'ionic-angular';
+import {SolicitudCerrarPage} from '../solicitud-cerrar/solicitud-cerrar';
 
 @Component({
   selector: 'page-solicitud-detail',
@@ -14,9 +8,29 @@ import { NavController, NavParams } from 'ionic-angular';
 })
 export class SolicitudDetailPage {
   s: any = null;
-  constructor(public navCtrl: NavController, public navParams: NavParams) {
+  isPro: boolean;
+  constructor(public alertCtrl: AlertController,public navCtrl: NavController, public navParams: NavParams) {
     this.s = navParams.get('item');
-    console.log(this.s);
+    this.isPro = navParams.get('isPro');
+    console.log(navParams);
+  }
+
+  confirmCloseSol(){
+    let confirm = this.alertCtrl.create({
+      title: 'Cerrar la solicitud?',
+      buttons: [
+        {
+          text: 'Cancelar'
+        },
+        {
+          text: 'Aceptar',
+          handler: () => {
+            this.navCtrl.push(SolicitudCerrarPage, { item: this.s });
+          }
+        }
+      ]
+    });
+    confirm.present();
   }
 
 }
