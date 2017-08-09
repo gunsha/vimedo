@@ -6,21 +6,30 @@ import { APP_CONFIG, IAppConfig } from '../../app/app.config';
 @Injectable()
 export class SolicitudService {
 
-  constructor(@Inject(APP_CONFIG) private config: IAppConfig,public http: Http) {
-    
+  constructor( @Inject(APP_CONFIG) private config: IAppConfig, public http: Http) {
+
   }
 
-  create(obj){
-    return new Promise((resolve,reject) => {
-     var url = this.config.apiEndpoint + 'solicitudesMedicas/';
-        this.http.post(url,obj)
-      .map(res => res.json())
-      .subscribe(data => {
-        resolve(data);
-      },error=>{
-          reject(JSON.parse(error._body).message);
-      });
-  });
+  create(obj) {
+    return new Promise((resolve, reject) => {
+      var url = this.config.apiEndpoint + 'solicitudesMedicas/';
+      this.http.post(url, obj)
+        .map(res => res.json())
+        .subscribe(data => {
+          resolve(data);
+        });
+    });
+  }
+  finalizar(obj) {
+    return new Promise((resolve, reject) => {
+      var url = this.config.apiEndpoint + 'solicitudesMedicas/profesional/finalizarSolicitud';
+      this.http.put(url, obj)
+        .map(res => res.json())
+        .subscribe(data => {
+          resolve(data);
+        });
+    });
+
   }
 
 }

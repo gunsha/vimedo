@@ -52,7 +52,7 @@ export class RegisterStep2Page {
   }
 
   search() {
-    if(this.query == '')
+    if (this.query == '')
       return false;
     let opt = { componentRestrictions: { country: 'ar' }, types: ['geocode'], input: this.query };
     this.autocompleteService.getPlacePredictions(opt, (data) => {
@@ -108,9 +108,16 @@ export class RegisterStep2Page {
   register = function () {
     if (this.validateSave()) {
       this.registerCredentials.personaFisica.telefonos = this.registerCredentials.personaFisica.telefonosA.toString();
-      if (this.registerCredentials.isProfesional)
         this.auth.register(this.registerCredentials).then(function () {
-          this.navCtrl.setRoot(LoginPage)
+          let alert = this.alertCtrl.create({
+            subTitle: 'Su usuario esta pendiente de activación!',
+            buttons: [{
+              text: 'Aceptar', handler: data => {
+                this.navCtrl.setRoot(LoginPage)
+              }
+            }]
+          });
+          alert.present(prompt);
         })
     }
   };
@@ -119,12 +126,21 @@ export class RegisterStep2Page {
       if (this.registerCredentials.personaFisica.domicilios.length !== 0) {
         return true;
       } else {
-        //growl.error("Ingrese al menos una direccion.");
+        this.showError("Ingrese al menos una direccion.");
       }
     } else {
-      //growl.error("Ingrese al menos un telefono.");
+      this.showError("Ingrese al menos un telefono.");
     }
     return false;
+  }
+
+  showError(text) {
+    let alert = this.alertCtrl.create({
+      title: 'Error',
+      subTitle: text,
+      buttons: ['Aceptar']
+    });
+    alert.present(prompt);
   }
 
 }

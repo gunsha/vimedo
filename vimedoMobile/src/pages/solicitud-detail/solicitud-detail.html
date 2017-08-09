@@ -27,7 +27,6 @@
 	<div class="row-fluid">
 		<b>Tiempo de sintomas</b>: {{s.horasSintomas}} hs. {{s.minutosSintomas}} min.
 	</div>
-
 	<div class="row-fluid">
 		<b>Antecedentes Medicos</b>:
 		<ul>
@@ -39,7 +38,15 @@
 			</ng-container>
       <li *ngIf="s.antecedentesMedicos == '' && s.antecedentesMedicosCie.length == 0">No se presentan antecedentes.</li>
 		</ul>
-  </div>
+	</div>
+	<br>
+	<div class="row-fluid" *ngIf="s.indicaciones">
+		<b>Indicaciones</b>: {{s.indicaciones}}
+	</div>
+<br>
+	<div class="row-fluid" *ngIf="s.observaciones">
+		<b>Observaciones</b>: {{s.observaciones}}
+	</div>
 
 <ng-container *ngIf="isPro">
     <button ion-button full round icon-left (click)="confirmCloseSol()">

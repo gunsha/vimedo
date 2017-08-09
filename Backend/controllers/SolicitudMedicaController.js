@@ -131,7 +131,7 @@ module.exports = {
     darDeBaja:function(req,res){
         SolicitudMedicaModel.findOneAndUpdate({_id:req.body._id},{$set:{estado:2,observaciones:req.body.observaciones,indicaciones:req.body.indicaciones}}, {new: true}).exec(function (err, solicitud){
             if(err){
-                return res.status(500).json({
+                return res.status(406).json({
                     message: 'Error al actualizar solicitud.',
                     error: err
                 });

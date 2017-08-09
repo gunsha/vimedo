@@ -64,6 +64,7 @@ router.get('/ruta/profesional/:idProfesional', function (req, res) {
 // });
 
 router.put('/profesional/finalizarSolicitud/', function (req, res) {
+    console.log('baja');
     SolicitudMedicaController.darDeBaja(req, res);
 });
 

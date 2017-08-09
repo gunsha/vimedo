@@ -327,8 +327,9 @@ module.exports = {
                 if (afiliadoRest) {
                     Usuario.save(function(err, usuario) {
                         if (err) {
+                            var msg = err.errors.email.message ? err.errors.email.message : 'No se puede crear el usuario.';
                             return res.status(406).json({
-                                message: err.errors.email.message
+                                message: msg
                             });
                         } else {
                             var afiliadoData = {
@@ -492,10 +493,10 @@ module.exports = {
                 //             if (profesionalRest) {
                 usuario.save(function(err, usuario) {
                     if (err) {
-                        return res.status(406).json({
-                            message: 'Error al crear el usuario.',
-                            error: err
-                        });
+                        var msg = err.errors.email.message ? err.errors.email.message : 'No se puede crear el usuario.';
+                            return res.status(406).json({
+                                message: msg
+                            });
                     } else {
                         var PersonaFisica = new PersonaFisicaModel({
                             nombre: personaFisicaRest.nombre,

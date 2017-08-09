@@ -28,6 +28,9 @@ export class HttpService extends Http {
   post(url: string, body: any, options?: RequestOptionsArgs){
     return this.intercept(super.post(url,body, options));
   }
+  put(url: string, body: any, options?: RequestOptionsArgs){
+    return this.intercept(super.put(url,body, options));
+  }
 
   intercept(observable: Observable<Response>): Observable<Response> {
     this.pendingRequests++;

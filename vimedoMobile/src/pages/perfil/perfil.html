@@ -1,6 +1,6 @@
 <ion-header>
   <ion-navbar>
-    <button ion-button menuToggle right >
+    <button ion-button menuToggle right>
       <ion-icon name="menu"></ion-icon>
     </button>
     <ion-title>Perfil</ion-title>
@@ -9,29 +9,38 @@
 
 
 <ion-content>
-  <ion-list inset>
+  <ion-list>
 
-  <ion-item>
-    <ion-label>Email</ion-label>
-    <ion-input [(ngModel)]="user.email" name="email" type="text"></ion-input>
-  </ion-item>
+    <ion-item>
+      <ion-label>Email</ion-label>
+      <ion-input [(ngModel)]="user.email" name="email" type="text"></ion-input>
+    </ion-item>
 
-  <ion-item>
-    <ion-label>Contraseña</ion-label>
-    <ion-input [(ngModel)]="user.password" name="password" type="password"></ion-input>
-  </ion-item>
-  <ion-item>
-    <ion-label>Nombre</ion-label>
-    <ion-input [(ngModel)]="user.profile.nombre" name="nombre" type="text"></ion-input>
-  </ion-item>
-  <ion-item>
-    <ion-label>Apellido</ion-label>
-    <ion-input [(ngModel)]="user.profile.apellido" name="nombre" type="text"></ion-input>
-  </ion-item>
-
-</ion-list>
-<button ion-button full round icon-left (click)="update()">
-    <ion-icon name="add"></ion-icon>
+    <ion-item>
+      <ion-label>Contraseña</ion-label>
+      <ion-input [(ngModel)]="user.password" name="password" type="password"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label>Nombre</ion-label>
+      <ion-input [(ngModel)]="user.profile.nombre" name="nombre" type="text"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label>Apellido</ion-label>
+      <ion-input [(ngModel)]="user.profile.apellido" name="nombre" type="text"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label>DNI / LC / LE N°</ion-label>
+      <ion-input [(ngModel)]="user.profile.nroDocumento" name="doc" type="text"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label>Fecha de nacimiento</ion-label>
+      <ion-datetime displayFormat="D/M/YYYY" pickerFormat="DD M YYYY" [(ngModel)]="user.profile.fechaNacimiento" cancelText="Cancelar"
+        doneText="Aceptar"></ion-datetime>
+    </ion-item>
+  </ion-list>
+</ion-content>
+<ion-footer padding>
+  <button ion-button full round icon-left (click)="update()">
     Guardar
   </button>
-</ion-content>
+</ion-footer>

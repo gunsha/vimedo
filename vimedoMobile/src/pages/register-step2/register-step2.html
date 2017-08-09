@@ -18,6 +18,10 @@
       <ion-input [(ngModel)]="registerCredentials.personaFisica.apellido" name="apellido" type="text"></ion-input>
     </ion-item>
     <ion-item>
+      <ion-label>DNI / LC / LE N°</ion-label>
+      <ion-input [(ngModel)]="registerCredentials.personaFisica.nro_documento" name="doc" type="text"></ion-input>
+    </ion-item>
+    <ion-item>
       <ion-label>Fecha de nacimiento</ion-label>
       <ion-datetime displayFormat="D/M/YYYY" pickerFormat="DD M YYYY" [(ngModel)]="registerCredentials.personaFisica.nacimiento"
         cancelText="Cancelar" doneText="Aceptar"></ion-datetime>
@@ -58,8 +62,7 @@
     </ion-item>
   </ion-list>
   <button ion-button full round icon-left (click)="register()">
-    <ion-icon name="add"></ion-icon>
-    Guardar
+    Aceptar
   </button>
 
 </ion-content>
