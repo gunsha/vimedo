@@ -451,7 +451,7 @@ module.exports = {
 
         if (req.body.matricula == null) {
             var errorMsj = 'La matricula no puede ser null';
-            return res.status(404).json({
+            return res.status(406).json({
                 message: errorMsj
             });
         }
@@ -460,13 +460,13 @@ module.exports = {
             matricula: req.body.matricula
         }, function(err, profesional) {
             if (err) {
-                return res.status(404).json({
+                return res.status(406).json({
                     message: 'Error al crear el usuario.',
                     error: err
                 });
             }
             if (profesional) {
-                return res.status(404).json({
+                return res.status(406).json({
                     message: 'La matricula ya se encuentra registrada.'
                 });
             } else {
@@ -492,7 +492,7 @@ module.exports = {
                 //             if (profesionalRest) {
                 usuario.save(function(err, usuario) {
                     if (err) {
-                        return res.status(404).json({
+                        return res.status(406).json({
                             message: 'Error al crear el usuario.',
                             error: err
                         });
@@ -516,7 +516,7 @@ module.exports = {
 
                                 PersonaFisica.save(function(err, personaFisica) {
                                     if (err) {
-                                        return res.status(404).json({
+                                        return res.status(406).json({
                                             message: 'Error al crear el usuario.',
                                             error: err
                                         });
@@ -539,7 +539,7 @@ module.exports = {
                                             }
                                             profesional.save(function(err, profesional) {
                                                 if (err) {
-                                                    return res.status(404).json({
+                                                    return res.status(406).json({
                                                         message: 'Error al crear el usuario.',
                                                         error: err
                                                     });
@@ -577,7 +577,7 @@ module.exports = {
                 });
                 // } else {
                 //     var errorMsj = 'No se ha encontrado la matricula ' + req.body.matricula;
-                //     return res.status(404).json({
+                //     return res.status(406).json({
                 //         message: 'Error al crear el usuario.',
                 //         error: errorMsj
                 //     });
@@ -590,14 +590,14 @@ module.exports = {
                 //         }
                 //     });
                 //     response.on('error', function() {
-                //         return res.status(404).json({
+                //         return res.status(406).json({
                 //             message: 'Error al validar matricula.',
                 //             error: err
                 //         });
                 //     });
                 // });
                 // request.on('error', function(err) {
-                //     return res.status(404).json({
+                //     return res.status(406).json({
                 //         message: 'Error al validar matricula.',
                 //         error: err
                 //     });

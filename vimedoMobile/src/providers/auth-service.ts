@@ -13,10 +13,7 @@ export class AuthService {
   user: any = null;
 
   constructor( @Inject(APP_CONFIG) private config: IAppConfig, private http: Http) {
-
-
     this.user = JSON.parse(localStorage.getItem('profile'));
-
   }
   public login(credentials) {
     return new Promise((resolve, reject) => {
@@ -26,8 +23,17 @@ export class AuthService {
         .subscribe(data => {
           this.authSuccess(data.jwt);
           resolve();
-        }, error => {
-          reject(JSON.parse(error._body).message);
+        });
+    });
+  }
+  public register(user) {
+    return new Promise((resolve, reject) => {
+      var url = this.config.apiEndpoint + 'users/register';
+      this.http.post(url, user)
+        .map(res => res.json())
+        .subscribe(data => {
+          this.authSuccess(data.jwt);
+          resolve();
         });
     });
   }
@@ -43,8 +49,6 @@ export class AuthService {
           this.user.email = user.usuario.email;
           localStorage.setItem('profile', JSON.stringify(this.user));
           resolve();
-        }, error => {
-          reject(JSON.parse(error._body).message);
         });
     });
   }

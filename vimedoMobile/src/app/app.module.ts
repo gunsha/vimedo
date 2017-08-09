@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { ErrorHandler, NgModule } from '@angular/core';
 import { IonicApp, IonicErrorHandler, IonicModule } from 'ionic-angular';
-import { HttpModule } from '@angular/http';
+
 import { IonicStorageModule } from '@ionic/storage';
 
 import { Vimedo } from './app.component';
@@ -17,6 +17,7 @@ import {SintomasModalPage} from '../pages/sintomas-modal/sintomas-modal';
 import { ChatPage } from '../pages/chat/chat';
 import { LoginPage } from '../pages/login/login';
 import { RegisterPage } from '../pages/register/register';
+import { RegisterStep2Page } from '../pages/register-step2/register-step2';
 
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
@@ -27,6 +28,9 @@ import { MessagesProvider } from '../providers/messages/messages';
 import { AgmCoreModule } from '@agm/core';
 import { AfiliadoService } from '../providers/afiliado/afiliado';
 import { SolicitudService } from '../providers/solicitud/solicitud';
+import { HttpService } from '../providers/http-service/http-service';
+import { Http, HttpModule, RequestOptions, XHRBackend } from '@angular/http';
+import { AlertController, LoadingController } from 'ionic-angular';
 
 @NgModule({
   declarations: [
@@ -42,7 +46,8 @@ NuevaSolicitudPage,
 SintomasModalPage,
 ChatPage,
 LoginPage,
-RegisterPage
+RegisterPage,
+RegisterStep2Page
   ],
   imports: [
     BrowserModule,
@@ -69,7 +74,8 @@ NuevaSolicitudPage,
 SintomasModalPage,
 ChatPage,
 LoginPage,
-RegisterPage
+RegisterPage,
+RegisterStep2Page
   ],
   providers: [
     StatusBar,
@@ -80,7 +86,13 @@ RegisterPage
     { provide: APP_CONFIG, useValue: AppConfig },
     MessagesProvider,
     AfiliadoService,
-    SolicitudService
+    SolicitudService,
+    { provide: Http,
+      useFactory: (backend: XHRBackend, options: RequestOptions,alert:AlertController, loading:LoadingController) => {
+        return new HttpService(backend, options,alert,loading);
+      },
+      deps: [XHRBackend, RequestOptions,AlertController, LoadingController]
+    }
   ]
 })
 export class AppModule {}

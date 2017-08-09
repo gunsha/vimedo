@@ -29,3 +29,6 @@ solicitud de visita afiliado
 edicion-cerrado de visitas medico 	
 guardado de location medico 
 alertas push solicitudes		
+
+
+36

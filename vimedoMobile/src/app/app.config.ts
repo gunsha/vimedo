@@ -8,6 +8,6 @@ export interface IAppConfig {
 
 export const AppConfig: IAppConfig = {    
     //apiEndpoint:'http://localhost:3000/'
-    apiEndpoint:'http://192.168.0.101:3000/'
-    //apiEndpoint:'http://vimedo.gunsha.c9users.io:8080/'
+    //apiEndpoint:'http://192.168.0.101:3000/'
+    apiEndpoint:'http://vimedo.gunsha.c9users.io:8080/'
 };

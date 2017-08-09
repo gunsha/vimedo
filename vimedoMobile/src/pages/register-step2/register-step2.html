@@ -1,0 +1,65 @@
+<ion-header>
+
+  <ion-navbar>
+    <ion-title>registerStep2</ion-title>
+  </ion-navbar>
+
+</ion-header>
+
+
+<ion-content>
+  <ion-list>
+    <ion-item>
+      <ion-label>Nombre</ion-label>
+      <ion-input [(ngModel)]="registerCredentials.personaFisica.nombre" name="nombre" type="text"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label>Apellido</ion-label>
+      <ion-input [(ngModel)]="registerCredentials.personaFisica.apellido" name="apellido" type="text"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label>Fecha de nacimiento</ion-label>
+      <ion-datetime displayFormat="D/M/YYYY" pickerFormat="DD M YYYY" [(ngModel)]="registerCredentials.personaFisica.nacimiento"
+        cancelText="Cancelar" doneText="Aceptar"></ion-datetime>
+    </ion-item>
+    <ion-item *ngIf="registerCredentials.isProfesional">
+      <ion-label>Matricula</ion-label>
+      <ion-input [(ngModel)]="registerCredentials.matricula" name="matricula" type="text"></ion-input>
+    </ion-item>
+    <ion-item *ngIf="!registerCredentials.isProfesional">
+      <ion-label>Credencial</ion-label>
+      <ion-input [(ngModel)]="registerCredentials.credencial" name="credencial" type="text"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-input [(ngModel)]="query" name="query" autocorrect="off" autocapitalize="off" spellcheck="off" type="text" value=""
+        placeholder="Domicilio"></ion-input>
+      <button ion-button round (click)="search()" icon-only item-end> 
+        <ion-icon name="add-circle"></ion-icon>
+      </button>
+    </ion-item>
+    <ion-item *ngFor="let item of registerCredentials.personaFisica.domicilios; let i = index;">
+      <ion-label item-start>{{item.calle}}</ion-label>
+      <ion-input [(ngModel)]="item.extra" name="extra" placeholder="Piso/Dto"></ion-input>
+      <button ion-button round (click)="removeDom(i)" icon-only item-end> 
+        <ion-icon name="remove-circle"></ion-icon>
+      </button>
+    </ion-item>
+    <ion-item>
+      <ion-input [(ngModel)]="tel" name="tel" type="text" value="" placeholder="Telefono"></ion-input>
+      <button ion-button round (click)="addTel()" icon-only item-end> 
+        <ion-icon name="add-circle"></ion-icon>
+      </button>
+    </ion-item>
+    <ion-item *ngFor="let item of registerCredentials.personaFisica.telefonosA; let i = index;">
+      <ion-label>{{item}}</ion-label>
+      <button ion-button round (click)="removeTel(i)" icon-only item-end> 
+        <ion-icon name="remove-circle"></ion-icon>
+      </button>
+    </ion-item>
+  </ion-list>
+  <button ion-button full round icon-left (click)="register()">
+    <ion-icon name="add"></ion-icon>
+    Guardar
+  </button>
+
+</ion-content>

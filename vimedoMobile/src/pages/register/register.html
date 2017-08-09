@@ -13,6 +13,29 @@
 </ion-header>
 
 
-<ion-content padding>
+<ion-content>
+  <form (ngSubmit)="registerStep1()" #registerForm="ngForm">
+    <ion-list>
 
+      <ion-item>
+        <ion-label fixed>Email</ion-label>
+        <ion-input type="email" name="email" value="" required [(ngModel)]="registerCredentials.email"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label fixed>Contraseña</ion-label>
+        <ion-input type="password" name="password" required [(ngModel)]="registerCredentials.password"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Acepto los Términos y Condiciones</ion-label>
+        <ion-checkbox color="dark" name="tos" required [(ngModel)]="registerCredentials.tos"></ion-checkbox>
+      </ion-item>
+    </ion-list>
+    <ion-row>
+      <ion-col class="signup-col">
+        <button ion-button class="submit-btn" full type="submit" [disabled]="!registerForm.form.valid">Continuar</button>
+      </ion-col>
+    </ion-row>
+  </form>
 </ion-content>

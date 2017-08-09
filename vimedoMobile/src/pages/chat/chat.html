@@ -41,7 +41,7 @@
 
     <form (ngSubmit)="send()" #f="ngForm" class="message-form">
 
-      <input type="text" placeholder="Escriba un mensaje aquí..." [(ngModel)]="chatBox" name="chatBox" required [disabled]="c.estado==2" style="width: 69%;
+      <input type="text" placeholder="Escriba un mensaje aquí..." [(ngModel)]="chatBox" name="chatBox" required [disabled]="c.estado==2" style="width: 60%;
     height: 2.8em;">
 
       <button type="submit" ion-button icon-right [disabled]="c.estado==2">
