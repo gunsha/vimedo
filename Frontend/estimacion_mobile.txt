@@ -10,7 +10,7 @@ mensajeria medico-admin					5
 #historial solicitudes afiliado-medico	6
 #listado/mapa de visitas medico 		6
 
-#cerrado de visitas medico 		4 
+#cerrado de visitas medico 				4 
 
 guardado de location medico 			2
 

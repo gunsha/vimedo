@@ -1,0 +1,41 @@
+  <div class="navbar-default sidebar" role="navigation">
+    <div class="sidebar-nav navbar-collapse">
+      <ul class="nav" id="side-menu">
+        <li ng-class="{active: active=='admin' || active=='app' }">
+          <a ui-sref="admin">
+            <img src="../assets_Vimedo/ic_dashboard_blue.svg" ng-if="active=='admin' || active=='app'">
+            <img src="../assets_Vimedo/ic_dashboard.svg" ng-if="active!='admin' && active!='app'">
+            <p>Vista General</p></a>
+          </li>
+          <li ng-class="{active: active=='admin.pacientes'}">
+            <a ui-sref="admin.pacientes">
+              <img src="../assets_Vimedo/ic_user_avatar_blue.svg" ng-if="active=='admin.pacientes'">
+              <img src="../assets_Vimedo/ic_user_avatar.svg" ng-if="active != 'admin.pacientes'">
+              <p>Afiliados</p></a>
+            </li>
+            <li ng-class="{active: active=='admin.medicos'}">
+              <a ui-sref="admin.medicos">
+                <img src="../assets_Vimedo/ic_doctor_blue.svg" ng-if="active=='admin.medicos'">
+                <img src="../assets_Vimedo/ic_doctor.svg" ng-if="active != 'admin.medicos'">
+                <p>Médicos</p></a>
+              </li>
+              <li ng-class="{active: active=='admin.mapa'}">
+                <a ui-sref="admin.mapa">
+                  <img src="../assets_Vimedo/ic_maps_blue.svg" ng-if="active=='admin.mapa'">
+                  <img src="../assets_Vimedo/ic_maps.svg" ng-if="active != 'admin.mapa'">
+                  <p>Mapa</p></a>
+                </li>
+              </ul>
+            </div>
+            <!-- /.sidebar-collapse -->
+          </div>
+          <!-- /.navbar-static-side -->
+          <!-- Sidebar Menu -->
+<!--       <ul class="sidebar-menu" ng-if="::hasRole('ADMIN')">
+        <li class="header">ADMIN</li>
+        <li ng-class="{active: active=='admin' || active=='app' }" ><a ui-sref="admin"><i class="fa fa-link"></i> <span>Inicio</span></a></li>
+        <li ng-class="{active: active=='admin.pacientes'}" ><a ui-sref="admin.pacientes"><i class="fa fa-link"></i> <span>Pacientes</span></a></li>
+        <li ng-class="{active: active=='admin.medicos'}" ><a ui-sref="admin.medicos"><i class="fa fa-link"></i> <span>Medicos</span></a></li>
+        <li ng-class="{active: active=='admin.historial'}" ><a ui-sref="admin.historial"><i class="fa fa-link"></i> <span>Historial</span></a></li>
+      </ul> -->
+      <!-- /.sidebar-menu -->

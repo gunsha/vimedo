@@ -17,8 +17,7 @@ function ($scope, $stateParams) {
 			{
 				sender: 'noreply',
 				time: '11:11',
-				body: `Su usuario fue registrado con exito y un correo de verificacion fue enviado a su cuenta.
-				Use el link en el mail para verificar y activar su cuenta.`
+				body: 'Su usuario fue registrado con exito y un correo de verificacion fue enviado a su cuenta. Use el link en el mail para verificar y activar su cuenta.'
 			}
 		];
 	

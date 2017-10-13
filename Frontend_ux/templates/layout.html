@@ -1,0 +1,5 @@
+<div ui-view="navView" ng-if="!hideNav"></div>
+<div ui-view="sidemenu" ng-if="user"></div>
+<div ui-view="contentView" ng-if="user"></div>
+
+<div ui-view="loginView" ng-if="!user"></div>

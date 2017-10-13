@@ -32,6 +32,11 @@ import { HttpService } from '../providers/http-service/http-service';
 import { Http, HttpModule, RequestOptions, XHRBackend } from '@angular/http';
 import { AlertController, LoadingController } from 'ionic-angular';
 
+
+export function httpInterceptor(backend: XHRBackend, options: RequestOptions,alert:AlertController, loading:LoadingController) {
+        return new HttpService(backend, options,alert,loading);
+}
+
 @NgModule({
   declarations: [
     Vimedo,
@@ -88,9 +93,7 @@ RegisterStep2Page
     AfiliadoService,
     SolicitudService,
     { provide: Http,
-      useFactory: (backend: XHRBackend, options: RequestOptions,alert:AlertController, loading:LoadingController) => {
-        return new HttpService(backend, options,alert,loading);
-      },
+      useFactory: (httpInterceptor),
       deps: [XHRBackend, RequestOptions,AlertController, LoadingController]
     }
   ]

@@ -53,6 +53,12 @@ inicio
 -al modificar perfil inhabilitar
 tiempo estimado -viajes+tiempo de atencion
 
+maquetado nuevo
+
+landing - login 3hrs
+dashboard 8hrs
+
+
 horas total 128 + 8 + 8
-horas pagadas 100 (al 20/7)
-horas restantes 44
+horas pagadas 150 (al 10/10)
+horas restantes -2

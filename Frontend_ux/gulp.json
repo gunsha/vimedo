@@ -1,0 +1,46 @@
+{
+    "secciones": [
+        "index",
+        "nav",
+        "auth",
+        "profesionales",
+        "pacientes",
+        "solicitudes"
+    ],
+    "core": [
+        "main",
+        "app",
+        "states"
+    ],
+    "libs": [
+        "jquery/dist/jquery.min",
+        "bootstrap/dist/js/bootstrap.min.js",
+        "angular/angular.min",
+        "angular-animate",
+        "angular-block-ui/dist/angular-block-ui.min",
+        "angular-ui-router/release/angular-ui-router.min",
+        "angular-jwt/dist/angular-jwt.min",
+        "angular-growl-v2/build/angular-growl.min",
+        "angular-table",
+        "sweetalert2/dist/sweetalert2.min",
+        "angular-avatar/dist/angular-avatar.min",
+        "ng-map.min",
+        "moment/min/moment.min",
+        "typeahead.min",
+        "typeahead-tpls.min",
+        "angular-bootstrap-datetimepicker/src/js/datetimepicker",
+        "angular-bootstrap-datetimepicker/src/js/datetimepicker.templates",
+        "angular-moment.min"
+    ],
+    "components": [
+        "modal-nueva-solicitud"
+    ],
+    "css":[
+        "css/app",
+        "lib/angular-growl-v2/build/angular-growl.min",
+        "lib/angular-bootstrap-datetimepicker/src/css/datetimepicker",
+        "lib/sweetalert2/dist/sweetalert2.min",
+        "lib/bootstrap/dist/css/bootstrap.min",
+        "css/main"
+    ]
+}

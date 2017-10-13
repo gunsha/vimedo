@@ -25,7 +25,7 @@ export class Vimedo {
   pages: Array<{title: string, component: any}>;
 
   constructor(public config:Config,public platform: Platform, private auth: AuthService, public statusBar: StatusBar, public splashScreen: SplashScreen) {
-    this.config.set('ios', 'statusbarPadding', false);
+    //this.config.set('ios', 'statusbarPadding', false);
     this.initializeApp();
 
     this.pages = [
