@@ -3,19 +3,19 @@
             <div class="col-md-12">
               <div class="col-md-5">
                 <p class="lg-thin-text blue">Estado:</p>
-                <p class="md-text"><span class="blue">126</span> <span style="font-weight: 100; color: #4a4a4a">solicitudes médicas</span></p>
+                <p class="md-text"><span class="blue">{{ctrl.solicitudes.length}}</span> <span style="font-weight: 100; color: #4a4a4a">solicitudes médicas</span></p>
               </div>
               <div class="col-md-7 dashboard-btns">
                 <div class="col-md-3 col-sm-6 text-center">
-                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">5</button>
+                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">{{ctrl.stats.pending}}</button>
                   <p>Solicitudes Pendientes</p>
                 </div>
                 <div class="col-md-3 col-sm-6 text-center">
-                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">120</button>
+                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">{{ctrl.stats.active}}</button>
                   <p>Solicitudes En Curso</p>
                 </div>
                 <div class="col-md-3 col-sm-6 text-center">
-                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">4</button>
+                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">{{ctrl.stats.available}}</button>
                   <p>Profesionales disponibles</p>
                 </div>
                 <div class="col-md-3 col-sm-6 text-center">
@@ -28,7 +28,19 @@
           <div class="row">
             <div class="col-md-12">
               <div class="col-md-6">
-                <div class="panel" style="height: 600px"></div>
+                <div class="panel" style="height: 600px">
+                  <table class="table table-bordered" at-table at-list="ctrl.solicitudes" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
+                    <thead>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td at-implicit at-sortable at-attribute="nombreApellido" at-title="Nombre"></td>
+                        <td at-sortable at-attribute="fechaAlta" at-title="Tiempo en Espera"><span am-time-ago="item.fechaAlta"></span></td>
+                        <td at-title="Solicitud">{{getEstado(item.estado)}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
               <div class="col-md-6">
                 <div class="panel" style="height: 600px"></div>

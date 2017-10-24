@@ -9,6 +9,7 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     vm.profesionalesOrig = [];
     vm.solicitudes = [];
     vm.solicitudesOrig = [];
+    vm.stats = {pending:0,active:0,available:0}
 
     vm.filterListS = function() {
         var lower = vm.queryS.toLowerCase();
@@ -72,206 +73,31 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         }
     };
 
-    vm.calcularRutaProfesional = function(id) {
-        solicitudesService.calcularRutaProfesional(id)
-            .then(function(response) {
-
-                var ruta = response;
-                NgMap.getMap("map").then(function(map) {
-                    for (var i = 0; i < vm.polylines.length; i++) {
-                        vm.polylines[i].setMap(null);
-                    }
-                    vm.polylines = [];
-
-                    for (var i = 0; i < ruta.routes[0].legs.length; i++) {
-                        var flightPlanCoordinates = [];
-                        var leg = ruta.routes[0].legs[i];
-                        for (var ii = 0; ii < leg.steps.length; ii++) {
-                            var step = leg.steps[ii];
-                            var points = decodePolyline(step.polyline.points);
-                            for (var z = 0; z < points.length; z++) {
-                                flightPlanCoordinates.push(points[z]);
-                            }
-                        }
-                        var flightPath = new google.maps.Polyline({
-                            path: flightPlanCoordinates,
-                            geodesic: true,
-                            strokeColor: getColor(),
-                            strokeOpacity: 1.0,
-                            strokeWeight: 2
-                        });
-                        vm.polylines.push(flightPath);
-                        flightPath.setMap(map);
-
-                    }
-
-                });
-            });
-    };
-
     vm.initMap = function() {
-        vm.polylines = [];
-        vm.latlngArray = [];
-        vm.solicitudesMarks = [];
-        vm.profesionalMark = [];
-        vm.asignandoProfesional = false;
-        vm.infowindows = [];
         solicitudesService.listActive().then(function(response) {
-            vm.solicitudes = response;
-            vm.solicitudesOrig = response;
-            NgMap.getMap("map").then(function(map) {
-                vm.map = map;
-                for (var i = 0; i < vm.solicitudes.length; i++) {
-                    var solicitud = vm.solicitudes[i];
-                    var contentString = '<div id="content"><h5>' +
-                        solicitud.afiliado.personaFisica.nombre + ' ' + solicitud.afiliado.personaFisica.apellido +
-                        '</h5><div>' + solicitud.domicilio.calle + ' ' + solicitud.domicilio.numero + '</div><div>';
-                    if (solicitud.estado == 0) {
-                        contentString += '<button type="button" class="btn btn-primary btn-xs" onclick="asignarProfesional(&quot;' + solicitud._id + '&quot;)">Asignar Prestador</button></div>';
-                    }
-                    contentString += '</div>';
-                    var compiledContent = $compile(contentString)(vm);
-                    var infowindow = new google.maps.InfoWindow({
-                        content: contentString
-                    });
-                    vm.infowindows.push(infowindow);
-                    var icon;
-                    switch (solicitud.estado) {
-                        case 0:
-                            icon = client + "/img/red-dot.png";
-                            break;
-                        case 1:
-                            icon = client + "/img/green-dot.png";
-                            break;
-                    }
-                    var latlng = new google.maps.LatLng(solicitud.domicilio.latitud, solicitud.domicilio.longitud);
-                    vm.latlngArray.push(latlng);
-                    var mark = new google.maps.Marker({
-                        icon: icon,
-                        estado: solicitud.estado,
-                        solicitud: solicitud
-                    });
-                    mark.infowindow = infowindow;
-
-                    //finally call the explicit infowindow object
-                    mark.addListener('click', function() {
-                        // vm.ocultarInfoWindows();
-                        this.infowindow.setContent(compiledContent);
-                        // vm.calcularRutaSolicitud(this.solicitud);
-                        return this.infowindow.open(map, this);
-                    });
-                    mark.setPosition(latlng);
-                    mark.setMap(map);
-                    vm.map.setCenter(latlng);
-                    vm.solicitudesMarks.push(mark);
-                }
-                vm.cargarProfesionales();
+            vm.solicitudes = response.map(function(item){
+                item.nombreApellido = item.afiliado.personaFisica.nombre +' '+ item.afiliado.personaFisica.apellido;
+                if(item.estado === 0)
+                    vm.stats.pending++;
+                if(item.estado === 1)
+                    vm.stats.active++;
+                return item;
             });
+            vm.solicitudesOrig = angular.copy(vm.solicitudes);
         });
+        vm.cargarProfesionales();
     }
+
 
     vm.cargarProfesionales = function() {
         profesionalesService.getList().then(function(data) {
             vm.profesionales = data;
             vm.profesionalesD = data;
             vm.profesionalesOrig = data;
-
-
-
-            for (var i = 0; i < vm.profesionalesOrig.length; i++) {
-                vm.profesionalesOrig[i];
-
-                var latlng = new google.maps.LatLng(vm.profesionalesOrig[i].latitud, vm.profesionalesOrig[i].longitud);
-                vm.latlngArray.push(latlng);
-                var mark = new google.maps.Marker({
-                    icon: client + "/img/doctor.png",
-                    profesional: vm.profesionalesOrig[i]
-                });
-
-
-                //finally call the explicit infowindow object
-                mark.addListener('click', function() {
-                    vm.ocultarInfoWindows();
-                    if (vm.asignandoProfesional) {
-                        var contentString = '<div id="content"><h5>' +
-                            this.profesional.personaFisica.nombre + ' ' + this.profesional.personaFisica.apellido +
-                            '</h5>' +
-                            '<button type="button" class="btn btn-primary btn-xs" onclick="confirmarProfesional(&quot;' + this.profesional._id + '&quot;)">Aceptar</button></div>'; +
-                        '</div>';
-                        var compiledContent = $compile(contentString)(s);
-                        var infowindow = new google.maps.InfoWindow({
-                            content: contentString
-                        });
-                        vm.infowindows.push(infowindow);
-                        this.infowindow = infowindow;
-                        this.infowindow.setContent(compiledContent);
-                        return this.infowindow.open(vm.map, this);
-                    } else {
-                        var contentString = '<div id="content"><h5>' +
-                            this.profesional.personaFisica.nombre + ' ' + this.profesional.personaFisica.apellido +
-                            '</h5></div>';
-
-                        var compiledContent = $compile(contentString)(s);
-                        var infowindow = new google.maps.InfoWindow({
-                            content: contentString
-                        });
-                        vm.infowindows.push(infowindow);
-                        this.infowindow = infowindow;
-                        this.infowindow.setContent(compiledContent);
-                        vm.calcularRutaProfesional(this.profesional._id);
-                        return this.infowindow.open(vm.map, this);
-                    }
-
-                })
-
-                mark.setPosition(latlng);
-                mark.setMap(vm.map);
-
-                vm.profesionalMark.push(mark);
-
-                
-            }
-            vm.centerAndZoom();
-
         });
     };
-    vm.calcularRutaSolicitud = function(solicitud) {
-        if (solicitud.estado === 0) {
-            return false;
-        }
-        solicitudesService.calcularRutaSolicitud(solicitud._id).then(function(response) {
-            var ruta = response;
-            NgMap.getMap("map").then(function(map) {
-                for (var i = 0; i < vm.polylines.length; i++) {
-                    vm.polylines[i].setMap(null);
-                }
-                vm.polylines = [];
 
-                for (var i = 0; i < ruta.routes[0].legs.length; i++) {
-                    var flightPlanCoordinates = [];
-                    var leg = ruta.routes[0].legs[i];
-                    for (var ii = 0; ii < leg.steps.length; ii++) {
-                        var step = leg.steps[ii];
-                        var points = decodePolyline(step.polyline.points);
-                        for (var z = 0; z < points.length; z++) {
-                            flightPlanCoordinates.push(points[z]);
-                        }
-
-                    }
-                    var flightPath = new google.maps.Polyline({
-                        path: flightPlanCoordinates,
-                        geodesic: true,
-                        strokeColor: getColor(),
-                        strokeOpacity: 1.0,
-                        strokeWeight: 2
-                    });
-                    vm.polylines.push(flightPath);
-                    flightPath.setMap(map);
-                }
-            });
-
-        });
-    };
+    vm.initMap();
 
     vm.asignarProfesional = function(id) {
         vm.ocultarInfoWindows();

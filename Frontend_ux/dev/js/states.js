@@ -80,6 +80,19 @@ angular.module('vimedo')
                         // requiresRole: ['ADMIN']
                     }
             })
+            .state('admin.mapa', {
+                url: 'mapa',
+                views: {
+                    'contentView@admin': {
+                        templateUrl: 'templates/admin/mapa.html',
+                        controller: 'mapaCtrl as ctrl'
+                    }
+                },
+                    data:{
+                        // requiresLogin: true,
+                        // requiresRole: ['ADMIN']
+                    }
+            })
             .state('admin.historial', {
                 url: 'historial',
                 views: {

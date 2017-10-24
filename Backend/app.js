@@ -6,7 +6,8 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var mongoose = require('mongoose');
-var connection = mongoose.connect('mongodb://localhost/vimedo');
+// var connection = mongoose.connect('mongodb://localhost/vimedo');
+var connection = mongoose.connect('mongodb://admin:admin@vimedo-shard-00-00-9ou8j.mongodb.net:27017,vimedo-shard-00-01-9ou8j.mongodb.net:27017,vimedo-shard-00-02-9ou8j.mongodb.net:27017/vimedo?replicaSet=vimedo-shard-0&ssl=true&authSource=admin');
 // var connection = mongoose.connect('mongodb://localhost:8082/vimedo');
 
 
@@ -38,8 +39,8 @@ app.use(function(req, res, next) {
     }
 });
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));

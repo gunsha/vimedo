@@ -1,3 +1,7 @@
 node vimedo/Backend/bin/www
 mongod --dbpath=vimedo/data --repair && mongod --dbpath=vimedo/data --port 8082 --nojournal --rest "$@"
 cd vimedo/Frontend && gulp
+
+node bin/www
+mongod --dbpath=data --repair && mongod --dbpath=data --nojournal --rest "$@"
+cd vimedo/Frontend && gulp

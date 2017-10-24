@@ -10,19 +10,16 @@
           <a class="navbar-brand" href="index.html"><img src="../assets_Vimedo/VIMEDO.svg"></a>
         </div>
         <!-- /.navbar-header -->
-        <ul class="nav navbar-top-links navbar-right">
+        <ul class="nav navbar-top-links navbar-right" ng-if="user">
           <li class="dropdown">
             <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-              <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+              <ng-avatar class="user-image" initials="{{profile.initials}}" round-shape="true" width="25"></ng-avatar> <span class="hidden-xs">{{profile.nombre + ' ' + profile.apellido}}</span> <i class="fa fa-caret-down"></i>
             </a>
             <ul class="dropdown-menu dropdown-user">
-              <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
-            </li>
-            <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
-          </li>
+              <li><a href="#">Perfil</a></li>
+
           <li class="divider"></li>
-          <li><a href="login.html"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
-        </li>
+          <li style="cursor:pointer;"><a ng-click="logout()">Cerrar Sesi&oacute;n</a></li>
       </ul>
       <!-- /.dropdown-user -->
     </li>
@@ -30,3 +27,20 @@
   </ul>
   <!-- /.navbar-top-links -->
   </nav>
+<!-- 
+  <li class="dropdown user user-menu">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+              <ng-avatar class="user-image" initials="{{profile.initials}}" round-shape="true" width="25"></ng-avatar>
+              <span class="hidden-xs">{{profile.nombre + ' ' + profile.apellido}}</span>
+            </a>
+            <ul class="dropdown-menu">
+              <li class="user-footer">
+                <div class="pull-left">
+                  <a href="#" class="btn btn-default btn-flat">Perfil</a>
+                </div>
+                <div class="pull-right">
+                  <a ng-click="logout()" class="btn btn-default btn-flat">Cerrar Sesi&oacute;n</a>
+                </div>
+              </li>
+            </ul>
+          </li> -->

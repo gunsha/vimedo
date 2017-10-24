@@ -1,50 +1,42 @@
 <section class="container">
   <div class="row">
-    <div class="col-md-12">
-      <div class="box">
-        <div class="box-header with-border">
-          <h3 class="md-text blue" style="font-weight: 100;"">Listado de Profesionales</h3>
-        </div>
-        <!-- /.box-header -->
-        <div class="box-body">
-          <div class="row">
-          <div class="col-lg-12 box-tools">
-            <div class="pull-left">
-              <a href="#" class="btn btn-md btn-primary" ng-click="ctrl.newPro();"><span class="glyphicon glyphicon-plus"></span> Nuevo</a>
-            </div>
-            <div class="pull-right has-feedback">
-              <input type="text" class="form-control input-sm" ng-model="ctrl.query" ng-change="ctrl.filterList();" placeholder="Filtrar">
-              <span class="glyphicon glyphicon-search form-control-feedback"></span>
-            </div>
-          </div>
-          </div>
-          <div class="table-responsive">
-          <table class="table table-bordered" at-table at-list="ctrl.profesionales" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
-            <thead>
-            </thead>
-            <tbody>
-              <tr>
-                <td at-implicit at-sortable at-attribute="personaFisica.nombre" at-title="Nombre"></td>
-                <td at-implicit at-sortable at-attribute="personaFisica.apellido" at-title="Apellido"></td>
-                <td at-implicit at-sortable at-attribute="personaFisica.nroDocumento" at-title="DNI / LC / LE N°"></td>
-                <td at-implicit at-sortable at-attribute="matricula" at-title="Matricula"></td>
-                <td at-attribute="usuario.activo" at-title="Estado"> {{item.usuario.activo ? 'Activo':'Inactivo'}}</td>
-                <td at-title="Ver / Editar">
-                  <a href="#" class="btn btn-success" ng-click="ctrl.view(item);"><span class="glyphicon glyphicon-zoom-in"></span> </a>
-                  <a href="#" class="btn btn-warning" ng-click="ctrl.edit(item);"><span class="glyphicon glyphicon-edit"></span> </a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          </div>
-        </div>
-        <!-- /.box-body -->
-        <div class="box-footer clearfix">
-          <at-pagination class="pagination pagination-sm no-margin pull-right" at-config="ctrl.tableConfig" at-list="ctrl.profesionales"></at-pagination>
-        </div>
-      </div>
-      <!-- /.box -->
+    <div class="col-md-7">
+      <h3 class="md-text blue" style="font-weight: 100;">Médicos</h3>
     </div>
+    <div class="col-md-5">
+      <div class="pull-left">
+        <a href="#" class="btn btn-md btn-primary" ng-click="ctrl.newPro();">Nuevo Médico</a>
+      </div>
+    </div>
+  </div>
+  <div class="row table-responsive blue-border">
+    <div class="col-md-12">
+      <div class="pull-right has-feedback">
+        <input type="text" class="form-control input-sm" ng-model="ctrl.query" ng-change="ctrl.filterList();" placeholder="Filtrar">
+        <span class="glyphicon glyphicon-search form-control-feedback"></span>
+      </div>
+    </div>
+    <table class="table" at-table at-list="ctrl.profesionales" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
+      <thead>
+      </thead>
+      <tbody>
+        <tr>
+          <td at-implicit at-sortable at-attribute="personaFisica.nombre" at-title="Nombre"></td>
+          <td at-implicit at-sortable at-attribute="personaFisica.apellido" at-title="Apellido"></td>
+          <td at-implicit at-sortable at-attribute="personaFisica.nroDocumento" at-title="DNI / LC / LE N°"></td>
+          <td at-implicit at-sortable at-attribute="matricula" at-title="Matricula"></td>
+          <td at-attribute="usuario.activo" at-title="Estado"> {{item.usuario.activo ? 'Activo':'Inactivo'}}</td>
+          <td at-title="">
+            <a href="#" class="btn ver-icon" ng-click="ctrl.viewAfil(item);"></a>
+            <a href="#" class="btn btn-warning" ng-click="ctrl.edit(item);"><span class="edit-icon"></span></a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="row">
+    <at-pagination class="pagination pagination-sm no-margin pull-right" at-config="ctrl.tableConfig" at-list="ctrl.profesionales"></at-pagination>
   </div>
 </section>
 <div id="newModal" class="modal fade" tabindex="-1" role="dialog">
@@ -85,7 +77,7 @@
                     </div>
                   </a>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                  <datetimepicker data-ng-model="ctrl.modalPro.personaFisica.nacimiento" data-datetimepicker-config="{ dropdownSelector: '#dropdown2', minView:'day' }"/>
+                    <datetimepicker data-ng-model="ctrl.modalPro.personaFisica.nacimiento" data-datetimepicker-config="{ dropdownSelector: '#dropdown2', minView:'day' }"/>
                   </ul>
                 </div>
               </div>
@@ -106,14 +98,14 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="newTelefono">Telefono</label>
               <div class="col-md-5">
-              <div class="col-md-10">
-                <input id="telefono" ng-model="ctrl.modalPro.personaFisica.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
+                <div class="col-md-10">
+                  <input id="telefono" ng-model="ctrl.modalPro.personaFisica.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
                 </div>
                 <div class="col-md-2">
-                <a href="#" class="btn btn-xs btn-primary" ng-click="ctrl.addTel();" style="margin-top: 5px;"><span class="glyphicon glyphicon-plus"></span></a>
+                  <a href="#" class="btn btn-xs btn-primary" ng-click="ctrl.addTel();" style="margin-top: 5px;"><span class="glyphicon glyphicon-plus"></span></a>
                 </div>
                 <div class="col-md-12">
-                <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
+                  <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
                 </div>
               </div>
             </div>
@@ -189,7 +181,7 @@
                     </div>
                   </a>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                  <datetimepicker data-ng-model="ctrl.modalPro.personaFisica.nacimiento" data-datetimepicker-config="{ dropdownSelector: '#dropdown2', minView:'day' }"/>
+                    <datetimepicker data-ng-model="ctrl.modalPro.personaFisica.nacimiento" data-datetimepicker-config="{ dropdownSelector: '#dropdown2', minView:'day' }"/>
                   </ul>
                 </div>
               </div>
@@ -210,14 +202,14 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="newTelefono">Telefono</label>
               <div class="col-md-5">
-              <div class="col-md-10">
-                <input id="telefono" ng-model="ctrl.modalPro.personaFisica.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
+                <div class="col-md-10">
+                  <input id="telefono" ng-model="ctrl.modalPro.personaFisica.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
                 </div>
                 <div class="col-md-2">
-                <a href="#" class="btn btn-xs btn-primary" ng-click="ctrl.addTel();" style="margin-top: 5px;"><span class="glyphicon glyphicon-plus"></span></a>
+                  <a href="#" class="btn btn-xs btn-primary" ng-click="ctrl.addTel();" style="margin-top: 5px;"><span class="glyphicon glyphicon-plus"></span></a>
                 </div>
                 <div class="col-md-12">
-                <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
+                  <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
                 </div>
               </div>
             </div>
@@ -291,7 +283,7 @@
                 <p class="form-control-static">{{ctrl.modalPro.usuario.email}}</p>
               </div>
             </div>
-             <div class="form-group">
+            <div class="form-group">
               <label class="col-md-6 control-label" for="newDireccion">Especialidades</label>
               <div class="col-md-6">
                 <p class="form-control-static" ng-repeat="esp in ctrl.modalPro.especialidades">{{esp.nombre}}</p>

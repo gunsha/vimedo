@@ -181,7 +181,7 @@ gulp.task('serve',function () {
       }
     }
   }).resume();
- }).listen(8082);
+ }).listen(3001);
 });
 
 gulp.task('default', ['build','watch','serve']);

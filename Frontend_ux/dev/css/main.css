@@ -5,12 +5,67 @@ html, #wrapper, .container{
 .md-text{
     font-size: 40px;
 }
-.blue{
+.blue,thead i{
   color: #0068e9;
 }
 .lg-thin-text{
   font-size: 72px;
   font-weight: 100;
+}
+.blue-border{
+  border-radius: 4px;
+  border: solid 1px #0068e9;
+}
+thead{
+  background-color: #f0f3f5;
+}
+.ver-icon{
+  background-image: url('../assets_Vimedo/view-icon.svg');
+  background-repeat: no-repeat;
+  height: 12px;
+  width: 22px;
+}
+.modal-backdrop{
+  background-color: rgba(0, 0, 0, 0.8);
+}
+.modal-content{
+  box-shadow: none;
+  border-radius: 0;
+}
+.modal .close{
+    width: 44px;
+    height: 44px;
+    background-color: #d8d8d8;
+    border-radius: 50%;
+    position: absolute;
+    right: -22px;
+    top: -20px;
+    opacity: 1;
+    color: #0068e9;
+    font-size: 44px;
+    text-shadow: none;
+    line-height: 44px;
+}
+
+.full-page-modal{
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin-top: 65px;
+  background-color: white;
+  width: calc(100vw - 120px);
+  height: calc(100vh - 65px);
+  z-index: 3;
+  transform: translateX(-100vw);
+  transition: ease-in-out .4s;
+  padding-left: 20px;
+}
+.full-page-modal.active{
+  transform: translateX(0);
+}
+a.cancel,a.cancel:hover{
+  color: red;
+  cursor: pointer;
 }
 
 a,a:hover{
@@ -35,6 +90,13 @@ a,a:hover{
     color: #0068e9;
     background-color: #fff;
     border-color: #0068e9;
+}
+[ui-view="sidemenu"]{
+  position: absolute;
+  z-index: 4;
+}
+[ui-view="contentView"]{
+  margin-left: 120px;
 }
 
 /**LANDING**/
@@ -94,6 +156,15 @@ a,a:hover{
   margin-top: 11px;
 }
 
+nav .dropdown-toggle{
+    min-height: 65px;
+    line-height: 35px;
+}
+.user-image{
+    float: left;
+    margin-right: 10px;
+    margin-top: 5px;
+}
 
 /*
 img src="../assets_Vimedo/ic_dashboard_blue.svg"> 
@@ -120,7 +191,7 @@ body {
 @media (min-width: 768px) {
   #page-wrapper {
     position: inherit;
-    margin: 0 0 0 120px;
+    margin: 0 0 0 0;
     padding: 0 30px;
     /*border-left: 1px solid #e7e7e7;*/
   }

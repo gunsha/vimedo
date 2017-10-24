@@ -13,6 +13,11 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
         maxPages: "10",
         itemsPerPage: "8"
     };
+    vm.newActive = false;
+
+    vm.cancelNew = function(){
+        vm.newActive = false;        
+    }
 
     NgMap.getMap().then(function(map) {
         vm.map = map;
@@ -109,7 +114,7 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
                 vm.modalAfil.afiliado.telefonos = vm.modalAfil.afiliado.telefonosA.toString();
                 pacientesService.create(vm.modalAfil).then(function(data) {
                     vm.modalAfil = {};
-                    $('#newModal').modal('hide');
+                    vm.newActive = false;
                     vm.updateList();
                 })
             }

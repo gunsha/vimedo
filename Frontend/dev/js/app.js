@@ -1,7 +1,10 @@
 // var apiRoute = 'http://vimedo.gunsha.c9users.io:8080';
 // var client = "http://vimedo.gunsha.c9users.io:8081";
-var apiRoute = 'http://localhost:3000';
-var client = "http://localhost:3001";
+// var apiRoute = 'http://localhost:3000';
+// var client = "http://localhost:3001";
+
+var apiRoute = 'http://apivimedo.us-east-1.elasticbeanstalk.com';
+var client = 'http://test.vimedo.com.s3-website-us-east-1.amazonaws.com';
 
 var monthsShortDot$1 = 'ene._feb._mar._abr._may._jun._jul._ago._sep._oct._nov._dic.'.split('_');
 var monthsShort$2 = 'ene_feb_mar_abr_may_jun_jul_ago_sep_oct_nov_dic'.split('_');
@@ -210,7 +213,7 @@ angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-
     .config(['$httpProvider', 'jwtOptionsProvider', 'growlProvider', 'blockUIConfig',
         function($httpProvider, jwtOptionsProvider, growlProvider, blockUIConfig) {
             jwtOptionsProvider.config({
-                whiteListedDomains: ['localhost'],
+                whiteListedDomains: ['localhost',apiRoute],
                 unauthenticatedRedirector: ['$state', 'growl', function($state, growl) {
                     $state.go('app.login');
                     growl.warning('Su sesi&oacute;n ha expirado.');

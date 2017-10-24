@@ -5,7 +5,8 @@
         "auth",
         "profesionales",
         "pacientes",
-        "solicitudes"
+        "solicitudes",
+        "mapa"
     ],
     "core": [
         "main",
@@ -14,7 +15,7 @@
     ],
     "libs": [
         "jquery/dist/jquery.min",
-        "bootstrap/dist/js/bootstrap.min.js",
+        "bootstrap/dist/js/bootstrap.min",
         "angular/angular.min",
         "angular-animate",
         "angular-block-ui/dist/angular-block-ui.min",
@@ -35,7 +36,7 @@
     "components": [
         "modal-nueva-solicitud"
     ],
-    "css":[
+    "css": [
         "css/app",
         "lib/angular-growl-v2/build/angular-growl.min",
         "lib/angular-bootstrap-datetimepicker/src/css/datetimepicker",
