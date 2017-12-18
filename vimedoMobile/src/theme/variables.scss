@@ -34,11 +34,12 @@ $app-direction: ltr;
 // The "primary" color is the only required color in the map.
 
 $colors: (
-  primary:    #488aff,
+  primary:    #0068e9,
   secondary:  #32db64,
   danger:     #f53d3d,
   light:      #f4f4f4,
-  dark:       #222
+  dark:       #222,
+  white: white
 );
 
 
@@ -80,6 +81,11 @@ $colors: (
 
 @import "ionic.ionicons";
 
+$ionicons-font-path: "../assets/fonts";
+
+// In order to make icons work and not break ionic icons, change ionic.ionicons to ionicons
+// @import "ionic.ionicons";
+@import "ionicons";
 
 // Fonts
 // --------------------------------------------------

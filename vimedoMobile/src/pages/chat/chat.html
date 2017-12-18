@@ -1,9 +1,6 @@
 <ion-header>
 
-  <ion-navbar>
-    <button ion-button menuToggle right>
-      <ion-icon name="menu"></ion-icon>
-    </button>
+  <ion-navbar color="primary">
     <ion-title>chat</ion-title>
   </ion-navbar>
 
@@ -13,14 +10,18 @@
 <ion-content>
   <ion-grid>
     <ion-row *ngFor="let m of c.msgs">
-      <ion-col col-2 *ngIf="id == m.from"></ion-col>
+      <ion-col col-2 *ngIf="id != m.from">
+          <p text-right class="timestamp" style="right: 0"><small>{{m.send | date:'HH:mm'}}</small></p>
+      </ion-col>
       <ion-col col-10>
-        <ion-card>
+        <ion-card [ngClass]="{'own-msg': id == m.from}">
           <ion-card-content>
             {{m.message}}
-            <p text-right><small>{{m.send | date:'HH:mm'}}</small><ion-icon name="checkmark" *ngIf="m.read && m.from === id"></ion-icon></p>
           </ion-card-content>
         </ion-card>
+      </ion-col>
+      <ion-col col-2 *ngIf="id == m.from">
+          <p text-left class="timestamp"><small>{{m.send | date:'HH:mm'}}</small></p>
       </ion-col>
     </ion-row>
     <ion-row *ngIf="c.estado==2">

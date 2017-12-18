@@ -11,12 +11,16 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
 
     vm.tableConfig = {
         maxPages: "10",
-        itemsPerPage: "8"
+        itemsPerPage: "10"
     };
     vm.newActive = false;
+    vm.editActive = false;
 
     vm.cancelNew = function(){
         vm.newActive = false;        
+    }
+    vm.cancelEdit = function(){
+        vm.editActive = false;        
     }
 
     NgMap.getMap().then(function(map) {
@@ -82,7 +86,7 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
                 vm.afilSel.personaFisica.telefonosA = [];
             if (vm.afilSel.personaFisica.fechaNacimiento)
                 vm.afilSel.personaFisica.nacimiento = new Date(vm.afilSel.personaFisica.fechaNacimiento);
-            $('#editModal').modal();
+            vm.editActive = true;
         };
         vm.saveEdit = function() {
             if (vm.validateSave()) {
@@ -90,7 +94,7 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
                 vm.afilSel.personaFisica.fechaNacimiento = vm.afilSel.personaFisica.nacimiento;
                 pacientesService.update(vm.afilSel).then(function() {
                     vm.afilSel = {};
-                    $('#editModal').modal('hide');
+                    vm.editActive = false;
                     vm.updateList();
                 })
             }

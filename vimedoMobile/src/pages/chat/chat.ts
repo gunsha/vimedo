@@ -40,11 +40,11 @@ export class ChatPage {
   }
 
   ionViewWillLeave() {
-    this.msgs.disconnect();
+      this.msgs.disconnect();
   }
   ionViewDidEnter() {
     this.content.scrollToBottom(300);
-    let toId = this.c.afiliado._id === this.id ? this.c.profesional._id : this.c.afiliado._id;
+    let toId = this.c.afiliado._id === this.id ? (this.c.profesional ? this.c.profesional._id:0) : this.c.afiliado._id;
     if (this.c.estado != 2)
       this.msgs.connect(this.c._id, this.id, toId);
   }

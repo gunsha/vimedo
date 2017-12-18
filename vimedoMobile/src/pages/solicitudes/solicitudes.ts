@@ -63,7 +63,7 @@ export class SolicitudesPage {
       bounds.extend(new google.maps.LatLng(element.domicilio.latitud, element.domicilio.longitud));
     });
     this.mapBounds = bounds;
-    console.log(bounds)
+    //console.log(bounds)
   }
   private setCurrentPosition() {
     if ("geolocation" in navigator) {

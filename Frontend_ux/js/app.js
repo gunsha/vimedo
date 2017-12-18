@@ -69,7 +69,8 @@ moment.defineLocale('es', {
 // var client = "http://vimedo.gunsha.c9users.io:8081";
 // var apiRoute = 'http://localhost:3000';
 var apiRoute = 'http://apivimedo.us-east-1.elasticbeanstalk.com';
-var client = "http://localhost:3001";
+var client = 'http://test.vimedo.com.s3-website-us-east-1.amazonaws.com';
+// var client = "http://localhost:3001";
 
 angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table', 'ngAvatar', 'blockUI', 'ngMap','ngAnimate','ui.bootstrap.datetimepicker','ui.bootstrap','angularMoment'])
     .run(['$rootScope', '$state', 'authManager', 'jwtHelper', '$anchorScroll', 'growl', function(r, s, authManager, jwtHelper, $anchorScroll, growl) {
@@ -1019,9 +1020,23 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
         itemsPerPage: "8"
     };
 
+        vm.tableConfig = {
+        maxPages: "10",
+        itemsPerPage: "10"
+    };
+    vm.newActive = false;
+    vm.editActive = false;
+
     NgMap.getMap().then(function(map) {
         vm.map = map;
     });
+
+        vm.cancelNew = function(){
+        vm.newActive = false;        
+    }
+    vm.cancelEdit = function(){
+        vm.editActive = false;        
+    }
 
     vm.filterList = function() {
         var lower = vm.query.toLowerCase();
@@ -1066,7 +1081,7 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
                 telefonosA: []
             }
         };
-        $('#newModal').modal();
+        vm.newActive = true;
     };
     vm.edit = function(item) {
         vm.modalPro = angular.copy(item);
@@ -1076,7 +1091,7 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
             vm.modalPro.personaFisica.telefonosA = [];
         if (vm.modalPro.personaFisica.fechaNacimiento)
             vm.modalPro.personaFisica.nacimiento = new Date(vm.modalPro.personaFisica.fechaNacimiento);
-        $('#editModal').modal();
+        vm.editActive = true;
     };
     vm.saveEdit = function() {
         if (vm.validateSave()) {
@@ -1084,7 +1099,7 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
             vm.modalPro.personaFisica.fechaNacimiento = vm.modalPro.personaFisica.nacimiento;
             profesionalesService.update(vm.modalPro).then(function() {
                 vm.modalPro = {};
-                $('#editModal').modal('hide');
+                vm.editActive = false;
                 vm.updateList();
             })
         }
@@ -1094,7 +1109,7 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
             vm.modalPro.personaFisica.telefonos = vm.modalPro.personaFisica.telefonosA.toString();
             profesionalesService.create(vm.modalPro).then(function() {
                 vm.modalPro = {};
-                $('#newModal').modal('hide');
+                vm.newActive = false;
                 vm.updateList();
             })
         }
@@ -1216,12 +1231,16 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
 
     vm.tableConfig = {
         maxPages: "10",
-        itemsPerPage: "8"
+        itemsPerPage: "10"
     };
     vm.newActive = false;
+    vm.editActive = false;
 
     vm.cancelNew = function(){
         vm.newActive = false;        
+    }
+    vm.cancelEdit = function(){
+        vm.editActive = false;        
     }
 
     NgMap.getMap().then(function(map) {
@@ -1287,7 +1306,7 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
                 vm.afilSel.personaFisica.telefonosA = [];
             if (vm.afilSel.personaFisica.fechaNacimiento)
                 vm.afilSel.personaFisica.nacimiento = new Date(vm.afilSel.personaFisica.fechaNacimiento);
-            $('#editModal').modal();
+            vm.editActive = true;
         };
         vm.saveEdit = function() {
             if (vm.validateSave()) {
@@ -1295,7 +1314,7 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
                 vm.afilSel.personaFisica.fechaNacimiento = vm.afilSel.personaFisica.nacimiento;
                 pacientesService.update(vm.afilSel).then(function() {
                     vm.afilSel = {};
-                    $('#editModal').modal('hide');
+                    vm.editActive = false;
                     vm.updateList();
                 })
             }

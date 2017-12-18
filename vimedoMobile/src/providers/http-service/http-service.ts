@@ -22,16 +22,16 @@ export class HttpService extends Http {
   }
 
   get(url: string, options?: RequestOptionsArgs){
-    console.log(url)
+    //console.log(url)
     return this.intercept(super.get(url, options));
   }
     
   post(url: string, body: any, options?: RequestOptionsArgs){
-    console.log(url)
+    //console.log(url)
     return this.intercept(super.post(url,body, options));
   }
   put(url: string, body: any, options?: RequestOptionsArgs){
-    console.log(url)
+    //console.log(url)
     return this.intercept(super.put(url,body, options));
   }
 
@@ -53,7 +53,7 @@ export class HttpService extends Http {
       });
   }
   private turnOnModal() {
-    console.log('modal on')
+    //console.log('modal on')
     if (!this.showLoading_) {
       this.showLoading_ = true;
       this.showLoading();
@@ -63,7 +63,7 @@ export class HttpService extends Http {
 
   private turnOffModal() {
     this.pendingRequests--;
-    console.log(this.pendingRequests)
+    //console.log(this.pendingRequests)
     if (this.pendingRequests <= 0) {
       if (this.showLoading_) {
         this.loading.dismiss();

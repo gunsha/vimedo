@@ -12,9 +12,23 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
         itemsPerPage: "8"
     };
 
+        vm.tableConfig = {
+        maxPages: "10",
+        itemsPerPage: "10"
+    };
+    vm.newActive = false;
+    vm.editActive = false;
+
     NgMap.getMap().then(function(map) {
         vm.map = map;
     });
+
+        vm.cancelNew = function(){
+        vm.newActive = false;        
+    }
+    vm.cancelEdit = function(){
+        vm.editActive = false;        
+    }
 
     vm.filterList = function() {
         var lower = vm.query.toLowerCase();
@@ -59,7 +73,7 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
                 telefonosA: []
             }
         };
-        $('#newModal').modal();
+        vm.newActive = true;
     };
     vm.edit = function(item) {
         vm.modalPro = angular.copy(item);
@@ -69,7 +83,7 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
             vm.modalPro.personaFisica.telefonosA = [];
         if (vm.modalPro.personaFisica.fechaNacimiento)
             vm.modalPro.personaFisica.nacimiento = new Date(vm.modalPro.personaFisica.fechaNacimiento);
-        $('#editModal').modal();
+        vm.editActive = true;
     };
     vm.saveEdit = function() {
         if (vm.validateSave()) {
@@ -77,7 +91,7 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
             vm.modalPro.personaFisica.fechaNacimiento = vm.modalPro.personaFisica.nacimiento;
             profesionalesService.update(vm.modalPro).then(function() {
                 vm.modalPro = {};
-                $('#editModal').modal('hide');
+                vm.editActive = false;
                 vm.updateList();
             })
         }
@@ -87,7 +101,7 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
             vm.modalPro.personaFisica.telefonos = vm.modalPro.personaFisica.telefonosA.toString();
             profesionalesService.create(vm.modalPro).then(function() {
                 vm.modalPro = {};
-                $('#newModal').modal('hide');
+                vm.newActive = false;
                 vm.updateList();
             })
         }

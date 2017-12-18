@@ -4,16 +4,29 @@
       <h3 class="md-text blue" style="font-weight: 100;">Médicos</h3>
     </div>
     <div class="col-md-5">
-      <div class="pull-left">
+      <div class="text-right" style="margin-top: 27px;">
+        <span style="margin-right: 35px;">Mostrar:
+          <select ng-model="ctrl.tableConfig.itemsPerPage" >
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </span>
         <a href="#" class="btn btn-md btn-primary" ng-click="ctrl.newPro();">Nuevo Médico</a>
       </div>
     </div>
   </div>
   <div class="row table-responsive blue-border">
-    <div class="col-md-12">
-      <div class="pull-right has-feedback">
-        <input type="text" class="form-control input-sm" ng-model="ctrl.query" ng-change="ctrl.filterList();" placeholder="Filtrar">
-        <span class="glyphicon glyphicon-search form-control-feedback"></span>
+    <div class="col-md-12" style="margin: 16px 0;padding: 0;">
+      <div class="col-md-4">
+        <h4>Listado de Médicos</h4>
+      </div>
+      <div class="col-md-8">
+        <div class="pull-right has-feedback">
+          <input type="text" class="form-control input-sm" ng-model="ctrl.query" ng-change="ctrl.filterList();" placeholder="Filtrar">
+          <span class="glyphicon glyphicon-search form-control-feedback"></span>
+        </div>
       </div>
     </div>
     <table class="table" at-table at-list="ctrl.profesionales" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
@@ -39,259 +52,225 @@
     <at-pagination class="pagination pagination-sm no-margin pull-right" at-config="ctrl.tableConfig" at-list="ctrl.profesionales"></at-pagination>
   </div>
 </section>
-<div id="newModal" class="modal fade" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">Nuevo Medico</h4>
-      </div>
-      <div class="modal-body">
-        <form class="form-horizontal" ng-submit="ctrl.savePro();">
-          <fieldset>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newName">Nombre</label>
-              <div class="col-md-5">
-                <input id="name" ng-model="ctrl.modalPro.personaFisica.nombre" name="newName" type="text" placeholder="" class="form-control input-md" required="">
+<!-- new modal -->
+<div class="full-page-modal" ng-class="{active: ctrl.newActive}">
+  <div class="col-md-4">
+    <h3 class="md-text blue" style="font-weight: 100;">Nuevo Médico</h3>
+  </div>
+  <div class="col-md-4">
+    <form class="form-horizontal" ng-submit="ctrl.savePro();">
+      <fieldset>
+        <div class="form-group">
+          <label class="control-label" for="newName">Nombre</label>
+          <input id="name" ng-model="ctrl.modalPro.personaFisica.nombre" name="newName" type="text" placeholder="" class="form-control input-md" required="">
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="newApellido">Apellido</label>
+          <input id="apellido" ng-model="ctrl.modalPro.personaFisica.apellido" name="newApellido" type="text" placeholder="" class="form-control input-md" required="">
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="newDoc">DNI / LC / LE N°</label>
+          <input id="doc" ng-model="ctrl.modalPro.personaFisica.nroDocumento" name="newDoc" type="text" placeholder="" class="form-control input-md" required="">
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="newDoc">Fecha de nacimiento</label>
+          <div class="dropdown">
+            <a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" href="#">
+              <div class="input-group">
+                <input type="text" class="form-control" readonly="" value="{{ctrl.modalPro.personaFisica.nacimiento | date:'dd/MM/yyyy'}}"><span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
               </div>
+            </a>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+              <datetimepicker data-ng-model="ctrl.modalPro.personaFisica.nacimiento" data-datetimepicker-config="{ dropdownSelector: '#dropdown2', minView:'day' }"/>
+            </ul>
+          </div>
+          <!-- /.input group -->
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="newCredencial">Matricula</label>
+            <input id="Credencial" ng-model="ctrl.modalPro.matricula" name="newCredencial" type="text" placeholder="" class="form-control input-md" required="">
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="newEmail">Email</label>
+            <input id="email" ng-model="ctrl.modalPro.usuario.email" name="newEmail" type="email" placeholder="" class="form-control input-md" required="">
+        </div>
+        <div class="form-group">
+          <div class="">
+            <label class="control-label" for="newTelefono">Telefono</label>
+          </div>
+          <div class="row">
+            <div class="col-md-10">
+              <input id="telefono" ng-model="ctrl.modalPro.personaFisica.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newApellido">Apellido</label>
-              <div class="col-md-5">
-                <input id="apellido" ng-model="ctrl.modalPro.personaFisica.apellido" name="newApellido" type="text" placeholder="" class="form-control input-md" required="">
-              </div>
+            <div class="col-md-2">
+              <a href="#" class="btn btn-xs btn-primary" ng-click="ctrl.addTel();" style="margin-top: 5px;"><span class="glyphicon glyphicon-plus"></span></a>
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newDoc">DNI / LC / LE N°</label>
-              <div class="col-md-5">
-                <input id="doc" ng-model="ctrl.modalPro.personaFisica.nro_documento" name="newDoc" type="text" placeholder="" class="form-control input-md" required="">
-              </div>
+          </div>
+            <div class="col-md-12">
+              <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newDoc">Fecha de nacimiento</label>
-              <div class="col-md-5">
-                <div class="dropdown">
-                  <a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" href="#">
-                    <div class="input-group">
-                      <input type="text" class="form-control" readonly="" value="{{ctrl.modalPro.personaFisica.nacimiento | date:'dd/MM/yyyy'}}"><span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
-                    </div>
-                  </a>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                    <datetimepicker data-ng-model="ctrl.modalPro.personaFisica.nacimiento" data-datetimepicker-config="{ dropdownSelector: '#dropdown2', minView:'day' }"/>
-                  </ul>
-                </div>
-              </div>
-              <!-- /.input group -->
+          </div>
+        <div class="form-group">
+          <div>
+          <label class="control-label" for="newDireccion">Direccion</label>
+          </div>
+            <div >
+              <input id="newDireccion" places-auto-complete size=80 ng-model="ctrl.afilDir" component-restrictions="{country:'ar'}"  on-place-changed="ctrl.placeChanged()" ng-enter="" class="form-control input-md" >
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newCredencial">Matricula</label>
-              <div class="col-md-5">
-                <input id="Credencial" ng-model="ctrl.modalPro.matricula" name="newCredencial" type="text" placeholder="" class="form-control input-md" required="">
-              </div>
+            <p class="form-control-static" ng-repeat="dom in ctrl.modalPro.personaFisica.domicilios"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeDom($index)">x</button> {{dom.calle + ' ' + dom.numero + ', ' + dom.localidad + ', ' + dom.provincia}} <input ng-model="dom.extra" placeholder="Datos extra" class="form-control input-md"> </p>
+          </div>
+          <!-- Button (Double) -->
+          <div class="form-group">
+            <div class="col-md-8">
+              <button id="guardarNew" type="submit" name="guardarNew" class="btn btn-primary btn-block">Aceptar</button>
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newEmail">Email</label>
-              <div class="col-md-5">
-                <input id="email" ng-model="ctrl.modalPro.email" name="newEmail" type="email" placeholder="" class="form-control input-md" required="">
-              </div>
+            <div class="col-md-4" style="padding-top: 10px">
+              <a id="cancelarNew" name="cancelarNew" class="cancel" ng-click="ctrl.cancelNew()">Cancelar</a>
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newTelefono">Telefono</label>
-              <div class="col-md-5">
-                <div class="col-md-10">
-                  <input id="telefono" ng-model="ctrl.modalPro.personaFisica.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
-                </div>
-                <div class="col-md-2">
-                  <a href="#" class="btn btn-xs btn-primary" ng-click="ctrl.addTel();" style="margin-top: 5px;"><span class="glyphicon glyphicon-plus"></span></a>
-                </div>
-                <div class="col-md-12">
-                  <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newDireccion">Direccion</label>
-              <div class="col-md-5">
-                <div >
-                  <input id="newDireccion" places-auto-complete size=80 ng-model="ctrl.afilDir" component-restrictions="{country:'ar'}"  on-place-changed="ctrl.placeChanged()" ng-enter="" class="form-control input-md" >
-                </div>
-                <p class="form-control-static" ng-repeat="dom in ctrl.modalPro.personaFisica.domicilios"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeDom($index)">x</button> {{dom.calle + ' ' + dom.numero + ', ' + dom.localidad + ', ' + dom.provincia}} <input ng-model="dom.extra" placeholder="Datos extra" class="form-control input-md"> </p>
-              </div>
-            </div>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  </div>
 
-            <!-- Button (Double) -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="guardarNew"></label>
-              <div class="col-md-8">
-                <button id="guardarNew" type="submit" name="guardarNew" class="btn btn-success">Aceptar</button>
-                <button id="cancelarNew" name="cancelarNew" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+  <!-- edit modal -->
+<div class="full-page-modal" ng-class="{active: ctrl.editActive}">
+  <div class="col-md-4">
+    <h3 class="md-text blue" style="font-weight: 100;">Editar Médico</h3>
+    <h3 class="blue" style="font-weight: 100;">{{ctrl.modalPro.personaFisica.nombre}} {{ctrl.modalPro.personaFisica.apellido}}</h3>
+  </div>
+  <div class="col-md-4">
+    <form class="form-horizontal" ng-submit="ctrl.saveEdit();">
+      <fieldset>
+        <div class="form-group">
+          <label class="control-label" for="newName">Nombre</label>
+          <input ng-model="ctrl.modalPro.personaFisica.nombre" name="newName" type="text" placeholder="" class="form-control input-md" required="">
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="newApellido">Apellido</label>
+          <input ng-model="ctrl.modalPro.personaFisica.apellido" name="newApellido" type="text" placeholder="" class="form-control input-md" required="">
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="newDoc">DNI / LC / LE N°</label>
+          <input ng-model="ctrl.modalPro.personaFisica.nroDocumento" name="newDoc" type="text" placeholder="" class="form-control input-md" required="">
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="newDoc">Fecha de nacimiento</label>
+          <div class="dropdown">
+            <a class="dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">
+              <div class="input-group">
+                <input type="text" class="form-control" readonly="" value="{{ctrl.modalPro.personaFisica.nacimiento | date:'dd/MM/yyyy'}}"><span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
               </div>
+            </a>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+              <datetimepicker data-ng-model="ctrl.modalPro.personaFisica.nacimiento" data-datetimepicker-config="{ dropdownSelector: '#dropdown2', minView:'day' }"/>
+            </ul>
+          </div>
+          <!-- /.input group -->
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="newCredencial">Matricula</label>
+            <input ng-model="ctrl.modalPro.matricula" name="newCredencial" type="text" placeholder="" class="form-control input-md" required="">
+        </div>
+        <div class="form-group">
+          <label class="control-label" for="newEmail">Email</label>
+            <input ng-model="ctrl.modalPro.usuario.email" name="newEmail" type="email" placeholder="" class="form-control input-md" required="">
+        </div>
+        <div class="form-group">
+          <div class="">
+            <label class="control-label" for="newTelefono">Telefono</label>
+          </div>
+          <div class="row">
+            <div class="col-md-10">
+              <input ng-model="ctrl.modalPro.personaFisica.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
             </div>
-          </fieldset>
-        </form>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-<div id="editModal" class="modal fade" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">Editar Medico</h4>
-      </div>
-      <div class="modal-body">
-        <form class="form-horizontal" ng-submit="ctrl.saveEdit();">
-          <fieldset>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="estado">Estado</label>
-              <div class="col-md-5">
-                <select ng-model="ctrl.modalPro.usuario.activo" convert-to-number class="form-control">
-                  <option value="0">Inactivo</option>
-                  <option value="1">Activo</option>
-                </select>
-              </div>
+            <div class="col-md-2">
+              <a href="#" class="btn btn-xs btn-primary" ng-click="ctrl.addTel();" style="margin-top: 5px;"><span class="glyphicon glyphicon-plus"></span></a>
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newName">Nombre</label>
-              <div class="col-md-5">
-                <input id="name" ng-model="ctrl.modalPro.personaFisica.nombre" name="newName" type="text" placeholder="" class="form-control input-md" required="">
-              </div>
+          </div>
+            <div class="col-md-12">
+              <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newApellido">Apellido</label>
-              <div class="col-md-5">
-                <input id="apellido" ng-model="ctrl.modalPro.personaFisica.apellido" name="newApellido" type="text" placeholder="" class="form-control input-md" required="">
-              </div>
+          </div>
+        <div class="form-group">
+          <div>
+          <label class="control-label" for="newDireccion">Direccion</label>
+          </div>
+            <div >
+              <input places-auto-complete size=80 ng-model="ctrl.afilDir" component-restrictions="{country:'ar'}"  on-place-changed="ctrl.placeChanged()" ng-enter="" class="form-control input-md" >
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newDoc">DNI / LC / LE N°</label>
-              <div class="col-md-5">
-                <input id="doc" ng-model="ctrl.modalPro.personaFisica.nroDocumento" name="newDoc" type="text" placeholder="" class="form-control input-md" required="">
-              </div>
+            <p class="form-control-static" ng-repeat="dom in ctrl.modalPro.personaFisica.domicilios"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeDom($index)">x</button> {{dom.calle + ' ' + dom.numero + ', ' + dom.localidad + ', ' + dom.provincia}} <input ng-model="dom.extra" placeholder="Datos extra" class="form-control input-md"> </p>
+          </div>
+          <!-- Button (Double) -->
+          <div class="form-group">
+            <div class="col-md-8">
+              <button type="submit" class="btn btn-primary btn-block">Guardar</button>
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newDoc">Fecha de nacimiento</label>
-              <div class="col-md-5">
-                <div class="dropdown">
-                  <a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" href="#">
-                    <div class="input-group">
-                      <input type="text" class="form-control" readonly="" value="{{ctrl.modalPro.personaFisica.nacimiento | date:'dd/MM/yyyy'}}"><span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
-                    </div>
-                  </a>
-                  <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                    <datetimepicker data-ng-model="ctrl.modalPro.personaFisica.nacimiento" data-datetimepicker-config="{ dropdownSelector: '#dropdown2', minView:'day' }"/>
-                  </ul>
-                </div>
-              </div>
-              <!-- /.input group -->
+            <div class="col-md-4" style="padding-top: 10px">
+              <a class="cancel" ng-click="ctrl.cancelEdit()">Cancelar</a>
             </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newCredencial">Matricula</label>
-              <div class="col-md-5">
-                <input id="Credencial" ng-model="ctrl.modalPro.matricula" name="newCredencial" type="text" placeholder="" class="form-control input-md" required="">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newEmail">Email</label>
-              <div class="col-md-5">
-                <input id="email" ng-model="ctrl.modalPro.usuario.email" name="newEmail" type="email" placeholder="" class="form-control input-md" required="">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newTelefono">Telefono</label>
-              <div class="col-md-5">
-                <div class="col-md-10">
-                  <input id="telefono" ng-model="ctrl.modalPro.personaFisica.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
-                </div>
-                <div class="col-md-2">
-                  <a href="#" class="btn btn-xs btn-primary" ng-click="ctrl.addTel();" style="margin-top: 5px;"><span class="glyphicon glyphicon-plus"></span></a>
-                </div>
-                <div class="col-md-12">
-                  <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
-                </div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newDireccion">Direccion</label>
-              <div class="col-md-5">
-                <div >
-                  <input id="newDireccion" places-auto-complete size=80 ng-model="ctrl.afilDir" component-restrictions="{country:'ar'}"  on-place-changed="ctrl.placeChanged()" ng-enter="" class="form-control input-md" >
-                </div>
-                <p class="form-control-static" ng-repeat="dom in ctrl.modalPro.personaFisica.domicilios"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeDom($index)">x</button> {{dom.calle + ' ' + dom.numero + ', ' + dom.localidad + ', ' + dom.provincia}} <input ng-model="dom.extra" placeholder="Datos extra" class="form-control input-md"> </p>
-              </div>
-            </div>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  </div>
 
-            <!-- Button (Double) -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="guardarNew"></label>
-              <div class="col-md-8">
-                <button id="guardarNew" type="submit" name="guardarNew" class="btn btn-success">Aceptar</button>
-                <button id="cancelarNew" name="cancelarNew" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+
+  <div id="viewModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">{{ctrl.modalPro.personaFisica.nombre +' '+ ctrl.modalPro.personaFisica.apellido}}</h4>
+        </div>
+        <div class="modal-body">
+          <form class="form-horizontal" ng-submit="ctrl.savePro();">
+            <fieldset>
+              <div class="form-group">
+                <label class="col-md-6 control-label">Matricula</label>
+                <div class="col-md-6">
+                  <p class="form-control-static">{{ctrl.modalPro.matricula}}</p>
+                </div>
               </div>
-            </div>
-          </fieldset>
-        </form>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-<div id="viewModal" class="modal fade" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">{{ctrl.modalPro.personaFisica.nombre +' '+ ctrl.modalPro.personaFisica.apellido}}</h4>
-      </div>
-      <div class="modal-body">
-        <form class="form-horizontal" ng-submit="ctrl.savePro();">
-          <fieldset>
-            <div class="form-group">
-              <label class="col-md-6 control-label">Matricula</label>
-              <div class="col-md-6">
-                <p class="form-control-static">{{ctrl.modalPro.matricula}}</p>
+              <div class="form-group">
+                <label class="col-md-6 control-label">DNI / LC / LE N°</label>
+                <div class="col-md-6">
+                  <p class="form-control-static">{{ctrl.modalPro.personaFisica.nroDocumento}}</p>
+                </div>
               </div>
-            </div>
-            <div class="form-group">
-              <label class="col-md-6 control-label">DNI / LC / LE N°</label>
-              <div class="col-md-6">
-                <p class="form-control-static">{{ctrl.modalPro.personaFisica.nroDocumento}}</p>
+              <div class="form-group">
+                <label class="col-md-6 control-label">Fecha de nacimiento</label>
+                <div class="col-md-6">
+                  <p class="form-control-static">{{ctrl.modalPro.personaFisica.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
+                </div>
               </div>
-            </div>
-            <div class="form-group">
-              <label class="col-md-6 control-label">Fecha de nacimiento</label>
-              <div class="col-md-6">
-                <p class="form-control-static">{{ctrl.modalPro.personaFisica.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
+              <div class="form-group">
+                <label class="col-md-6 control-label">Domicilio/s</label>
+                <div class="col-md-6">
+                  <p class="form-control-static" ng-repeat="dom in ctrl.modalPro.personaFisica.domicilios">{{dom.calle + ' ' + dom.numero +(dom.extra ? ', '+dom.extra:'')+ ', ' + dom.localidad + ', ' + dom.provincia}}</p>
+                </div>
               </div>
-            </div>
-            <div class="form-group">
-              <label class="col-md-6 control-label">Domicilio/s</label>
-              <div class="col-md-6">
-                <p class="form-control-static" ng-repeat="dom in ctrl.modalPro.personaFisica.domicilios">{{dom.calle + ' ' + dom.numero +(dom.extra ? ', '+dom.extra:'')+ ', ' + dom.localidad + ', ' + dom.provincia}}</p>
+              <div class="form-group">
+                <label class="col-md-6 control-label">Telefono/s</label>
+                <div class="col-md-6">
+                  <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonos.split(',')">{{tel}}</p>
+                </div>
               </div>
-            </div>
-            <div class="form-group">
-              <label class="col-md-6 control-label">Telefono/s</label>
-              <div class="col-md-6">
-                <p class="form-control-static" ng-repeat="tel in ctrl.modalPro.personaFisica.telefonos.split(',')">{{tel}}</p>
+              <div class="form-group">
+                <label class="col-md-6 control-label">Email</label>
+                <div class="col-md-6">
+                  <p class="form-control-static">{{ctrl.modalPro.usuario.email}}</p>
+                </div>
               </div>
-            </div>
-            <div class="form-group">
-              <label class="col-md-6 control-label">Email</label>
-              <div class="col-md-6">
-                <p class="form-control-static">{{ctrl.modalPro.usuario.email}}</p>
+              <div class="form-group">
+                <label class="col-md-6 control-label" for="newDireccion">Especialidades</label>
+                <div class="col-md-6">
+                  <p class="form-control-static" ng-repeat="esp in ctrl.modalPro.especialidades">{{esp.nombre}}</p>
+                </div>
               </div>
-            </div>
-            <div class="form-group">
-              <label class="col-md-6 control-label" for="newDireccion">Especialidades</label>
-              <div class="col-md-6">
-                <p class="form-control-static" ng-repeat="esp in ctrl.modalPro.especialidades">{{esp.nombre}}</p>
-              </div>
-            </div>
-          </fieldset>
-        </form>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
+            </fieldset>
+          </form>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->

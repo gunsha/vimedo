@@ -1,5 +1,8 @@
 {
   "name": "Vimedo",
   "app_id": "fc619e9c",
-  "type": "ionic-angular"
+  "type": "ionic-angular",
+  "integrations": {
+    "cordova": {}
+  }
 }

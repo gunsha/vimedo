@@ -12,7 +12,7 @@ export class SolicitudDetailPage {
   constructor(public alertCtrl: AlertController,public navCtrl: NavController, public navParams: NavParams) {
     this.s = navParams.get('item');
     this.isPro = navParams.get('isPro');
-    console.log(navParams);
+    //console.log(navParams);
   }
 
   confirmCloseSol(){

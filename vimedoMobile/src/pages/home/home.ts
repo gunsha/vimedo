@@ -19,6 +19,7 @@ export class HomePage {
   testRadioResult;
   id: number = this.auth.getProfileId();
   mensajes = 0;
+  nombre: string = this.auth.getUser().profile.nombre;
 
   constructor(public navCtrl: NavController, private auth: AuthService, private pro: ProfessionalService,public alertCtrl: AlertController, public msgs: MessagesProvider) {
     this.pages = [

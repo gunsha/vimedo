@@ -18,6 +18,7 @@ import { ChatPage } from '../pages/chat/chat';
 import { LoginPage } from '../pages/login/login';
 import { RegisterPage } from '../pages/register/register';
 import { RegisterStep2Page } from '../pages/register-step2/register-step2';
+import { TabsPage } from '../pages/tabs/tabs';
 
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
@@ -52,7 +53,8 @@ SintomasModalPage,
 ChatPage,
 LoginPage,
 RegisterPage,
-RegisterStep2Page
+RegisterStep2Page,
+TabsPage
   ],
   imports: [
     BrowserModule,
@@ -80,7 +82,8 @@ SintomasModalPage,
 ChatPage,
 LoginPage,
 RegisterPage,
-RegisterStep2Page
+RegisterStep2Page,
+TabsPage
   ],
   providers: [
     StatusBar,

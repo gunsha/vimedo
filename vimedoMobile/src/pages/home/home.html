@@ -1,17 +1,20 @@
 <ion-header>
-  <ion-navbar>
-    <button ion-button menuToggle right>
-      <ion-icon name="menu"></ion-icon>
-    </button>
-    <ion-title>Home</ion-title>
+  <ion-navbar color="primary">
+    <ion-title >VIMEDO</ion-title>
   </ion-navbar>
 </ion-header>
 
 <ion-content padding>
   <ng-container *ngIf="!isPro">
-    <button ion-button full round icon-left (click)="newSol()">
-    <ion-icon name="add"></ion-icon>
-    Nueva Solicitud
+    <p style="color:#0068e9;font-size:36px;text-align:center;">¡Hola {{nombre}}!</p>
+    <p style="text-align:center;"><img src="assets/001-doctor.svg" alt=""></p>
+    <p style="font-size:20px;text-align:center;">
+        Estamos acá para que 
+        te sientas mejor. Solicitá la visita 
+        de un médico a domicilio.
+    </p>
+    <button ion-button full (click)="newSol()">
+    Solicitar médico
   </button>
   </ng-container>
   <ng-container *ngIf="isPro">

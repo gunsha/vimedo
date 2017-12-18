@@ -17,7 +17,7 @@ export class MessagesProvider {
 	}
 
 	connect(id, idu,iduTo) {
-		this.socket = io(this.config.apiEndpoint, { query: 'id=' + id + '&idu=' + idu +'&iduTo='+iduTo});
+		this.socket = io(this.config.apiEndpoint, { transports: ['websocket'],query: 'id=' + id + '&idu=' + idu +'&iduTo='+iduTo});
 		let that = this;
 		this.socket.on('connect', function () {
 			that.enterChat();
@@ -36,7 +36,8 @@ export class MessagesProvider {
 		this.socket.emit('socket/mensajeria/read');
 	}
 	disconnect() {
-		this.socket.disconnect();
+		if(this.socket)
+			this.socket.disconnect();
 	}
 
 	updateChat(id) {
