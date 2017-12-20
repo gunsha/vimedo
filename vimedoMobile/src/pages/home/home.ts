@@ -36,6 +36,7 @@ export class HomePage {
 
   getChats() {
     return this.msgs.getChats(this.id, this.isPro).then(data => {
+      this.mensajes = 0;
       data.forEach(element => {
         if(element.lastMsg && !element.lastMsg.read && element.lastMsg.from != this.id)
           this.mensajes++;

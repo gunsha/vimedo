@@ -1,6 +1,11 @@
 <ion-header>
   <ion-navbar color="primary">
     <ion-title>Perfil</ion-title>
+    <ion-buttons end>
+        <button ion-button icon-only (click)="presentActionSheet()">
+          <ion-icon name="more"></ion-icon>
+        </button>
+      </ion-buttons>
   </ion-navbar>
 </ion-header>
 
@@ -36,10 +41,7 @@
   </ion-list>
 </ion-content>
 <ion-footer padding>
-  <button ion-button full round icon-left (click)="update()">
-    Guardar
+  <button ion-button block outline icon-left (click)="update()">
+    Actualizar
   </button>
-  <button menuClose ion-button full round (click)="logout()">
-      Cerrar Sesión
-    </button>
 </ion-footer>

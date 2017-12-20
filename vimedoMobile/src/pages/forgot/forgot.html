@@ -1,0 +1,39 @@
+<ion-content class="forgot-content" padding>
+  <ion-row class="logo-row">
+    <ion-col style="    text-align: center;
+    font-size: 40px;
+    letter-spacing: 9.9px;
+    font-family: 'Roboto';
+    font-weight: 300;
+    color:white;">
+      <span>VIMEDO</span>
+    </ion-col>
+  </ion-row>
+  <ion-row class="desc">
+    <ion-col>
+        <p>¿Olvidaste la contraseña?</p>
+        <p>Te enviaremos a tu correo los pasos para recuperar tu contraseña. </p>
+    </ion-col>
+
+  </ion-row>
+  <div class="login-box">
+    <form (ngSubmit)="sendForgot()" #registerForm="ngForm" style="padding: 0 8%;">
+
+          <ion-list style="margin-bottom:10px;">
+            
+            <ion-item style="margin-bottom:5px;">
+              <ion-input type="text" placeholder="Correo electrónico " name="email" [(ngModel)]="registerCredentials.email" required></ion-input>
+            </ion-item>
+          </ion-list>
+
+      <ion-row>
+          <button ion-button class="submit-btn" block type="submit" [disabled]="!registerForm.form.valid" outline color="white">Recuperar contraseña</button>
+          </ion-row>
+          <ion-row>
+      </ion-row>
+    </form>
+  </div>
+</ion-content>
+<ion-footer>
+    <a ion-button class="register-btn" block clear (click)="login()" clear color="white">Iniciar Sesión</a>
+</ion-footer>

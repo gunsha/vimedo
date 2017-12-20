@@ -17,8 +17,8 @@
     </ion-refresher-content>
   </ion-refresher>
 <ion-list>
-    <button ion-item *ngFor="let item of chats" (click)="openChat(item)">
-      {{item.afiliado.personaFisica.nombre}} {{item.afiliado.personaFisica.apellido}}
+    <button ion-item *ngFor="let item of chats" (click)="openChat(item)" >
+        {{auth.isPro() ? item.afiliado.personaFisica.nombre +' '+ item.afiliado.personaFisica.apellido:item.profesional.personaFisica.nombre +' '+ item.profesional.personaFisica.apellido}}
       <p *ngIf="item.lastMsg">{{item.lastMsg.message}}</p>
       <div class="item-note" item-right>
       <ng-container *ngIf="item.lastMsg">

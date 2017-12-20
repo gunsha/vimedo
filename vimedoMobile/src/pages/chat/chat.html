@@ -1,9 +1,14 @@
 <ion-header>
 
   <ion-navbar color="primary">
-    <ion-title>chat</ion-title>
+    <ion-title>{{auth.isPro() ? c.afiliado.personaFisica.nombre +' '+ c.afiliado.personaFisica.apellido:c.profesional.personaFisica.nombre +' '+ c.profesional.personaFisica.apellido}}</ion-title>
+    <ion-buttons end>
+      <button ion-button icon-only (click)="presentActionSheet()">
+        <ion-icon name="more"></ion-icon>
+      </button>
+    </ion-buttons>
   </ion-navbar>
-
+  
 </ion-header>
 
 

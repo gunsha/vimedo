@@ -1,0 +1,25 @@
+page-forgot{
+
+    .forgot-content{
+        background-color: #0068e9;
+    }
+    .scroll-content {
+        overflow: hidden;
+      }
+      .logo-row{
+        margin-top: 65px;
+        margin-bottom: 60;
+      }
+      .desc{
+        text-align: center;
+        color: white;
+        p:first-child(){
+            font-size: 22px;
+            font-weight: 500;
+        }
+        p:last-child(){
+            font-size: 16px;
+        }
+      }
+
+}

@@ -14,6 +14,7 @@ import {SolicitudDetailPage} from '../pages/solicitud-detail/solicitud-detail';
 import {SolicitudCerrarPage} from '../pages/solicitud-cerrar/solicitud-cerrar';
 import { NuevaSolicitudPage } from '../pages/nueva-solicitud/nueva-solicitud';
 import {SintomasModalPage} from '../pages/sintomas-modal/sintomas-modal';
+import {ForgotPage} from '../pages/forgot/forgot';
 import { ChatPage } from '../pages/chat/chat';
 import { LoginPage } from '../pages/login/login';
 import { RegisterPage } from '../pages/register/register';
@@ -54,13 +55,15 @@ ChatPage,
 LoginPage,
 RegisterPage,
 RegisterStep2Page,
+ForgotPage,
 TabsPage
   ],
   imports: [
     BrowserModule,
     HttpModule,
     IonicModule.forRoot(Vimedo,{
-      backButtonText: 'Atras'}),
+      backButtonText: '',
+    backButtonIcon:'ios-arrow-dropleft'}),
     IonicStorageModule.forRoot(),
     AgmCoreModule.forRoot({
       apiKey: 'AIzaSyDoIklkBzmZOHP28l2znHtu3vxzjcaLqXI',
@@ -83,7 +86,8 @@ ChatPage,
 LoginPage,
 RegisterPage,
 RegisterStep2Page,
-TabsPage
+TabsPage,
+ForgotPage
   ],
   providers: [
     StatusBar,

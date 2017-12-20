@@ -1,56 +1,61 @@
 <ion-header>
 	<ion-navbar color="primary">
-		<ion-title>SolicitudDetail</ion-title>
+		<ion-title>Solicitud Médica</ion-title>
 	</ion-navbar>
 </ion-header>
 <ion-content padding>
-
-	<div class="row-fluid">
-		<b>Creado el</b>: {{s.fechaAlta | date: 'dd-MM-yyyy HH:MM'}}
-	</div>
-	<div class="row-fluid">
-		<b>Domicilio</b>: {{s.domicilio.calle + ' ' + s.domicilio.numero + ', ' + s.domicilio.localidad + ', ' + s.domicilio.provincia}}
-	</div>
-  
-  <div class="row-fluid">
-		<b>Sintomas</b>:
-		<ul>
+	<ion-card>
+		<ion-card-header *ngIf="isPro">
+			{{s.afiliado.personaFisica.nombre +' '+ s.afiliado.personaFisica.apellido}}
+		</ion-card-header>
+		<ion-card-header *ngIf="!isPro">
+				<p><strong>Profesional Asignado</strong></p>
+			<p>{{s.profesional ? s.profesional.personaFisica.nombre +' '+ s.profesional.personaFisica.apellido:'Pendiente'}}</p>
+			</ion-card-header>
+		<ion-card-content>
+			<p><strong>Fecha</strong></p>
+			<p>{{s.fechaAlta | date: 'dd-MM-yyyy HH:MM'}}</p>
+		</ion-card-content>
+		<ion-card-content>
+			<p><strong>Domicilio</strong></p>
+			<p>{{s.domicilio.calle + ' ' + s.domicilio.numero + ', ' + s.domicilio.localidad + ', ' + s.domicilio.provincia}}</p>
+		</ion-card-content>
+		<ion-card-content>
+			<p><strong>Tiempo de sintomas</strong></p>
+			<p>{{s.horasSintomas}} hs. {{s.minutosSintomas}} min.</p>
+		</ion-card-content>
+		<ion-card-content>
+			<p><strong>Sintomas</strong></p>
 			<ng-container *ngIf="s.sintomasCie.length != 0">
-				<li *ngFor="let sintoma of s.sintomasCie"> {{sintoma.dec10}}</li>
+				<p *ngFor="let sintoma of s.sintomasCie"> {{sintoma.dec10}}</p>
 			</ng-container>
 			<ng-container *ngIf="s.sintomas != '' ">
-				<li *ngFor="let sintoma of s.sintomas.split(',')"> {{sintoma}}</li>
+				<p *ngFor="let sintoma of s.sintomas.split(',')"> {{sintoma}}</p>
 			</ng-container>
-			<li *ngIf="s.sintomasCie.length == 0 && s.sintomas == ''">No se presentan sintomas.</li>
-		</ul>
-  </div>
-	<div class="row-fluid">
-		<b>Tiempo de sintomas</b>: {{s.horasSintomas}} hs. {{s.minutosSintomas}} min.
-	</div>
-	<div class="row-fluid">
-		<b>Antecedentes Medicos</b>:
-		<ul>
+			<p *ngIf="s.sintomasCie.length == 0 && s.sintomas == ''">No se presentan sintomas.</p>
+		</ion-card-content>
+		<ion-card-content>
+			<p><strong>Antecedentes</strong></p>
 			<ng-container *ngIf="s.antecedentesMedicosCie.length != 0">
-				<li *ngFor="let antecedentes of s.antecedentesMedicosCie"> {{antecedentes.dec10}}</li>
+				<p *ngFor="let antecedentes of s.antecedentesMedicosCie"> {{antecedentes.dec10}}</p>
 			</ng-container>
 			<ng-container *ngIf="s.antecedentesMedicos != ''">
-				<li *ngFor="let antecedentes of s.antecedentesMedicos.split(',')"> {{antecedentes}}</li>
+				<p *ngFor="let antecedentes of s.antecedentesMedicos.split(',')"> {{antecedentes}}</p>
 			</ng-container>
-      <li *ngIf="s.antecedentesMedicos == '' && s.antecedentesMedicosCie.length == 0">No se presentan antecedentes.</li>
-		</ul>
-	</div>
-	<br>
-	<div class="row-fluid" *ngIf="s.indicaciones">
-		<b>Indicaciones</b>: {{s.indicaciones}}
-	</div>
-<br>
-	<div class="row-fluid" *ngIf="s.observaciones">
-		<b>Observaciones</b>: {{s.observaciones}}
-	</div>
-
-<ng-container *ngIf="isPro">
-    <button ion-button full round icon-left (click)="confirmCloseSol()">
-    Cerrar Solicitud
-  </button>
-  </ng-container>
+			<p *ngIf="s.antecedentesMedicos == '' && s.antecedentesMedicosCie.length == 0">No se presentan antecedentes.</p>
+		</ion-card-content>
+		<ion-card-content *ngIf="s.indicaciones">
+			<p>Indicaciones</p>
+			<p>{{s.indicaciones}}</p>
+		</ion-card-content>
+		<ion-card-content *ngIf="s.observaciones">
+			<p>Observaciones</p>
+			<p>{{s.observaciones}}</p>
+		</ion-card-content>
+	</ion-card>
+	<ng-container *ngIf="isPro">
+		<button ion-button block icon-left outline (click)="confirmCloseSol()">
+		Cerrar Solicitud
+	  </button>
+	</ng-container>
 </ion-content>

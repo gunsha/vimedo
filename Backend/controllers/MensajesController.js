@@ -12,7 +12,17 @@ module.exports = {
         else
             find.afiliado = req.params.id;
         SolicitudMedicaModel.find(find)
-            .deepPopulate(["afiliado.personaFisica", "profesional.personaFisica"])
+            .deepPopulate([
+                "usuario",
+                "afiliado.personaFisica",
+                "domicilio",
+                "sintomasCie",
+                "antecedentesMedicosCie",
+                "profesional.especialidades",
+                "profesional.personaFisica.imagen",
+                "profesional.personaFisica.telefonos",
+                "profesional.personaFisica.domicilios",
+                "profesional.usuario"])
             .exec(function(err, sols) {
                 if (err) {
                     return res.status(406).json({

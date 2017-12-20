@@ -49,7 +49,11 @@ export class MensajesPage {
 
   getChats() {
     return this.msgs.getChats(this.id, this.auth.isPro()).then(data => {
-      this.chats = data;
+      this.chats = data.filter((item)=>{
+        if(item.profesional){
+          return item;
+        }
+      });
     })
 
   }

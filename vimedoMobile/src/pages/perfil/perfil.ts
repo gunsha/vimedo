@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { App } from 'ionic-angular';
-import { NavController, NavParams } from 'ionic-angular';
+import { ActionSheetController, NavController, NavParams } from 'ionic-angular';
 import { AuthService } from '../../providers/auth-service';
 import { LoginPage } from '../login/login';
 
@@ -10,7 +10,7 @@ import { LoginPage } from '../login/login';
 })
 export class PerfilPage {
   user: any = {};
-  constructor(private _app: App,public navCtrl: NavController, public navParams: NavParams, private auth: AuthService) {
+  constructor(private _app: App,public navCtrl: NavController, public navParams: NavParams, private auth: AuthService,public actionSheetCtrl: ActionSheetController) {
     this.user = auth.user;
     //console.log(this.user)
   }
@@ -26,6 +26,26 @@ export class PerfilPage {
     //const root = this._app.getRootNav();
     //root.popToRoot();
     this._app.getRootNavs()[0].setRoot(LoginPage);
+  }
+  presentActionSheet() {
+    
+    let actionSheet = this.actionSheetCtrl.create({
+      buttons: [
+        {
+          text: 'Cerrar Sesión',
+          handler: () => {
+            this.logout();
+          }
+        },{
+          text: 'Cancelar',
+          role: 'cancel',
+          handler: () => {
+            console.log('Cancel clicked');
+          }
+        }
+      ]
+    });
+    actionSheet.present();
   }
 
 }

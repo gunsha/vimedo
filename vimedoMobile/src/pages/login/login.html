@@ -25,7 +25,7 @@
 
       <ion-row>
         <ion-col>
-          <a ion-button class="register-btn" clear (click)="createAccount()" clear color="white">Olvidé contraseña</a>    
+          <a ion-button class="register-btn" clear (click)="forgot()" clear color="white">Olvidé contraseña</a>    
         </ion-col>
       <ion-col style="text-align:right">
           <a ion-button icon-only (click)="viewPass()">
@@ -36,9 +36,9 @@
       <ion-row>
           <button ion-button class="submit-btn" block type="submit" [disabled]="!registerForm.form.valid" outline color="white">Ingresar</button>
           </ion-row>
-          <ion-row>
-          <a ion-button class="register-btn" block clear (click)="createAccount()" clear color="white">Registrarse</a>
-      </ion-row>
     </form>
   </div>
 </ion-content>
+<ion-footer>
+    <a ion-button class="register-btn" block clear (click)="createAccount()" clear color="white">Registrarse</a>
+</ion-footer>

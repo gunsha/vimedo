@@ -5,3 +5,10 @@ cd vimedo/Frontend && gulp
 node bin/www
 mongod --dbpath=data --repair && mongod --dbpath=data --nojournal --rest "$@"
 cd vimedo/Frontend && gulp
+
+
+agregar a nginx para socket.io
+
+proxy_set_header Upgrade $http_upgrade;
+proxy_set_header Connection "upgrade";
+

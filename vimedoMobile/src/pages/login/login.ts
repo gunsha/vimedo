@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
-import { NavController} from 'ionic-angular';
+import { App,NavController} from 'ionic-angular';
 import { AuthService } from '../../providers/auth-service';
 import { HomePage } from '../home/home';
 import { RegisterPage } from '../register/register';
 import { TabsPage } from '../tabs/tabs';
+import { ForgotPage } from '../forgot/forgot';
 
 @Component({
   selector: 'page-login',
@@ -15,12 +16,16 @@ export class LoginPage {
   
   typePassword: string = "password";
 
-  constructor(private nav: NavController, private auth: AuthService) { 
+  constructor(private _app: App,private nav: NavController, private auth: AuthService) { 
       this.registerCredentials = {email : '', password : ''};
   }
  
   public createAccount() {
     this.nav.push(RegisterPage);
+  }
+
+  public forgot(){
+    this._app.getRootNavs()[0].setRoot(ForgotPage);
   }
  
   public login() {

@@ -1,8 +1,8 @@
 import { Component, ViewChild } from '@angular/core';
-import { NavController, NavParams, Content } from 'ionic-angular';
+import { NavController, NavParams, Content, ActionSheetController } from 'ionic-angular';
 import { MessagesProvider } from '../../providers/messages/messages';
 import { AuthService } from '../../providers/auth-service';
-
+import { SolicitudDetailPage } from '../solicitud-detail/solicitud-detail';
 
 @Component({
   selector: 'page-chat',
@@ -15,7 +15,7 @@ export class ChatPage {
   task: any;
 
   @ViewChild(Content) content: Content;
-  constructor(public navCtrl: NavController, public navParams: NavParams, public msgs: MessagesProvider, public auth: AuthService) {
+  constructor(public navCtrl: NavController, public navParams: NavParams, public msgs: MessagesProvider, public auth: AuthService,public actionSheetCtrl: ActionSheetController) {
     this.c = navParams.get('item');
     this.msgs.socketService.subscribe(event => {
       if (event.category === 'markRead') {
@@ -68,6 +68,40 @@ export class ChatPage {
     setTimeout(() => {
       this.content.scrollToBottom(300);
     });
+  }
+
+  presentActionSheet() {  
+    let buttons = [
+      {
+        text: 'Ver Solicitud',
+        handler: () => {
+          this.navCtrl.push(SolicitudDetailPage, { item: this.c, isPro: this.auth.isPro() });
+        }
+      },{
+        text: 'Reportar Conversación',
+        handler: () => {
+          console.log('Archive clicked');
+        }
+      },{
+        text: 'Cancelar',
+        role: 'cancel',
+        handler: () => {
+          console.log('Cancel clicked');
+        }
+      }
+    ];
+    if( !this.auth.isPro()){
+      buttons.splice(0,0,{
+        text: 'Ver perfil médico',
+        handler: () => {
+          console.log('Destructive clicked');
+        }
+      });
+    }
+    let actionSheet = this.actionSheetCtrl.create({
+      buttons: buttons
+    });
+    actionSheet.present();
   }
 
 }
