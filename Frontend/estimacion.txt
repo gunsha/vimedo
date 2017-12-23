@@ -58,8 +58,10 @@ maquetado nuevo
 landing - login 3hrs
 dashboard 8hrs
 20/10 4hrs
+mobile
 3/12 3hrs
-
+8hrs
+22/12 4hrs
 
 horas total 128 + 8 + 8
 horas pagadas 150 (al 10/10)
