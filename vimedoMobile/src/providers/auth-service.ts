@@ -26,6 +26,20 @@ export class AuthService {
         });
     });
   }
+  public forgot(user) {
+    return new Promise((resolve, reject) => {
+      var url = this.config.apiEndpoint + 'users/forgot';
+      /*
+      this.http.post(url, user)
+        .map(res => res.json())
+        .subscribe(() => {
+          resolve();
+        });
+      */
+      resolve();
+    });
+  }
+
   public register(user) {
     return new Promise((resolve, reject) => {
       var url = this.config.apiEndpoint + 'users/register';

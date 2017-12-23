@@ -1,17 +1,27 @@
 <ion-header>
-
+  
   <ion-navbar color="primary">
     <ion-title>nuevaSolicitud</ion-title>
   </ion-navbar>
-
+  
 </ion-header>
 <ion-content>
+ 
   <ion-item>
-    <ion-label>Domicilio</ion-label>
-    <ion-select [(ngModel)]="solicitud.domicilioSel" okText="Aceptar" cancelText="Cancelar">
-      <ion-option *ngFor="let dom of user.profile.domicilios" [value]="dom">{{dom.calle + ' ' + dom.numero }}</ion-option>
-    </ion-select>
-  </ion-item>
+<ion-label>Domicilio</ion-label>
+</ion-item>
+<ng-container *ngIf="checkDom.length != 0">
+
+  <ion-card *ngFor="let dom of checkDom;">
+    <ion-item>
+      <ion-checkbox (click)="selectDom(dom)" [checked]="dom.checked"></ion-checkbox>
+      <ion-label>{{dom.calle + ' ' + dom.numero +', '+ dom.localidad +', '+ dom.provincia}}</ion-label>
+    </ion-item>
+    
+  </ion-card>
+</ng-container>
+      
+ 
   <ion-item>
     <ion-label>Tiempo de sintomas</ion-label>
     <ion-datetime displayFormat="H:mm" pickerFormat="H mm" [(ngModel)]="tiempoSintomas" cancelText="Cancelar" doneText="Aceptar"></ion-datetime>

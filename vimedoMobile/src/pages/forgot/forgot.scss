@@ -1,5 +1,16 @@
 page-forgot{
 
+    .logo-row{
+        ion-col{
+            text-align: center;
+            font-size: 40px;
+            letter-spacing: 9.9px;
+            font-family: 'Roboto';
+            font-weight: 300;
+            color:white;
+        }
+    }
+
     .forgot-content{
         background-color: #0068e9;
     }

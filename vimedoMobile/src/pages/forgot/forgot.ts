@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../../providers/auth-service';
 import { LoginPage } from '../login/login';
-import { App } from 'ionic-angular';
+import { App,AlertController } from 'ionic-angular';
 
 @Component({
   selector: 'page-forgot',
@@ -12,12 +12,25 @@ export class ForgotPage {
   registerCredentials: { email: string};
   
 
-  constructor(private _app: App, private auth: AuthService) { 
+  constructor(private _app: App,public alertCtrl: AlertController, private auth: AuthService) { 
       this.registerCredentials = {email : ''};
   }
 
   sendForgot(){
-    this._app.getRootNavs()[0].setRoot(LoginPage);
+    let confirm = this.alertCtrl.create({
+      title: 'Se han enviado instrucciones a su correo electrónico.',
+      buttons: [
+        {
+          text: 'Aceptar',
+          handler: () => {
+            this._app.getRootNavs()[0].setRoot(LoginPage);
+          }
+        }
+      ]
+    });
+    this.auth.forgot(this.registerCredentials).then(()=>{
+      confirm.present();
+    })
   }
 
   login(){

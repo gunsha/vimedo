@@ -10,9 +10,21 @@ import { SolicitudService } from '../../providers/solicitud/solicitud';
 export class NuevaSolicitudPage {
   user: any;
   tiempoSintomas: any = '0:00';
-  solicitud: any = { antecedentes: [], sintomas: [] };
+  checkDom:any = [];
+  solicitud: any = { domicilioSel:{},antecedentes: [], sintomas: [] };
   constructor(public modalCtrl: ModalController, public auth: AuthService, public navCtrl: NavController, public alertCtrl: AlertController, public service: SolicitudService) {
     this.user = auth.getUser();
+    this.checkDom = this.user.profile.domicilios.map((item)=>{
+      item.checked = false;
+      return item;
+    })
+  }
+
+  selectDom(dom){
+    for(let i in this.checkDom){
+      this.checkDom[i].checked = this.checkDom[i]._id == dom._id;
+      this.solicitud.domicilioSel = this.checkDom[i]._id == dom._id ? dom : false;
+    }
   }
 
   buscarSintoma(type) {
