@@ -1,15 +1,16 @@
 angular.module('vimedo').controller('indexCtrl', ['$scope', '$rootScope', 'indexService', 'solicitudesService', 'profesionalesService', '$state', '$timeout', '$compile', 'NgMap', 'growl', indexCtrl]);
 
-function indexCtrl(s, r, indexService, solicitudesService, profesionalesService, $state, t, $compile, NgMap, growl) {
+function indexCtrl(s, r, indexService, solicitudesService, profesionalesService, state, t, $compile, NgMap, growl) {
 
     var vm = this;
-    vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyA02b574ia3BpLXpDZXU2gOFuQZTfC_Kks';
+    
     vm.profesionales = [];
     vm.profesionalesD = [];
     vm.profesionalesOrig = [];
     vm.solicitudes = [];
     vm.solicitudesOrig = [];
     vm.stats = {pending:0,active:0,available:0}
+    vm.selectedIndex = "0";
 
     vm.filterListS = function() {
         var lower = vm.queryS.toLowerCase();
@@ -50,29 +51,6 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
             });
     }
 
-    vm.centrarMapa = function(lat, lng) {
-        NgMap.getMap("map").then(function(map) {
-            var latlng = new google.maps.LatLng(lat, lng);
-            vm.map.setCenter(latlng);
-        });
-    };
-
-    vm.centerAndZoom = function() {
-        // NgMap.getMap("map").then(function(map) {
-            var bounds = new google.maps.LatLngBounds();
-            for (var i = 0; i < vm.latlngArray.length; i++) {
-                bounds.extend(vm.latlngArray[i]);
-            }
-            vm.map.fitBounds(bounds);
-        // });
-    };
-
-    vm.ocultarInfoWindows = function() {
-        for (var i = 0; i < vm.infowindows.length; i++) {
-            vm.infowindows[i].close();
-        }
-    };
-
     vm.initMap = function() {
         solicitudesService.listActive().then(function(response) {
             vm.solicitudes = response.map(function(item){
@@ -99,23 +77,24 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
 
     vm.initMap();
 
-    vm.asignarProfesional = function(id) {
-        vm.ocultarInfoWindows();
-        NgMap.getMap("map").then(function(map) {
-            vm.solicitudId = id;
-            vm.asignandoProfesional = true;
-            for (var i = 0; i < vm.solicitudesMarks.length; i++) {
-                var mark = vm.solicitudesMarks[i];
-                if (mark.solicitud._id != id) {
-                    mark.setMap(null);
-                }
-            }
-            for (var i = 0; i < vm.polylines.length; i++) {
-                var polyline = vm.polylines[i];
-                polyline.setMap(null);
-            }
-            vm.polylines = [];
-        });
+    vm.asignarProfesional = function() {
+        // vm.ocultarInfoWindows();
+        // NgMap.getMap("map").then(function(map) {
+        //     vm.solicitudId = id;
+        //     vm.asignandoProfesional = true;
+        //     for (var i = 0; i < vm.solicitudesMarks.length; i++) {
+        //         var mark = vm.solicitudesMarks[i];
+        //         if (mark.solicitud._id != id) {
+        //             mark.setMap(null);
+        //         }
+        //     }
+        //     for (var i = 0; i < vm.polylines.length; i++) {
+        //         var polyline = vm.polylines[i];
+        //         polyline.setMap(null);
+        //     }
+        //     vm.polylines = [];
+        // });
+        state.go('admin.mapa',{solicitud:vm.solicitudes[vm.selectedIndex]._id});
     };
 
     vm.vistaAsignarProfesional = function(id) {
@@ -141,8 +120,8 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
             growl.success('Profesional asignado.')
         });
     };
-    vm.finishSolicitud = function(s) {
-        vm.solSel = s;
+    vm.finishSolicitud = function() {
+        vm.solSel = vm.solicitudes[vm.selectedIndex];
         swal({
             title: 'Cerrar la solicitud?',
             type: 'warning',
@@ -197,69 +176,7 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         })
     };
 
-    function decodePolyline(str, precision) {
-        var index = 0,
-            lat = 0,
-            lng = 0,
-            coordinates = [],
-            shift = 0,
-            result = 0,
-            byte = null,
-            latitude_change,
-            longitude_change,
-            factor = Math.pow(10, precision || 5);
-
-        // Coordinates have variable length when encoded, so just keep
-        // track of whether we've hit the end of the string. In each
-        // loop iteration, a single coordinate is decoded.
-        while (index < str.length) {
-            {}
-
-            // Reset shift, result, and byte
-            byte = null;
-            shift = 0;
-            result = 0;
-
-            do {
-                byte = str.charCodeAt(index++) - 63;
-                result |= (byte & 0x1f) << shift;
-                shift += 5;
-            } while (byte >= 0x20);
-
-            latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
-
-            shift = result = 0;
-
-            do {
-                byte = str.charCodeAt(index++) - 63;
-                result |= (byte & 0x1f) << shift;
-                shift += 5;
-            } while (byte >= 0x20);
-
-            longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
-
-            lat += latitude_change;
-            lng += longitude_change;
-
-            coordinates.push({
-                lat: lat / factor,
-                lng: lng / factor
-            });
-        }
-
-        return coordinates;
-    };
-
-    var getColor = function() {
-        var letters = '0123456789ABCDEF';
-        var color = '#';
-        for (var i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
-    };
-
-    ///NUEVA SOLICITUD
+       ///NUEVA SOLICITUD
     vm.newSolicitudModal = '';
     vm.newSol = function() {
         vm.newSolicitud = {

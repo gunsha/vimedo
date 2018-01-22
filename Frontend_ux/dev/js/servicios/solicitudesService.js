@@ -2,6 +2,7 @@ angular.module('vimedo').factory('solicitudesService', ['$rootScope', '$http', s
 
 function solicitudesService(r, h) {
     var service = {
+        get:get,
         list: list,
         listActive: listActive,
         calcularRutaProfesional:calcularRutaProfesional,
@@ -15,6 +16,11 @@ function solicitudesService(r, h) {
     };
     return service;
 
+    function get(id) {
+        return h.get(apiRoute + '/solicitudesMedicas/'+id).then(function(resp) {
+            return resp.data;
+        });
+    }
     function list() {
         return h.get(apiRoute + '/solicitudesMedicas/').then(function(resp) {
             return resp.data;

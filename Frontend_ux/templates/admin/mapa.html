@@ -1,0 +1,97 @@
+<section class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h3 class="sm-text blue" style="font-weight: 100;">Paciente:{{ctrl.solSelected.afiliado.personaFisica.nombre}} {{ctrl.solSelected.afiliado.personaFisica.apellido}}</h3>
+    </div>
+    <div class="col-md-12">
+      <h3 class="md-text blue" style="font-weight: 100;">Médicos cercanos</h3>
+    </div>
+
+<div class="col-md-12">
+<div class="col-md-6">
+	<h3 class="md-text blue" style="font-weight: 100;">{{ctrl.proSelected.personaFisica.nombre}} {{ctrl.proSelected.personaFisica.apellido}}</h3>
+	<span>Agenda del Médico</span>
+	{{ctrl.proSelected}}
+</div>
+<div class="col-md-6">
+			<div >
+				<ng-map id="map" zoom="16" ng-init="ctrl.initMap()" ></ng-map>
+			</div>
+		</div>
+	</div>
+</div>
+</section>
+
+<div id="modalSol" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title">Selecci&oacute;n de solicitud</h4>
+				<div class="box-tools">
+					<div class="pull-right has-feedback">
+						<input type="text" class="form-control input-sm ng-pristine ng-valid ng-empty ng-touched" ng-model="ctrl.query" ng-change="ctrl.filterList();" placeholder="Filtrar">
+						<span class="glyphicon glyphicon-search form-control-feedback"></span>
+					</div>
+				</div>
+			</div>
+			<div class="modal-body">
+				<div class="box-group" id="accordionPro">
+					<!-- we are adding the .panel class so bootstrap.js collapse plugin detects it -->
+					<div class="panel" ng-repeat="s in ctrl.solicitudes track by $index" style="margin-bottom: 10px;">
+							<div class="box-header" style="padding: 2px;">
+								<h4 class="box-title">
+									<a data-toggle="collapse" data-parent="#accordion" data-target="#{{s._id}}" href="#" ng-click="ctrl.centrarMapa(s.domicilio.latitud, s.domicilio.longitud)">
+										{{s.afiliado.personaFisica.nombre}} {{s.afiliado.personaFisica.apellido}}
+										<small am-time-ago="s.fechaAlta"></small>
+									</a>
+								</h4>
+								<div class="box-tools pull-right" style="top: 0">
+									<span title="" class="badge" ng-class="{'bg-green':s.estado === 1,'bg-red':s.estado === 0}">{{getEstado(s.estado)}}</span>
+								</div>
+							</div>
+							<div id="{{s._id}}" class="panel-collapse collapse">
+								<div class="box-body">
+									<div class="row-fluid">
+										<b>Creado el</b>: {{s.fechaAlta | date: 'dd-MM-yyyy HH:MM'}}
+									</div>
+									<div class="row-fluid">
+									<b>Domicilio</b>: {{s.domicilio.calle + ' ' + s.domicilio.numero + ', ' + s.domicilio.localidad + ', ' + s.domicilio.provincia}}
+									</div>
+									<div class="row-fluid">
+										<b>Sintomas</b>:
+										<ul>
+											<li ng-if="s.sintomasCie.length != 0" ng-repeat="sintoma in s.sintomasCie"> {{sintoma.dec10}}</li>
+											<li ng-if="s.sintomas != '' " ng-repeat="sintoma in s.sintomas.split(',')"> {{sintoma}}</li>
+											<li ng-if="s.sintomasCie.length == 0 && s.sintomas == ''">No se presentan sintomas.</li>
+										</ul>
+									</div>
+									<div class="row-fluid">
+										<b>Tiempo de sintomas</b>: {{s.horasSintomas}} hs. {{s.minutosSintomas}} min.
+									</div>
+									<div class="row-fluid">
+										<b>Antecedentes Medicos</b>:
+										<ul>
+											<li ng-if="s.antecedentesMedicosCie.length != 0" ng-repeat="antecedentes in s.antecedentesMedicosCie"> {{antecedentes.dec10}}</li>
+											<li ng-if="s.antecedentesMedicos != ''" ng-repeat="antecedentes in s.antecedentesMedicos.split(',')"> {{antecedentes}}</li>
+											<li ng-if="s.antecedentesMedicos == '' && s.antecedentesMedicosCie.length == 0">No se presentan antecedentes.</li>
+										</ul>
+									</div>
+									<div class="row-fluid" ng-if="s.profesional">
+										<p><b>Profesional Asignado</b>:</p>
+										<p>{{s.profesional.personaFisica.nombre}} {{s.profesional.personaFisica.apellido}}</p>
+									</div>
+									<div class="row-fluid">
+										<div class="btn-group btn-block">
+											<button style="width: 50%;" class="btn btn-sm btn-success" ng-click="ctrl.selectSol(s)">{{!s.profesional ? 'Asignar':'Cambiar'}} Profesional</button>
+											<button style="width: 50%;" class="btn btn-sm btn-danger" ng-click="ctrl.finishSolicitud(s)">Cerrar Solicitud</button>
+										</div>
+
+									</div>
+								</div>
+							</div>
+						</div>
+				</div>
+			</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

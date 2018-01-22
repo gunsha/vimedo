@@ -19,7 +19,7 @@
                   <p>Profesionales disponibles</p>
                 </div>
                 <div class="col-md-3 col-sm-6 text-center">
-                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl"><i class="fa fa-plus"></i></button>
+                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl" ng-click="ctrl.newSol()"><i class="fa fa-plus"></i></button>
                   <p class="blue"><strong>NUEVA Solicitud</strong></p>
                 </div>
               </div>
@@ -33,19 +33,28 @@
                     <thead>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td at-implicit at-sortable at-attribute="nombreApellido" at-title="Nombre"></td>
-                        <td at-sortable at-attribute="fechaAlta" at-title="Tiempo en Espera"><span am-time-ago="item.fechaAlta"></span></td>
-                        <td at-title="Solicitud">{{getEstado(item.estado)}}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                      <tr ng-click="ctrl.selectedIndex = $index;">
+                        <td at-sortable at-attribute="nombreApellido" at-title="Nombre">
+                          <input type="radio" name="solicitudes" ng-value="$index" ng-model="ctrl.selectedIndex" />
+                          <a class="blue" ng-click="ctrl.showDetail(item)">
+
+                          {{item.nombreApellido}}</a></td>
+                          <td at-sortable at-attribute="fechaAlta" at-title="Tiempo en Espera"><span am-time-ago="item.fechaAlta"></span></td>
+                          <td at-title="Solicitud">{{getEstado(item.estado)}}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div class="panel-bottom">
+                      <button class="btn btn-primary" ng-click="ctrl.asignarProfesional()">Asignar Médico</button>
+                      <button class="btn btn-outline" ng-click="ctrl.finishSolicitud()">Cerrar solicitud</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="col-md-6">
-                <div class="panel" style="height: 600px"></div>
+                <div class="col-md-6">
+                  <div class="panel" style="height: 600px"></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
         <!-- /#page-wrapper -->
+        <modal-nueva-solicitud modal="ctrl.newSolicitudModal = modal" finish-action="ctrl.finishSaveSolicitud();" obj="ctrl.newSolicitud"></modal-nueva-solicitud>

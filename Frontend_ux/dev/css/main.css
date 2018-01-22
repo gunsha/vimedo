@@ -1,3 +1,19 @@
+.panel>.table-bordered a{
+  cursor: pointer;
+}
+.panel>.table-bordered>tbody>tr>td,.panel>.table-bordered>thead>tr>th{
+  border:none !important;
+  border-bottom: 1px solid #ddd !important;
+}
+.panel-bottom{
+  position: absolute;
+    bottom: 20px;
+    padding: 10px;
+}
+#map{
+  height: 500px;
+  width: 500px;
+}
 html, #wrapper, .container{
   font-family: Roboto;
   background-color: #ffffff;

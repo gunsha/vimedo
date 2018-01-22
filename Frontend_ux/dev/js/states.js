@@ -81,7 +81,7 @@ angular.module('vimedo')
                     }
             })
             .state('admin.mapa', {
-                url: 'mapa',
+                url: 'mapa/:solicitud',
                 views: {
                     'contentView@admin': {
                         templateUrl: 'templates/admin/mapa.html',
