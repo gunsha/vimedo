@@ -86,8 +86,8 @@ function mapaCtrl(r, s, mapaService, solicitudesService, profesionalesService, s
             solicitudesService.get(vm.solSelected).then(function(response) {
                 vm.solSelected = response;
                 solMarker();
-                vm.cargarProfesionales();
             });
+        vm.cargarProfesionales();
         });
 
         

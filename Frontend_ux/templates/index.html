@@ -104,7 +104,7 @@
                   <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     <div class="col-md-6 ">
-                    <h4 class="modal-title">Selecci&oacute;n de profesional</h4>
+                      <h4 class="modal-title">Selecciona Profesional</h4>
                     </div>
                     <div class="col-md-6 ">
                       <div class="pull-right has-feedback">
@@ -114,34 +114,21 @@
                     </div>
                   </div>
                   <div class="modal-body">
-                    <div class="box-group" id="accordionPro">
-                      <!-- we are adding the .panel class so bootstrap.js collapse plugin detects it -->
-                      <div class="panel box" ng-repeat="s in ctrl.profesionales track by $index" ng-class="{'box-success':s.estado === 1,'box-danger':s.estado === 0}">
-                        <div class="box-header with-border">
-                          <h4 class="box-title">
-                            <a data-toggle="collapse" data-parent="#accordionPro" data-target="#{{s._id}}" href="#">
-                              {{s.personaFisica.nombre}} {{s.personaFisica.apellido}} - Matricula: {{s.matricula}}
-                            </a>
-                          </h4>
-                          <div class="box-tools pull-right">
-                            <span title="" class="badge" ng-class="{'bg-green': true,'bg-red':false}">Disponible</span>
-                          </div>
-                        </div>
-                        <div id="{{s._id}}" class="panel-collapse collapse">
-                          <div class="box-body">
-                            <div class="row-fluid">
-                              <b>Especialidades</b>:
-                              <ul>
-                                <li ng-repeat="esp in s.especialidades"> {{esp.nombre}}</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                    <div class="box-group" >
+                      <table class="table">
+                        <tr ng-repeat="s in ctrl.profesionales track by $index" ng-click="ctrl.selectedIndexP = $index;">
+                          <td>
+                            <input type="radio" name="profesionales" ng-value="$index" ng-model="ctrl.selectedIndexP" />
+                            {{s.personaFisica.nombre}} {{s.personaFisica.apellido}} - Matricula: {{s.matricula}}
+                          </td>
+                          <td>{{s.solicitudesMedicas.length}} solicitud{{s.solicitudesMedicas.length!=1 ?'es':''}}</td>
+                          <td class="green">Disponible</td>
+                        </tr>
+                      </table>
                     </div>
                   </div>
                   <div class="modal-footer">
-                    <button class="btn btn-sm btn-primary" ng-click="ctrl.confirmarProfesional(s._id)">Asignar Profesional</button>
+                    <button class="btn btn-sm btn-primary" ng-click="ctrl.confirmarProfesional()">Asignar Profesional</button>
                     <button class="btn btn-sm btn-outline" ng-click="ctrl.verEnMapa()">Ver  médicos en  el mapa</button>
                   </div>
                 </div><!-- /.modal-content -->

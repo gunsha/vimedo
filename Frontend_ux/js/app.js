@@ -469,6 +469,7 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     vm.solicitudesOrig = [];
     vm.stats = {pending:0,active:0,available:0}
     vm.selectedIndex = "0";
+    vm.selectedIndexP = "0";
 
     vm.filterListS = function() {
         var lower = vm.queryS.toLowerCase();
@@ -510,6 +511,7 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     }
 
     vm.initMap = function() {
+        vm.stats = {pending:0,active:0,available:0}
         solicitudesService.listActive().then(function(response) {
             vm.solicitudes = response.map(function(item){
                 item.nombreApellido = item.afiliado.personaFisica.nombre +' '+ item.afiliado.personaFisica.apellido;
@@ -545,13 +547,13 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         vm.filterListP();
         $('#modalPro').modal();
     };
-    vm.confirmarProfesional = function(profesional) {
+    vm.confirmarProfesional = function() {
         var data = {
             solicitudMedica: {
                 _id: vm.solicitudId
             },
             profesional: {
-                _id: profesional
+                _id: vm.profesionales[vm.selectedIndexP]
             }
         };
         solicitudesService.setProfesional(data).then(function() {
@@ -562,54 +564,11 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         });
     };
 
-    vm.asignarProfesional = function() {
-
-        // vm.ocultarInfoWindows();
-        // NgMap.getMap("map").then(function(map) {
-        //     vm.solicitudId = id;
-        //     vm.asignandoProfesional = true;
-        //     for (var i = 0; i < vm.solicitudesMarks.length; i++) {
-        //         var mark = vm.solicitudesMarks[i];
-        //         if (mark.solicitud._id != id) {
-        //             mark.setMap(null);
-        //         }
-        //     }
-        //     for (var i = 0; i < vm.polylines.length; i++) {
-        //         var polyline = vm.polylines[i];
-        //         polyline.setMap(null);
-        //     }
-        //     vm.polylines = [];
-        // });
-        
-    };
     vm.verEnMapa = function(){
         $('.modal').modal('hide');
         state.go('admin.mapa',{solicitud:vm.solicitudes[vm.selectedIndex]._id});
     }
 
-    vm.vistaAsignarProfesional = function(id) {
-        vm.solicitudId = id;
-        vm.queryP = '';
-        vm.filterListP();
-        $('#modalPro').modal();
-    };
-    vm.confirmarProfesional = function(profesional) {
-        vm.ocultarInfoWindows();
-        var data = {
-            solicitudMedica: {
-                _id: vm.solicitudId
-            },
-            profesional: {
-                _id: profesional
-            }
-        };
-        solicitudesService.setProfesional(data).then(function() {
-            $('#modalPro').modal('hide');
-            $('.collapse').collapse('hide')
-            vm.initMap();
-            growl.success('Profesional asignado.')
-        });
-    };
     vm.finishSolicitud = function() {
         vm.solSel = vm.solicitudes[vm.selectedIndex];
         swal({
@@ -683,18 +642,6 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         vm.initMap();
         $(vm.newSolicitudModal).modal('hide');
     }
-}
-
-function asignarProfesional(data) {
-    var scope = angular.element('#accordion').scope();
-    if (scope && scope.ctrl)
-        scope.ctrl.asignarProfesional(data);
-}
-
-function confirmarProfesional(data) {
-    var scope = angular.element('#accordion').scope();
-    if (scope && scope.ctrl)
-        scope.ctrl.confirmarProfesional(data);
 }
 angular.module('vimedo').factory('navService', ['$rootScope',navService]);
 
@@ -1609,8 +1556,8 @@ function mapaCtrl(r, s, mapaService, solicitudesService, profesionalesService, s
             solicitudesService.get(vm.solSelected).then(function(response) {
                 vm.solSelected = response;
                 solMarker();
-                vm.cargarProfesionales();
             });
+        vm.cargarProfesionales();
         });
 
         
