@@ -55,13 +55,18 @@ tiempo estimado -viajes+tiempo de atencion
 
 maquetado nuevo
 
-landing - login 3hrs
+landing - login 4hrs
 dashboard 8hrs
-20/10 4hrs
+4hrs
+mapa-dashboard 8hrs
+6hrs
+
 mobile
-3/12 3hrs
 8hrs
-22/12 4hrs
+8hrs
+4hrs
+8hrs
+
 
 horas total 128 + 8 + 8
 horas pagadas 150 (al 10/10)

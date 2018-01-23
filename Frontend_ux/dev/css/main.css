@@ -1,3 +1,18 @@
+.mapa-detail{
+  width: 100%;
+}
+.mapa-detail tr{
+    font-size: 18px;
+    border-bottom: solid 3px #e0e0e0;
+    height: 40px;
+    color: #4a4a4a;
+}
+.mapa-detail tr>td:first-child{
+  text-align: left;
+}
+.mapa-detail tr>td:last-child{
+  text-align: right;
+}
 .panel>.table-bordered a{
   cursor: pointer;
 }

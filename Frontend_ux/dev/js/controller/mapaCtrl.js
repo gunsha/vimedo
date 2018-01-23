@@ -2,11 +2,16 @@ angular.module('vimedo').controller('mapaCtrl', ['$rootScope', '$scope', 'mapaSe
 
 function mapaCtrl(r, s, mapaService, solicitudesService, profesionalesService, state, NgMap, $compile) {
     var vm = this;
+    $('.modal-backdrop').remove();
     vm.googleMapsUrl = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyA02b574ia3BpLXpDZXU2gOFuQZTfC_Kks';
     vm.proSelected = {};
     vm.solSelected = state.params.solicitud;
     vm.solicitudes = [];
     vm.solicitudesOrig = [];
+    vm.distancia = '';
+    var directionsDisplay;
+    var directionsService = new google.maps.DirectionsService();
+
     vm.filterList = function() {
         var lower = vm.query.toLowerCase();
         vm.solicitudes = vm.solicitudesOrig
@@ -42,6 +47,20 @@ function mapaCtrl(r, s, mapaService, solicitudesService, profesionalesService, s
             vm.infowindows[i].close();
         }
     };
+    vm.calcularRutaProfesional = function(pos) {
+        var request = {
+            origin: pos,
+            destination: vm.solicitudesMarks[0].position,
+            travelMode: 'DRIVING'
+        };
+        directionsService.route(request, function(result, status) {
+            if (status == 'OK') {
+                vm.distancia = result.routes[0].legs[0].distance.text
+                directionsDisplay.setDirections(result);
+                s.$apply();
+            }
+        });
+    };
 
 
     vm.initMap = function() {
@@ -51,6 +70,10 @@ function mapaCtrl(r, s, mapaService, solicitudesService, profesionalesService, s
         vm.profesionalMark = [];
         vm.asignandoProfesional = false;
         vm.infowindows = [];
+        directionsDisplay = new google.maps.DirectionsRenderer({suppressMarkers: true});
+        NgMap.getMap("map").then(function(map) {
+            vm.map = map;
+            directionsDisplay.setMap(map);
         if (!vm.solSelected)
             solicitudesService.listActive().then(function(response) {
                 vm.solicitudes = response;
@@ -60,18 +83,17 @@ function mapaCtrl(r, s, mapaService, solicitudesService, profesionalesService, s
                 });
             });
         else
-        	solicitudesService.get(vm.solSelected).then(function(response) {
+            solicitudesService.get(vm.solSelected).then(function(response) {
                 vm.solSelected = response;
-            });
-        NgMap.getMap("map").then(function(map) {
-            vm.map = map;
-            if (vm.solSelected) {
                 solMarker();
-            }
+                vm.cargarProfesionales();
+            });
         });
+
+        
     }
 
-    function solMarker(sol) {
+    function solMarker() {
         var icon = client + "/img/green-dot.png";
         var latlng = new google.maps.LatLng(vm.solSelected.domicilio.latitud, vm.solSelected.domicilio.longitud);
         var mark = new google.maps.Marker({
@@ -81,7 +103,6 @@ function mapaCtrl(r, s, mapaService, solicitudesService, profesionalesService, s
         mark.setMap(vm.map);
         vm.map.setCenter(latlng);
         vm.solicitudesMarks.push(mark);
-        vm.cargarProfesionales();
     }
     vm.selectSol = function(sol) {
         vm.solSelected = sol;
@@ -91,6 +112,7 @@ function mapaCtrl(r, s, mapaService, solicitudesService, profesionalesService, s
     vm.selectPro = function() {
         vm.proSelected = this.profesional;
         s.$digest();
+        vm.calcularRutaProfesional(this.position);
     }
 
     vm.cargarProfesionales = function() {

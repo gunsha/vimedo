@@ -4,6 +4,7 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     var vm = this;
 
     vm.afiliados = [];
+    vm.solicitudes = [];
     vm.afiliadosOrg = [];
 
     vm.modalAfil = {};
@@ -15,12 +16,16 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     };
     vm.newActive = false;
     vm.editActive = false;
+    vm.viewActive = false;
 
     vm.cancelNew = function(){
         vm.newActive = false;        
     }
     vm.cancelEdit = function(){
         vm.editActive = false;        
+    }
+    vm.cancelView = function(){
+        vm.viewActive = false;        
     }
 
     NgMap.getMap().then(function(map) {
@@ -75,8 +80,17 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
 
         vm.viewAfil = function(afil) {
             vm.afilSel = afil;
-            $('#viewModal').modal();
+            vm.viewActive = true;
+            pacientesService.getHistorial(afil._id).then(function(data){
+                vm.solicitudes = data;
+            });
+            // $('#viewModal').modal();
         };
+
+        vm.viewHist = function(hist){
+            vm.histSel = hist;
+            $('#histModal').modal();
+        }
 
         vm.edit = function(item) {
             vm.afilSel = angular.copy(item);

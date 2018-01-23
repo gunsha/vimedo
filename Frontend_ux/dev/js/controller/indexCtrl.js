@@ -69,15 +69,43 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
 
     vm.cargarProfesionales = function() {
         profesionalesService.getList().then(function(data) {
-            vm.profesionales = data;
-            vm.profesionalesD = data;
-            vm.profesionalesOrig = data;
+            vm.profesionales = data.map(function(item){
+                item.nombreApellido = item.personaFisica.nombre +' '+ item.personaFisica.apellido;
+                vm.stats.available++;
+                return item;
+            });;
+            vm.profesionalesD = angular.copy(vm.profesionales);
+            vm.profesionalesOrig = angular.copy(vm.profesionales);
         });
     };
 
     vm.initMap();
 
+    vm.vistaAsignarProfesional = function() {
+        vm.solicitudId = vm.solicitudes[vm.selectedIndex]._id;
+        vm.queryP = '';
+        vm.filterListP();
+        $('#modalPro').modal();
+    };
+    vm.confirmarProfesional = function(profesional) {
+        var data = {
+            solicitudMedica: {
+                _id: vm.solicitudId
+            },
+            profesional: {
+                _id: profesional
+            }
+        };
+        solicitudesService.setProfesional(data).then(function() {
+            $('#modalPro').modal('hide');
+            $('.collapse').collapse('hide')
+            vm.initMap();
+            growl.success('Profesional asignado.')
+        });
+    };
+
     vm.asignarProfesional = function() {
+
         // vm.ocultarInfoWindows();
         // NgMap.getMap("map").then(function(map) {
         //     vm.solicitudId = id;
@@ -94,8 +122,12 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
         //     }
         //     vm.polylines = [];
         // });
-        state.go('admin.mapa',{solicitud:vm.solicitudes[vm.selectedIndex]._id});
+        
     };
+    vm.verEnMapa = function(){
+        $('.modal').modal('hide');
+        state.go('admin.mapa',{solicitud:vm.solicitudes[vm.selectedIndex]._id});
+    }
 
     vm.vistaAsignarProfesional = function(id) {
         vm.solicitudId = id;

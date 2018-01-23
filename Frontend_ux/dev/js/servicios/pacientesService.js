@@ -6,9 +6,16 @@ function pacientesService(r, h) {
         get: get,
         create: create,
         update: update,
-        remove: remove
+        remove: remove,
+        getHistorial: getHistorial
     };
     return service;
+
+    function getHistorial(id) {
+        return h.get(apiRoute + '/solicitudesMedicas/afiliado/'+id+'/historial').then(function(resp) {
+            return resp.data;
+        });
+    }
 
     function list() {
         return h.get(apiRoute + '/afiliados/').then(function(resp) {

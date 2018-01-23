@@ -3,7 +3,7 @@
             <div class="col-md-12">
               <div class="col-md-5">
                 <p class="lg-thin-text blue">Estado:</p>
-                <p class="md-text"><span class="blue">{{ctrl.solicitudes.length}}</span> <span style="font-weight: 100; color: #4a4a4a">solicitudes médicas</span></p>
+                <p class="md-text"><span class="blue">{{ctrl.solicitudesOrig.length}}</span> <span style="font-weight: 100; color: #4a4a4a">solicitudes médicas</span></p>
               </div>
               <div class="col-md-7 dashboard-btns">
                 <div class="col-md-3 col-sm-6 text-center">
@@ -29,6 +29,18 @@
             <div class="col-md-12">
               <div class="col-md-6">
                 <div class="panel" style="height: 600px">
+                  <div class="col-md-12">
+                    <div class="col-md-6">
+                      <h3 class="">Solicitudes Medicas</h3>
+                    </div>
+                    <div class="col-md-6 ">
+                      <div class="pull-right has-feedback" style="margin-top: 15px;">
+                        <input type="text" class="form-control input-sm ng-pristine ng-valid ng-empty ng-touched" ng-model="ctrl.queryS" ng-change="ctrl.filterListS();" placeholder="Buscar Afiliado">
+                        <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                      </div>
+                    </div>
+                  </div>
+
                   <table class="table table-bordered" at-table at-list="ctrl.solicitudes" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
                     <thead>
                     </thead>
@@ -45,16 +57,94 @@
                       </tbody>
                     </table>
                     <div class="panel-bottom">
-                      <button class="btn btn-primary" ng-click="ctrl.asignarProfesional()">Asignar Médico</button>
+                      <button class="btn btn-primary" ng-click="ctrl.vistaAsignarProfesional()">Asignar Médico</button>
                       <button class="btn btn-outline" ng-click="ctrl.finishSolicitud()">Cerrar solicitud</button>
                     </div>
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <div class="panel" style="height: 600px"></div>
+                  <div class="panel" style="height: 600px">
+                    <div class="col-md-12">
+                      <div class="col-md-6">
+                        <h3 class="">Profesionales Médicos</h3>
+                      </div>
+                      <div class="col-md-6 ">
+                        <div class="pull-right has-feedback" style="margin-top: 15px;">
+                          <input type="text" class="form-control input-sm ng-pristine ng-valid ng-empty ng-touched" ng-model="ctrl.queryP" ng-change="ctrl.filterListP();" placeholder="Buscar Profesional">
+                          <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                        </div>
+                      </div>
+                    </div>
+                    <table class="table table-bordered" at-table at-list="ctrl.profesionales" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
+                      <thead>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td at-sortable at-attribute="nombreApellido" at-title="Nombre">
+                            <a class="blue">
+                            {{item.nombreApellido}}</a></td>
+                            <td at-sortable at-title="Especialidad">{{item.especialidades[0].nombre}}</td>
+                            <td at-sortable at-title="Pacientes asignados">{{item.solicitudesMedicas.length}}</td>
+                            <td at-sortable at-title="Promedio por consulta"></td>
+                            <td at-sortable at-title="Solicitud"></td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        <!-- /#page-wrapper -->
-        <modal-nueva-solicitud modal="ctrl.newSolicitudModal = modal" finish-action="ctrl.finishSaveSolicitud();" obj="ctrl.newSolicitud"></modal-nueva-solicitud>
+            <!-- /#page-wrapper -->
+            <div id="modalPro" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <div class="col-md-6 ">
+                    <h4 class="modal-title">Selecci&oacute;n de profesional</h4>
+                    </div>
+                    <div class="col-md-6 ">
+                      <div class="pull-right has-feedback">
+                        <input type="text" class="form-control input-sm ng-pristine ng-valid ng-empty ng-touched" ng-model="ctrl.queryP" ng-change="ctrl.filterListP();" placeholder="Filtrar">
+                        <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-body">
+                    <div class="box-group" id="accordionPro">
+                      <!-- we are adding the .panel class so bootstrap.js collapse plugin detects it -->
+                      <div class="panel box" ng-repeat="s in ctrl.profesionales track by $index" ng-class="{'box-success':s.estado === 1,'box-danger':s.estado === 0}">
+                        <div class="box-header with-border">
+                          <h4 class="box-title">
+                            <a data-toggle="collapse" data-parent="#accordionPro" data-target="#{{s._id}}" href="#">
+                              {{s.personaFisica.nombre}} {{s.personaFisica.apellido}} - Matricula: {{s.matricula}}
+                            </a>
+                          </h4>
+                          <div class="box-tools pull-right">
+                            <span title="" class="badge" ng-class="{'bg-green': true,'bg-red':false}">Disponible</span>
+                          </div>
+                        </div>
+                        <div id="{{s._id}}" class="panel-collapse collapse">
+                          <div class="box-body">
+                            <div class="row-fluid">
+                              <b>Especialidades</b>:
+                              <ul>
+                                <li ng-repeat="esp in s.especialidades"> {{esp.nombre}}</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button class="btn btn-sm btn-primary" ng-click="ctrl.confirmarProfesional(s._id)">Asignar Profesional</button>
+                    <button class="btn btn-sm btn-outline" ng-click="ctrl.verEnMapa()">Ver  médicos en  el mapa</button>
+                  </div>
+                </div><!-- /.modal-content -->
+              </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
+            <modal-nueva-solicitud modal="ctrl.newSolicitudModal = modal" finish-action="ctrl.finishSaveSolicitud();" obj="ctrl.newSolicitud"></modal-nueva-solicitud>
