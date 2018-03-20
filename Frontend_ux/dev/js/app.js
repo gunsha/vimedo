@@ -1,9 +1,9 @@
 // var apiRoute = 'http://vimedo.gunsha.c9users.io:8080';
 // var client = "http://vimedo.gunsha.c9users.io:8081";
-// var apiRoute = 'http://localhost:3000';
-var apiRoute = 'http://apivimedo.us-east-1.elasticbeanstalk.com';
-var client = 'http://test.vimedo.com.s3-website-us-east-1.amazonaws.com';
-// var client = "http://localhost:3001";
+var apiRoute = 'http://localhost:3000';
+// var apiRoute = 'http://apivimedo.us-east-1.elasticbeanstalk.com';
+// var client = 'http://test.vimedo.com.s3-website-us-east-1.amazonaws.com';
+var client = "http://localhost:3001";
 
 angular.module('vimedo', ['ui.router', 'angular-jwt', 'angular-growl', 'angular-table', 'ngAvatar', 'blockUI', 'ngMap','ngAnimate','ui.bootstrap.datetimepicker','ui.bootstrap','angularMoment'])
     .run(['$rootScope', '$state', 'authManager', 'jwtHelper', '$anchorScroll', 'growl', function(r, s, authManager, jwtHelper, $anchorScroll, growl) {

@@ -3,6 +3,7 @@ import { App } from 'ionic-angular';
 import { ActionSheetController, NavController, NavParams } from 'ionic-angular';
 import { AuthService } from '../../providers/auth-service';
 import { LoginPage } from '../login/login';
+import { CardIO } from '@ionic-native/card-io';
 
 @Component({
   selector: 'page-perfil',
@@ -10,9 +11,28 @@ import { LoginPage } from '../login/login';
 })
 export class PerfilPage {
   user: any = {};
-  constructor(private _app: App,public navCtrl: NavController, public navParams: NavParams, private auth: AuthService,public actionSheetCtrl: ActionSheetController) {
+  constructor(private _app: App,public navCtrl: NavController, public navParams: NavParams, private auth: AuthService,public actionSheetCtrl: ActionSheetController, private cardIO: CardIO) {
     this.user = auth.user;
     //console.log(this.user)
+  }
+
+  scanCard(){
+    this.cardIO.canScan()
+  .then(
+    (res: boolean) => {
+      if(res){
+        let options = {
+          requireExpiry: false,
+          requireCVV: false,
+          requirePostalCode: false
+        };
+        
+        this.cardIO.scan(options).then((res: any) =>{
+          console.log(res);
+        });
+      }
+    }
+  );
   }
 
   update(){

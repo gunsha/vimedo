@@ -33,7 +33,7 @@ import { SolicitudService } from '../providers/solicitud/solicitud';
 import { HttpService } from '../providers/http-service/http-service';
 import { Http, HttpModule, RequestOptions, XHRBackend } from '@angular/http';
 import { AlertController, LoadingController } from 'ionic-angular';
-
+import { CardIO } from '@ionic-native/card-io';
 
 export function httpInterceptor(backend: XHRBackend, options: RequestOptions,alert:AlertController, loading:LoadingController) {
         return new HttpService(backend, options,alert,loading);
@@ -102,7 +102,8 @@ ForgotPage
     { provide: Http,
       useFactory: (httpInterceptor),
       deps: [XHRBackend, RequestOptions,AlertController, LoadingController]
-    }
+    },
+    CardIO
   ]
 })
 export class AppModule {}

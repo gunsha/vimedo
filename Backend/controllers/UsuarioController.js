@@ -11,20 +11,12 @@ var SolicitudMedicaModel = require('../models/SolicitudMedicaModel.js');
 var EspecialidadModel = require('../models/EspecialidadModel.js');
 var http = require('http');
 var Moment = require('moment');
-var nJwt = require('njwt');
+
+var jwt = require('jsonwebtoken');
+var tokenSecret = 'shared-secret';
+
 var Q = require('q');
-var secureRandom = require('secure-random');
 
-var signingKey = secureRandom(256, {
-    type: 'Buffer'
-}); // Create a highly random byte array of 256 bytes 
-
-/**
- * UsuarioController.js
- *
- * @description :: Server-side logic for managing Usuarios.
- 
- */
 module.exports = {
 
 
@@ -494,9 +486,9 @@ module.exports = {
                 usuario.save(function(err, usuario) {
                     if (err) {
                         var msg = err.errors.email.message ? err.errors.email.message : 'No se puede crear el usuario.';
-                            return res.status(406).json({
-                                message: msg
-                            });
+                        return res.status(406).json({
+                            message: msg
+                        });
                     } else {
                         var PersonaFisica = new PersonaFisicaModel({
                             nombre: personaFisicaRest.nombre,
@@ -700,21 +692,24 @@ module.exports = {
                     usuario.fechaLogin = Date.now();
 
                     usuario.save();
+
                     var usuarioTemp = usuario.toObject({
                         getters: true,
                         virtuals: false
                     });
+
                     AdminModel.findOne({
                         usuario: usuario._id
                     }).deepPopulate(["personaFisica"]).exec(function(err, admin) {
                         if (admin) {
-                            usuarioTemp.rolName = 'ADMIN';
+                            usuario.rolName = 'ADMIN';
                             map.usuario = usuarioTemp;
                             usuarioTemp.admin = admin;
-                            return res.json({
-                                jwt: nJwt.create({
+                            res.status(200).json({
+                                jwt: jwt.sign({
+                                    user: usuario,
                                     sub: map
-                                }, signingKey).setExpiration(new Date().getTime() + (24 * 60 * 60 * 1000)).compact()
+                                }, tokenSecret)
                             });
                         } else {
                             ProfesionalModel.findOne({
@@ -749,10 +744,11 @@ module.exports = {
                                                 if (grupoFamiliarResult) {
                                                     map.grupoFamiliar.afiliados = grupoFamiliarResult;
                                                 }
-                                                return res.json({
-                                                    jwt: nJwt.create({
+                                                res.status(200).json({
+                                                    jwt: jwt.sign({
+                                                        user: usuario,
                                                         sub: map
-                                                    }, signingKey).setExpiration(new Date().getTime() + (24 * 60 * 60 * 1000)).compact()
+                                                    }, tokenSecret)
                                                 });
                                             });
                                         });
@@ -764,10 +760,11 @@ module.exports = {
                                         virtuals: false
                                     });
                                     map.usuario = usuarioTemp;
-                                    return res.json({
-                                        jwt: nJwt.create({
+                                    res.status(200).json({
+                                        jwt: jwt.sign({
+                                            user: usuario,
                                             sub: map
-                                        }, signingKey).setExpiration(new Date().getTime() + (24 * 60 * 60 * 1000)).compact()
+                                        }, tokenSecret)
                                     });
                                 }
                             });
@@ -858,8 +855,8 @@ module.exports = {
                                     });
                                 } else {
                                     deferred.reject({
-                        message: 'Su usuario no esta habilitado para el uso de la aplicación.'
-                    });
+                                        message: 'Su usuario no esta habilitado para el uso de la aplicación.'
+                                    });
                                 }
                             });
                         } else {
