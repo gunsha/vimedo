@@ -59,7 +59,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(jwt({ secret: tokenSecret}).unless({path: ['/users/login','/users/register','/antecedentesMedicos/cieinsert']}));
+app.use(jwt({ secret: tokenSecret}).unless({path: ['/users/login','/users/register']}));
 
 app.use('/admin', admin);
 app.use('/afiliados', afiliados);

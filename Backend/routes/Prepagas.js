@@ -14,11 +14,11 @@ router.get('/:id', function (req, res) {
     TelefonoController.show(req, res);
 });
 
-
+*/
 router.post('/', function (req, res) {
-    TelefonoController.create(req, res);
+    PrepagaController.create(req, res);
 });
-
+/*
 
 router.put('/:id', function (req, res) {
     TelefonoController.update(req, res);

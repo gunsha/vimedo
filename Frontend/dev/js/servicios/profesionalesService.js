@@ -5,7 +5,8 @@ function profesionalesService(r, h) {
         getList: getList,
         coordenadas: coordenadas,
         create: create,
-        update: update
+        update: update,
+        especialidades: especialidades
     };
     return service;
 
@@ -29,6 +30,12 @@ function profesionalesService(r, h) {
     }
     function update(obj) {
         return h.put(apiRoute + '/profesionales/',obj).then(function(resp) {
+            return resp.data;
+        });
+    }
+
+    function especialidades() {
+        return h.get(apiRoute + '/especialidades/').then(function(resp) {
             return resp.data;
         });
     }

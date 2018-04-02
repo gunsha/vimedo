@@ -14,6 +14,11 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     vm.selectedIndexP = "0";
     
     var directionsService = new google.maps.DirectionsService();
+    vm.especialidades = [];
+    
+    profesionalesService.especialidades().then(function(data){
+        vm.especialidades = data;
+    })
     
     vm.filterListS = function() {
         var lower = vm.queryS.toLowerCase();

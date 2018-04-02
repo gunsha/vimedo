@@ -5,8 +5,9 @@ module.exports = {
 
 
     save: function (req, res) {
-    	var especialidad = new EspecialidadModel({
-    		nombre:req.body.nombre
+		for(var i = 0; i<req.body.length;i++){
+		var especialidad = new EspecialidadModel({
+    		nombre:req.body[i].nombre
     	});
     	especialidad.save(function (err,especialidad){
     		if (err){
@@ -15,10 +16,10 @@ module.exports = {
                     error: err
                 });
     		}
-    		else{
-    			return res.json(especialidad);
-    		}
-    	});
+    		
+		});
+	}
+		return res.status(200);
     },
 
     list: function (req, res) {

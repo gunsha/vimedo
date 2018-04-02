@@ -36,8 +36,7 @@ module.exports = {
                 }
                 return res.json(Cie10);
             });
-        }
-        ,
+        },
         create: function (req, res) {
             for(var i = 0; i<Cie10List.length;i++){
                 var cie10 = new Cie10Model({

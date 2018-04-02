@@ -16,7 +16,7 @@ module.exports = {
      * ProfesionalController.list()
      */
     list: function(req, res) {
-        ProfesionalModel.find({}).deepPopulate(["usuario", "personaFisica.domicilios", "personaFisica.telefonos", "especialidades"]).exec(function(err, Profesionals) {
+        ProfesionalModel.find({}).deepPopulate(["usuario", "personaFisica.domicilios", "personaFisica.telefonos", "especialidad"]).exec(function(err, Profesionals) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting Profesional.',
@@ -55,7 +55,7 @@ module.exports = {
         var id = req.params.id;
         ProfesionalModel.findOne({
             _id: id
-        }).deepPopulate(["usuario", "personaFisica.imagen", "personaFisica.domicilios", "personaFisica.telefonos", "especialidades"]).exec(function(err, Profesional) {
+        }).deepPopulate(["usuario", "personaFisica.imagen", "personaFisica.domicilios", "personaFisica.telefonos", "especialidad"]).exec(function(err, Profesional) {
             if (err) {
                 return res.status(500).json({
                     message: 'Error when getting Profesional.',
@@ -136,6 +136,7 @@ module.exports = {
                     }
 
                     Profesional.matricula = Profesional.matricula === req.body.matricula ? Profesional.matricula : req.body.matricula;
+                    Profesional.especialidad = req.body.especialidad;
                     // Profesional.id_usuario = req.body.id_usuario ? req.body.id_usuario : Profesional.id_usuario;
                     // Profesional.id_persona_fisica = req.body.id_persona_fisica ? req.body.id_persona_fisica : Profesional.id_persona_fisica;
 

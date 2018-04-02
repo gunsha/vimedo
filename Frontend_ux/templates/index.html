@@ -1,140 +1,139 @@
-        <div id="page-wrapper">
-          <div class="row" style="padding-top: 25px">
-            <div class="col-md-12">
-              <div class="col-md-5">
-                <p class="lg-thin-text blue">Estado:</p>
-                <p class="md-text"><span class="blue">{{ctrl.solicitudesOrig.length}}</span> <span style="font-weight: 100; color: #4a4a4a">solicitudes médicas</span></p>
+<div id="page-wrapper">
+  <div class="row" style="padding-top: 25px">
+    <div class="col-md-12">
+      <div class="col-md-5">
+        <p class="lg-thin-text blue">Estado:</p>
+        <p class="md-text"><span class="blue">{{ctrl.solicitudesOrig.length}}</span> <span style="font-weight: 100; color: #4a4a4a">solicitudes médicas</span></p>
+      </div>
+      <div class="col-md-7 dashboard-btns">
+        <div class="col-md-3 col-sm-6 text-center">
+          <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">{{ctrl.stats.pending}}</button>
+          <p>Solicitudes Pendientes</p>
+        </div>
+        <div class="col-md-3 col-sm-6 text-center">
+          <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">{{ctrl.stats.active}}</button>
+          <p>Solicitudes En Curso</p>
+        </div>
+        <div class="col-md-3 col-sm-6 text-center">
+          <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">{{ctrl.stats.available}}</button>
+          <p>Profesionales disponibles</p>
+        </div>
+        <div class="col-md-3 col-sm-6 text-center">
+          <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl" ng-click="ctrl.newSol()"><i class="fa fa-plus"></i></button>
+          <p class="blue"><strong>NUEVA Solicitud</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="col-md-6">
+        <div class="panel" style="height: 600px">
+          <div class="col-md-12">
+            <div class="col-md-6">
+              <h3 class="">Solicitudes Medicas</h3>
+            </div>
+            <div class="col-md-6 ">
+              <div class="pull-right has-feedback" style="margin-top: 15px;">
+                <input type="text" class="form-control input-sm ng-pristine ng-valid ng-empty ng-touched" ng-model="ctrl.queryS" ng-change="ctrl.filterListS();" placeholder="Buscar Afiliado">
+                <span class="glyphicon glyphicon-search form-control-feedback"></span>
               </div>
-              <div class="col-md-7 dashboard-btns">
-                <div class="col-md-3 col-sm-6 text-center">
-                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">{{ctrl.stats.pending}}</button>
-                  <p>Solicitudes Pendientes</p>
+            </div>
+          </div>
+          <table class="table table-bordered" at-table at-list="ctrl.solicitudes" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
+            <thead>
+            </thead>
+            <tbody>
+              <tr ng-click="ctrl.selectedIndex = $index;">
+                <td at-sortable at-attribute="nombreApellido" at-title="Nombre">
+                  <input type="radio" name="solicitudes" ng-value="$index" ng-model="ctrl.selectedIndex" />
+                  <a class="blue" ng-click="ctrl.showDetail(item)">
+                    
+                    {{item.nombreApellido}}</a></td>
+                    <td at-sortable at-attribute="fechaAlta" at-title="Tiempo en Espera"><span am-time-ago="item.fechaAlta"></span></td>
+                    <td at-title="Solicitud">{{getEstado(item.estado)}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="panel-bottom">
+                <button class="btn btn-primary" ng-click="ctrl.vistaAsignarProfesional()">Asignar Médico</button>
+                <button class="btn btn-outline" ng-click="ctrl.finishSolicitud()">Cerrar solicitud</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="panel" style="height: 600px">
+              <div class="col-md-12">
+                <div class="col-md-6">
+                  <h3 class="">Profesionales Médicos</h3>
                 </div>
-                <div class="col-md-3 col-sm-6 text-center">
-                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">{{ctrl.stats.active}}</button>
-                  <p>Solicitudes En Curso</p>
+                <div class="col-md-6 ">
+                  <div class="pull-right has-feedback" style="margin-top: 15px;">
+                    <input type="text" class="form-control input-sm ng-pristine ng-valid ng-empty ng-touched" ng-model="ctrl.queryP" ng-change="ctrl.filterListP();" placeholder="Buscar Profesional">
+                    <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                  </div>
                 </div>
-                <div class="col-md-3 col-sm-6 text-center">
-                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl">{{ctrl.stats.available}}</button>
-                  <p>Profesionales disponibles</p>
-                </div>
-                <div class="col-md-3 col-sm-6 text-center">
-                  <button type="button" class="btn btn-primary btn-circle btn-outline btn-xxl" ng-click="ctrl.newSol()"><i class="fa fa-plus"></i></button>
-                  <p class="blue"><strong>NUEVA Solicitud</strong></p>
+              </div>
+              <table class="table table-bordered" at-table at-list="ctrl.profesionales" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
+                <thead>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td at-sortable at-attribute="nombreApellido" at-title="Nombre">
+                      <a class="blue">
+                        {{item.nombreApellido}}</a></td>
+                        <td at-sortable at-title="Especialidad">{{item.especialidad.nombre}}</td>
+                        <td at-sortable at-title="Pacientes asignados">{{item.solicitudesMedicas.length}}</td>
+                        <td at-sortable at-title="Promedio por consulta"></td>
+                        <td at-sortable at-title="Solicitud"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  
+                  
                 </div>
               </div>
             </div>
           </div>
-          <div class="row">
-            <div class="col-md-12">
-              <div class="col-md-6">
-                <div class="panel" style="height: 600px">
-                  <div class="col-md-12">
-                    <div class="col-md-6">
-                      <h3 class="">Solicitudes Medicas</h3>
-                    </div>
-                    <div class="col-md-6 ">
-                      <div class="pull-right has-feedback" style="margin-top: 15px;">
-                        <input type="text" class="form-control input-sm ng-pristine ng-valid ng-empty ng-touched" ng-model="ctrl.queryS" ng-change="ctrl.filterListS();" placeholder="Buscar Afiliado">
-                        <span class="glyphicon glyphicon-search form-control-feedback"></span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <table class="table table-bordered" at-table at-list="ctrl.solicitudes" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
-                    <thead>
-                    </thead>
-                    <tbody>
-                      <tr ng-click="ctrl.selectedIndex = $index;">
-                        <td at-sortable at-attribute="nombreApellido" at-title="Nombre">
-                          <input type="radio" name="solicitudes" ng-value="$index" ng-model="ctrl.selectedIndex" />
-                          <a class="blue" ng-click="ctrl.showDetail(item)">
-
-                          {{item.nombreApellido}}</a></td>
-                          <td at-sortable at-attribute="fechaAlta" at-title="Tiempo en Espera"><span am-time-ago="item.fechaAlta"></span></td>
-                          <td at-title="Solicitud">{{getEstado(item.estado)}}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <div class="panel-bottom">
-                      <button class="btn btn-primary" ng-click="ctrl.vistaAsignarProfesional()">Asignar Médico</button>
-                      <button class="btn btn-outline" ng-click="ctrl.finishSolicitud()">Cerrar solicitud</button>
-                    </div>
-                  </div>
+        </div>
+        <!-- /#page-wrapper -->
+        <div id="modalPro" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <div class="col-md-6 ">
+                  <h4 class="modal-title">Selecciona Profesional</h4>
                 </div>
-                <div class="col-md-6">
-                  <div class="panel" style="height: 600px">
-                    <div class="col-md-12">
-                      <div class="col-md-6">
-                        <h3 class="">Profesionales Médicos</h3>
-                      </div>
-                      <div class="col-md-6 ">
-                        <div class="pull-right has-feedback" style="margin-top: 15px;">
-                          <input type="text" class="form-control input-sm ng-pristine ng-valid ng-empty ng-touched" ng-model="ctrl.queryP" ng-change="ctrl.filterListP();" placeholder="Buscar Profesional">
-                          <span class="glyphicon glyphicon-search form-control-feedback"></span>
-                        </div>
-                      </div>
-                    </div>
-                    <table class="table table-bordered" at-table at-list="ctrl.profesionales" at-config="ctrl.tableConfig" style="margin-top: 10px;" at-paginated>
-                      <thead>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td at-sortable at-attribute="nombreApellido" at-title="Nombre">
-                            <a class="blue">
-                            {{item.nombreApellido}}</a></td>
-                            <td at-sortable at-title="Especialidad">{{item.especialidades[0].nombre}}</td>
-                            <td at-sortable at-title="Pacientes asignados">{{item.solicitudesMedicas.length}}</td>
-                            <td at-sortable at-title="Promedio por consulta"></td>
-                            <td at-sortable at-title="Solicitud"></td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-
-                    </div>
+                <div class="col-md-6 ">
+                  <div class="pull-right has-feedback">
+                    <input type="text" class="form-control input-sm ng-pristine ng-valid ng-empty ng-touched" ng-model="ctrl.queryP" ng-change="ctrl.filterListP();" placeholder="Filtrar">
+                    <span class="glyphicon glyphicon-search form-control-feedback"></span>
                   </div>
                 </div>
               </div>
-            </div>
-            <!-- /#page-wrapper -->
-            <div id="modalPro" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static">
-              <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <div class="col-md-6 ">
-                      <h4 class="modal-title">Selecciona Profesional</h4>
-                    </div>
-                    <div class="col-md-6 ">
-                      <div class="pull-right has-feedback">
-                        <input type="text" class="form-control input-sm ng-pristine ng-valid ng-empty ng-touched" ng-model="ctrl.queryP" ng-change="ctrl.filterListP();" placeholder="Filtrar">
-                        <span class="glyphicon glyphicon-search form-control-feedback"></span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="modal-body">
-                    <div class="box-group" >
-                      <table class="table">
-                        <tr ng-repeat="s in ctrl.profesionales track by $index" ng-click="ctrl.selectedIndexP = $index;">
-                          <td>
-                            <input type="radio" name="profesionales" ng-value="$index" ng-model="ctrl.selectedIndexP" />
-                            {{s.personaFisica.nombre}} {{s.personaFisica.apellido}}
-                          </td>
-                          <td>
-                            demora: {{s.llegada}}
-                          </td>
-                          <td>{{s.solicitudesMedicas.length}} solicitud{{s.solicitudesMedicas.length!=1 ?'es':''}}</td>
-                          <td class="green">Disponible</td>
-                        </tr>
-                      </table>
-                    </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button class="btn btn-sm btn-primary" ng-click="ctrl.confirmarProfesional()">Asignar Profesional</button>
-                    <button class="btn btn-sm btn-outline" ng-click="ctrl.verEnMapa()">Ver  médicos en  el mapa</button>
-                  </div>
-                </div><!-- /.modal-content -->
-              </div><!-- /.modal-dialog -->
-            </div><!-- /.modal -->
-            <modal-nueva-solicitud modal="ctrl.newSolicitudModal = modal" finish-action="ctrl.finishSaveSolicitud();" obj="ctrl.newSolicitud"></modal-nueva-solicitud>
+              <div class="modal-body">
+                <div class="box-group" >
+                  <table class="table">
+                    <tr ng-repeat="s in ctrl.profesionales track by $index" ng-click="ctrl.selectedIndexP = $index;">
+                      <td>
+                        <input type="radio" name="profesionales" ng-value="$index" ng-model="ctrl.selectedIndexP" />
+                        {{s.personaFisica.nombre}} {{s.personaFisica.apellido}}
+                      </td>
+                      <td>
+                        demora: {{s.llegada}}
+                      </td>
+                      <td>{{s.solicitudesMedicas.length}} solicitud{{s.solicitudesMedicas.length!=1 ?'es':''}}</td>
+                      <td class="green">Disponible</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-sm btn-primary" ng-click="ctrl.confirmarProfesional()">Asignar Profesional</button>
+                <button class="btn btn-sm btn-outline" ng-click="ctrl.verEnMapa()">Ver  médicos en  el mapa</button>
+              </div>
+            </div><!-- /.modal-content -->
+          </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+        <modal-nueva-solicitud modal="ctrl.newSolicitudModal = modal" finish-action="ctrl.finishSaveSolicitud();" obj="ctrl.newSolicitud"></modal-nueva-solicitud>
