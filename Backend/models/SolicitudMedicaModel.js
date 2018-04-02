@@ -29,6 +29,8 @@ var SolicitudMedicaSchema = new Schema({
 		ref:'Domicilio'
 	},
 	'fechaAlta':Date,
+	'fechaAsignacion':Date,
+	'fechaEstimadaLlegada':Date,
 	'fechaModificacion':Date,
 	'latitud':String,
 	'longitud':String,

@@ -2,14 +2,13 @@ angular.module('vimedo').controller('pacientesCtrl', ['$rootScope', 'pacientesSe
 
 function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     var vm = this;
-
+    
     vm.afiliados = [];
     vm.solicitudes = [];
     vm.afiliadosOrg = [];
-
-    vm.modalAfil = {};
+    
     vm.afilSel = {};
-
+    
     vm.tableConfig = {
         maxPages: "10",
         itemsPerPage: "10"
@@ -17,7 +16,7 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     vm.newActive = false;
     vm.editActive = false;
     vm.viewActive = false;
-
+    
     vm.cancelNew = function(){
         vm.newActive = false;        
     }
@@ -27,57 +26,45 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     vm.cancelView = function(){
         vm.viewActive = false;        
     }
-
+    
     NgMap.getMap().then(function(map) {
         vm.map = map;
     });
-
+    
     vm.filterList = function() {
         var lower = vm.query.toLowerCase();
         vm.afiliados = vm.afiliadosOrg
         .filter(function(i) {
             if (i.personaFisica &&
                 (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
-                    i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
-                    i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
-                return i;
+                i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
+                    return i;
+                }
+            });
         }
-    });
-    }
-
-    vm.updateList = function() {
-        pacientesService.list().then(function(data) {
-            vm.afiliados = data;
-            vm.afiliadosOrg = data;
-        });
-    }
-    vm.removeDom = function(index) {
-        if (vm.modalAfil.afiliado)
-            vm.modalAfil.afiliado.domicilios.splice(index, 1);
-        else
+        
+        vm.updateList = function() {
+            pacientesService.list().then(function(data) {
+                vm.afiliados = data;
+                vm.afiliadosOrg = data;
+            });
+        }
+        vm.removeDom = function(index) {
             vm.afilSel.personaFisica.domicilios.splice(index, 1);
-    };
-
-    vm.addTel = function() {
-        if (vm.modalAfil.afiliado) {
-            if(vm.modalAfil.afiliado.telefono && vm.modalAfil.afiliado.telefono !== ''){    
-                vm.modalAfil.afiliado.telefonosA.push(vm.modalAfil.afiliado.telefono);
-                vm.modalAfil.afiliado.telefono = '';
-            }
-        } else{
-            if(vm.afilSel.personaFisica.telefono && vm.afilSel.personaFisica.telefono !== ''){
+        };
+        
+        vm.addTel = function() {
+            if(vm.afilSel.personaFisica.telefono && vm.afilSel.personaFisica.telefono !== ''){    
                 vm.afilSel.personaFisica.telefonosA.push(vm.afilSel.personaFisica.telefono);
-                vm.afilSel.personaFisica.telefono = '';}
+                vm.afilSel.personaFisica.telefono = '';
             }
         };
-
+        
         vm.removeTel = function(index) {
-            if (vm.modalAfil.afiliado)
-                vm.modalAfil.afiliado.telefonosA.splice(index, 1);
-            else
-                vm.afilSel.personaFisica.telefonosA.splice(index, 1);
+            vm.afilSel.personaFisica.telefonosA.splice(index, 1);
         };
-
+        
         vm.viewAfil = function(afil) {
             vm.afilSel = afil;
             vm.viewActive = true;
@@ -86,20 +73,20 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
             });
             // $('#viewModal').modal();
         };
-
+        
         vm.viewHist = function(hist){
             vm.histSel = hist;
             $('#histModal').modal();
         }
-
+        
         vm.edit = function(item) {
             vm.afilSel = angular.copy(item);
             if (vm.afilSel.personaFisica.telefonos)
-                vm.afilSel.personaFisica.telefonosA = vm.afilSel.personaFisica.telefonos.split(',');
+            vm.afilSel.personaFisica.telefonosA = vm.afilSel.personaFisica.telefonos.split(',');
             else
-                vm.afilSel.personaFisica.telefonosA = [];
+            vm.afilSel.personaFisica.telefonosA = [];
             if (vm.afilSel.personaFisica.fechaNacimiento)
-                vm.afilSel.personaFisica.nacimiento = new Date(vm.afilSel.personaFisica.fechaNacimiento);
+            vm.afilSel.personaFisica.nacimiento = new Date(vm.afilSel.personaFisica.fechaNacimiento);
             vm.editActive = true;
         };
         vm.saveEdit = function() {
@@ -124,75 +111,36 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
                 growl.error("Ingrese al menos un telefono.");
             }
             return false;
-
+            
         }
-
+        
         vm.saveAfil = function() {
             if (vm.validateSave()) {
-                vm.modalAfil.afiliado.telefonos = vm.modalAfil.afiliado.telefonosA.toString();
-                pacientesService.create(vm.modalAfil).then(function(data) {
-                    vm.modalAfil = {};
+                vm.afilSel.personaFisica.telefonos = vm.afilSel.personaFisica.telefonosA.toString();
+                pacientesService.create(vm.afilSel).then(function(data) {
+                    vm.afilSel = {};
                     vm.newActive = false;
                     vm.updateList();
                 })
             }
         };
-
+        
         vm.newAfil = function() {
-        // MapManager.autocomplete('newDireccion');
-        vm.modalAfil = {
-            afiliado: {
-                domicilios: [],
-                telefonosA: []
-            }
+            // MapManager.autocomplete('newDireccion');
+            vm.afilSel = {
+                personaFisica: {
+                    domicilios: [],
+                    telefonosA: []
+                }
+            };
+            vm.newActive = true;
         };
-        $('#newModal').modal();
-    };
-
-    vm.placeChanged = function() {
-        var place = this.getPlace();
-        var componentForm = {
-            street_number: {
-                type: 'short_name',
-                name: 'numero'
-            },
-            route: {
-                type: 'long_name',
-                name: 'calle'
-            },
-            locality: {
-                type: 'short_name',
-                name: 'localidad'
-            },
-            administrative_area_level_1: {
-                type: 'long_name',
-                name: 'provincia'
-            },
-            country: {
-                type: 'long_name',
-                name: 'pais'
-            },
-            postal_code: {
-                type: 'short_name',
-                name: 'cp'
-            }
-        };
-        // console.log(vm.place);
-        var direccion = {};
-        for (var i = 0; i < place.address_components.length; i++) {
-            var addressType = place.address_components[i].types[0];
-            if (componentForm[addressType]) {
-                var val = place.address_components[i][componentForm[addressType].type];
-                // document.getElementById(addressType).value = val;
-                direccion[componentForm[addressType].name] = val;
-            }
+        
+        vm.placeChanged = function() {
+            if(!vm.afilSel.personaFisica.domicilios)
+            vm.afilSel.personaFisica.domicilios = [];
+            vm.afilSel.personaFisica.domicilios.push(getDireccion(this.getPlace()));
+            vm.afilDir = '';
         }
-        direccion.latitud = place.geometry.location.lat();
-        direccion.longitud = place.geometry.location.lng();
-        direccion.coordenadas = place.geometry.location.lat() + ',' + place.geometry.location.lng();
-        vm.modalAfil.afiliado.domicilios.push(direccion);
-        vm.afilDir = '';
-
+        vm.updateList();
     }
-    vm.updateList();
-}

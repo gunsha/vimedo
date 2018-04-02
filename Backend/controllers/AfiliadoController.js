@@ -145,7 +145,7 @@ module.exports = {
                                         message: 'No such PersonaFisica'
                                     });
                                 }
-                                var fields = ['nombre', 'apellido', 'fechaNacimiento', 'nro_documento', 'telefonos'];
+                                var fields = ['nombre', 'apellido', 'fechaNacimiento', 'nroDocumento', 'telefonos'];
 
                                 for (var i = 0; i < fields.length; i++) {
                                     PersonaFisica[fields[i]] = PersonaFisica[fields[i]] === req.body.personaFisica[fields[i]] ? PersonaFisica[fields[i]] : req.body.personaFisica[fields[i]];

@@ -48,20 +48,21 @@ function mapaCtrl(r, s, mapaService, solicitudesService, profesionalesService, s
         }
     };
     vm.calcularRutaProfesional = function(pos) {
-        var request = {
-            origin: pos,
-            destination: vm.solicitudesMarks[0].position,
-            travelMode: 'DRIVING'
-        };
-        directionsService.route(request, function(result, status) {
+        directionsService.route(_getRequestRuta(vm.solSelected,vm.proSelected), function(result, status) {
             if (status == 'OK') {
-                vm.distancia = result.routes[0].legs[0].distance.text
+                
+                var ruta = result.routes[0].legs;
+                var distanciaSegundos = 0;
+                for (var i = 0; i < ruta.length; i++) {
+                    distanciaSegundos += ruta[i].duration.value;
+                    var horaLlegada = new Date((new Date()).getTime()+(distanciaSegundos*1000));   
+                    console.log(horaLlegada)
+                }
                 directionsDisplay.setDirections(result);
                 s.$apply();
             }
         });
     };
-
 
     vm.initMap = function() {
         vm.polylines = [];

@@ -1,3 +1,101 @@
+var componentForm = {
+    street_number: {
+        type: 'short_name',
+        name: 'numero'
+    },
+    route: {
+        type: 'long_name',
+        name: 'calle'
+    },
+    locality: {
+        type: 'short_name',
+        name: 'localidad'
+    },
+    administrative_area_level_1: {
+        type: 'long_name',
+        name: 'provincia'
+    },
+    country: {
+        type: 'long_name',
+        name: 'pais'
+    },
+    postal_code: {
+        type: 'short_name',
+        name: 'cp'
+    },
+    sublocality_level_1:{
+        type: 'short_name',
+        name: 'localidad'
+    }
+};
+
+var visitaPromedio = 30;
+
+function _getDemoraTime(segundos,visita,solicitudes){
+    if(!visita)
+        visita = visitaPromedio;
+    if(!solicitudes)
+        solicitudes = 0;
+    if(solicitudes>1){
+        segundos += (visita*solicitudes)*60
+    }
+
+    var minutosTotales = segundos/60;
+    var horas = Math.floor(minutosTotales/60);
+    var minutos = Math.floor(minutosTotales%60);
+    return [segundos,(horas>0 ? horas + 'h ':' ')+(minutos>0?minutos+'m ':'')]
+}
+
+function _getRequestRuta(solicitud,profesional){
+    var latlng = new google.maps.LatLng(solicitud.domicilio.latitud, solicitud.domicilio.longitud);
+        var ultimoDomicilio;
+        var wps = [];
+
+        wps.push({
+            location: new google.maps.LatLng(profesional.personaFisica.domicilios[0].latitud, profesional.personaFisica.domicilios[0].longitud),
+            stopover: false
+        })
+
+        if(profesional.solicitudesMedicas.length != 0){
+            var solicitudes = profesional.solicitudesMedicas;
+            for (var i = 0; i < solicitudes.length; i++) {
+                wps.push({
+                    location: new google.maps.LatLng(solicitudes[i].domicilio.latitud, solicitudes[i].domicilio.longitud),
+                    stopover: true
+                })
+            }
+        }
+
+        wps.push({
+            location: latlng,
+            stopover: true
+        })
+
+        return {
+            origin: wps[0].location,
+            destination: wps[wps.length-1].location,
+            waypoints: wps,
+            optimizeWaypoints: false,
+            travelMode: google.maps.TravelMode.DRIVING
+          };
+}
+
+function getDireccion(place){
+    var direccion = {};
+    for (var i = 0; i < place.address_components.length; i++) {
+        var addressType = place.address_components[i].types[0];
+        if (componentForm[addressType]) {
+            var val = place.address_components[i][componentForm[addressType].type];
+            // document.getElementById(addressType).value = val;
+            direccion[componentForm[addressType].name] = val;
+        }
+    }
+    direccion.latitud = place.geometry.location.lat();
+    direccion.longitud = place.geometry.location.lng();
+    direccion.coordenadas = place.geometry.location.lat() + ',' + place.geometry.location.lng();
+    return direccion;
+}
+
 var monthsShortDot$1 = 'ene._feb._mar._abr._may._jun._jul._ago._sep._oct._nov._dic.'.split('_');
 var monthsShort$2 = 'ene_feb_mar_abr_may_jun_jul_ago_sep_oct_nov_dic'.split('_');
 
@@ -459,7 +557,7 @@ function indexService(r,h) {
 angular.module('vimedo').controller('indexCtrl', ['$scope', '$rootScope', 'indexService', 'solicitudesService', 'profesionalesService', '$state', '$timeout', '$compile', 'NgMap', 'growl', indexCtrl]);
 
 function indexCtrl(s, r, indexService, solicitudesService, profesionalesService, state, t, $compile, NgMap, growl) {
-
+    
     var vm = this;
     
     vm.profesionales = [];
@@ -470,179 +568,210 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     vm.stats = {pending:0,active:0,available:0}
     vm.selectedIndex = "0";
     vm.selectedIndexP = "0";
-
+    
+    var directionsService = new google.maps.DirectionsService();
+    
     vm.filterListS = function() {
         var lower = vm.queryS.toLowerCase();
         vm.solicitudes = vm.solicitudesOrig
-            .filter(function(i) {
-                if (i.afiliado.personaFisica &&
-                    (i.afiliado.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
-                        i.afiliado.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
-                        i.afiliado.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
+        .filter(function(i) {
+            if (i.afiliado.personaFisica &&
+                (i.afiliado.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
+                i.afiliado.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                i.afiliado.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
                     return i;
                 }
             });
-    }
-    vm.filterListP = function() {
-        var lower = vm.queryP.toLowerCase();
-        vm.profesionales = vm.profesionalesOrig
-            .filter(function(i) {
-                if (i.personaFisica &&
-                    (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
-                        i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
-                        i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) ||
-                    i.matricula.toLowerCase().indexOf(lower) !== -1) {
-                    return i;
-                }
-            });
-    }
-    vm.filterListPD = function() {
-        var lower = vm.queryPD.toLowerCase();
-        vm.profesionalesD = vm.profesionalesOrig
+        }
+        vm.filterListP = function() {
+            var lower = vm.queryP.toLowerCase();
+            vm.profesionales = vm.profesionalesOrig
             .filter(function(i) {
                 if (i.personaFisica &&
                     (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
-                        i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
-                        i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) ||
+                    i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                    i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) ||
                     i.matricula.toLowerCase().indexOf(lower) !== -1) {
-                    return i;
-                }
-            });
-    }
-
-    vm.initMap = function() {
-        vm.stats = {pending:0,active:0,available:0}
-        solicitudesService.listActive().then(function(response) {
-            vm.solicitudes = response.map(function(item){
-                item.nombreApellido = item.afiliado.personaFisica.nombre +' '+ item.afiliado.personaFisica.apellido;
-                if(item.estado === 0)
-                    vm.stats.pending++;
-                if(item.estado === 1)
-                    vm.stats.active++;
-                return item;
-            });
-            vm.solicitudesOrig = angular.copy(vm.solicitudes);
-        });
-        vm.cargarProfesionales();
-    }
-
-
-    vm.cargarProfesionales = function() {
-        profesionalesService.getList().then(function(data) {
-            vm.profesionales = data.map(function(item){
-                item.nombreApellido = item.personaFisica.nombre +' '+ item.personaFisica.apellido;
-                vm.stats.available++;
-                return item;
-            });;
-            vm.profesionalesD = angular.copy(vm.profesionales);
-            vm.profesionalesOrig = angular.copy(vm.profesionales);
-        });
-    };
-
-    vm.initMap();
-
-    vm.vistaAsignarProfesional = function() {
-        vm.solicitudId = vm.solicitudes[vm.selectedIndex]._id;
-        vm.queryP = '';
-        vm.filterListP();
-        $('#modalPro').modal();
-    };
-    vm.confirmarProfesional = function() {
-        var data = {
-            solicitudMedica: {
-                _id: vm.solicitudId
-            },
-            profesional: {
-                _id: vm.profesionales[vm.selectedIndexP]
+                        return i;
+                    }
+                });
             }
-        };
-        solicitudesService.setProfesional(data).then(function() {
-            $('#modalPro').modal('hide');
-            $('.collapse').collapse('hide')
-            vm.initMap();
-            growl.success('Profesional asignado.')
-        });
-    };
-
-    vm.verEnMapa = function(){
-        $('.modal').modal('hide');
-        state.go('admin.mapa',{solicitud:vm.solicitudes[vm.selectedIndex]._id});
-    }
-
-    vm.finishSolicitud = function() {
-        vm.solSel = vm.solicitudes[vm.selectedIndex];
-        swal({
-            title: 'Cerrar la solicitud?',
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Aceptar'
-        }).then(function() {
-            swal.setDefaults({
-                input: 'text',
-                confirmButtonText: 'Siguiente &rarr;',
-                showCancelButton: true,
-                animation: true,
-                progressSteps: ['1', '2']
-            })
-
-            var steps = [{
-                title: 'Indicaciones',
-                text: 'Indicaciones para el paciente'
-            }, {
-                title: 'Observaciones',
-                text: 'Obsrvaciones de la visita'
-            }]
-            swal.queue(steps).then(function(result) {
-                swal.resetDefaults();
-                vm.solSel.indicaciones = result[0];
-                vm.solSel.observaciones = result[1];
-                solicitudesService.finalizar(vm.solSel).then(function() {
-                    swal({
-                        text: 'La solicitud ha sido cerrada.',
-                        type: 'success',
-                        showCancelButton: false,
-                        confirmButtonColor: '#3085d6',
-                        confirmButtonText: 'Aceptar'
+            vm.filterListPD = function() {
+                var lower = vm.queryPD.toLowerCase();
+                vm.profesionalesD = vm.profesionalesOrig
+                .filter(function(i) {
+                    if (i.personaFisica &&
+                        (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
+                        i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                        i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1) ||
+                        i.matricula.toLowerCase().indexOf(lower) !== -1) {
+                            return i;
+                        }
                     });
+                }
+                
+                vm.initMap = function() {
+                    vm.stats = {pending:0,active:0,available:0}
+                    solicitudesService.listActive().then(function(response) {
+                        vm.solicitudes = response.map(function(item){
+                            item.nombreApellido = item.afiliado.personaFisica.nombre +' '+ item.afiliado.personaFisica.apellido;
+                            if(item.estado === 0)
+                            vm.stats.pending++;
+                            if(item.estado === 1)
+                            vm.stats.active++;
+                            return item;
+                        });
+                        vm.solicitudesOrig = angular.copy(vm.solicitudes);
+                    });
+                    vm.cargarProfesionales();
+                }
+                
+                
+                vm.cargarProfesionales = function() {
+                    profesionalesService.getList().then(function(data) {
+                        vm.profesionales = data.map(function(item){
+                            item.nombreApellido = item.personaFisica.nombre +' '+ item.personaFisica.apellido;
+                            vm.stats.available++;
+                            return item;
+                        });;
+                        vm.profesionalesD = angular.copy(vm.profesionales);
+                        vm.profesionalesOrig = angular.copy(vm.profesionales);
+                    });
+                };
+                
+                vm.initMap();
+                
+                vm.vistaAsignarProfesional = function() {
+                    vm.solicitudId = vm.solicitudes[vm.selectedIndex]._id;
+                    vm.queryP = '';
+                    vm.filterListP();
+                    $('#modalPro').modal();
+                    vm.calcularRutaProfesional();
+                };
+                
+                vm.calcularRutaProfesional = function(pos) {
+                    
+                    for(var i = 0; i<vm.profesionales.length;i++){
+                        var _profesional = vm.profesionales[i];
+                        _profesional.pos = i;
+                        vm.callRutaService(vm.solicitudes[vm.selectedIndex],_profesional);
+                    }
+                };
+                
+                vm.callRutaService = function(sol,pro){
+                    directionsService.route(_getRequestRuta(sol,pro), function(result, status) {
+                        if (status == 'OK') {
+                            var ruta = result.routes[0].legs;
+                            var distanciaSegundos = 0;
+                            
+                            for (var i = 0; i < ruta.length; i++) {
+                                distanciaSegundos += ruta[i].duration.value;
+                            }
+                            
+                            var data = _getDemoraTime(distanciaSegundos,visitaPromedio,pro.solicitudesMedicas.length);
+                            vm.profesionales[pro.pos].demora = data[0];
+                            vm.profesionales[pro.pos].llegada = data[1];
+                            s.$apply();
+                        }
+                    });
+                }
+                
+                vm.confirmarProfesional = function() {
+                    var data = {
+                        solicitudMedica: {
+                            _id: vm.solicitudId
+                        },
+                        profesional: {
+                            _id: vm.profesionales[vm.selectedIndexP]
+                        }
+                    };
+                    solicitudesService.setProfesional(data).then(function() {
+                        $('#modalPro').modal('hide');
+                        $('.collapse').collapse('hide')
+                        vm.initMap();
+                        growl.success('Profesional asignado.')
+                    });
+                };
+                
+                vm.verEnMapa = function(){
+                    $('.modal').modal('hide');
+                    state.go('admin.mapa',{solicitud:vm.solicitudes[vm.selectedIndex]._id});
+                }
+                
+                vm.finishSolicitud = function() {
+                    vm.solSel = vm.solicitudes[vm.selectedIndex];
+                    swal({
+                        title: 'Cerrar la solicitud?',
+                        type: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Aceptar'
+                    }).then(function() {
+                        swal.setDefaults({
+                            input: 'text',
+                            confirmButtonText: 'Siguiente &rarr;',
+                            showCancelButton: true,
+                            animation: true,
+                            progressSteps: ['1', '2']
+                        })
+                        
+                        var steps = [{
+                            title: 'Indicaciones',
+                            text: 'Indicaciones para el paciente'
+                        }, {
+                            title: 'Observaciones',
+                            text: 'Obsrvaciones de la visita'
+                        }]
+                        swal.queue(steps).then(function(result) {
+                            swal.resetDefaults();
+                            vm.solSel.indicaciones = result[0];
+                            vm.solSel.observaciones = result[1];
+                            solicitudesService.finalizar(vm.solSel).then(function() {
+                                swal({
+                                    text: 'La solicitud ha sido cerrada.',
+                                    type: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonColor: '#3085d6',
+                                    confirmButtonText: 'Aceptar'
+                                });
+                                vm.initMap();
+                            }, function() {
+                                swal({
+                                    title: 'Ocurrio un error.',
+                                    text: 'Intente mas tarde.',
+                                    type: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonColor: '#3085d6',
+                                    confirmButtonText: 'Aceptar'
+                                });
+                            })
+                            
+                        }, function() {
+                            swal.resetDefaults();
+                        })
+                        
+                    })
+                };
+                
+                ///NUEVA SOLICITUD
+                vm.newSolicitudModal = '';
+                vm.newSol = function() {
+                    vm.newSolicitud = {
+                        sintomas: [],
+                        antecedentes: []
+                    };
+                    $(vm.newSolicitudModal).modal();
+                };
+                vm.finishSaveSolicitud = function() {
+                    vm.newSolicitud = {
+                        sintomas: [],
+                        antecedentes: []
+                    };
                     vm.initMap();
-                }, function() {
-                    swal({
-                        title: 'Ocurrio un error.',
-                        text: 'Intente mas tarde.',
-                        type: 'error',
-                        showCancelButton: false,
-                        confirmButtonColor: '#3085d6',
-                        confirmButtonText: 'Aceptar'
-                    });
-                })
-
-            }, function() {
-                swal.resetDefaults();
-            })
-
-        })
-    };
-
-       ///NUEVA SOLICITUD
-    vm.newSolicitudModal = '';
-    vm.newSol = function() {
-        vm.newSolicitud = {
-            sintomas: [],
-            antecedentes: []
-        };
-        $(vm.newSolicitudModal).modal();
-    };
-    vm.finishSaveSolicitud = function() {
-        vm.newSolicitud = {
-            sintomas: [],
-            antecedentes: []
-        };
-        vm.initMap();
-        $(vm.newSolicitudModal).modal('hide');
-    }
-}
+                    $(vm.newSolicitudModal).modal('hide');
+                }
+            }
 angular.module('vimedo').factory('navService', ['$rootScope',navService]);
 
 function navService(r) {
@@ -812,47 +941,8 @@ function authCtrl(s, r, authService, state, jwtHelper, t, NgMap, growl) {
     };
 
     vm.placeChanged = function() {
-        var place = this.getPlace();
-        var componentForm = {
-            street_number: {
-                type: 'short_name',
-                name: 'numero'
-            },
-            route: {
-                type: 'long_name',
-                name: 'calle'
-            },
-            locality: {
-                type: 'short_name',
-                name: 'localidad'
-            },
-            administrative_area_level_1: {
-                type: 'long_name',
-                name: 'provincia'
-            },
-            country: {
-                type: 'long_name',
-                name: 'pais'
-            },
-            postal_code: {
-                type: 'short_name',
-                name: 'cp'
-            }
-        };
-        var direccion = {};
-        for (var i = 0; i < place.address_components.length; i++) {
-            var addressType = place.address_components[i].types[0];
-            if (componentForm[addressType]) {
-                var val = place.address_components[i][componentForm[addressType].type];
-                direccion[componentForm[addressType].name] = val;
-            }
-        }
-        direccion.latitud = place.geometry.location.lat();
-        direccion.longitud = place.geometry.location.lng();
-        direccion.coordenadas = place.geometry.location.lat() + ',' + place.geometry.location.lng();
-        vm.newUser.personaFisica.domicilios.push(direccion);
+        vm.newUser.personaFisica.domicilios.push(getDireccion(this.getPlace()));
         vm.afilDir = '';
-
     }
 
     vm.registrarse = function() {
@@ -1024,49 +1114,8 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
 
     }
     vm.placeChanged = function() {
-        var place = this.getPlace();
-        var componentForm = {
-            street_number: {
-                type: 'short_name',
-                name: 'numero'
-            },
-            route: {
-                type: 'long_name',
-                name: 'calle'
-            },
-            locality: {
-                type: 'short_name',
-                name: 'localidad'
-            },
-            administrative_area_level_1: {
-                type: 'long_name',
-                name: 'provincia'
-            },
-            country: {
-                type: 'long_name',
-                name: 'pais'
-            },
-            postal_code: {
-                type: 'short_name',
-                name: 'cp'
-            }
-        };
-        // console.log(vm.place);
-        var direccion = {};
-        for (var i = 0; i < place.address_components.length; i++) {
-            var addressType = place.address_components[i].types[0];
-            if (componentForm[addressType]) {
-                var val = place.address_components[i][componentForm[addressType].type];
-                // document.getElementById(addressType).value = val;
-                direccion[componentForm[addressType].name] = val;
-            }
-        }
-        direccion.latitud = place.geometry.location.lat();
-        direccion.longitud = place.geometry.location.lng();
-        direccion.coordenadas = place.geometry.location.lat() + ',' + place.geometry.location.lng();
-        vm.modalPro.personaFisica.domicilios.push(direccion);
+        vm.modalPro.personaFisica.domicilios.push(getDireccion(this.getPlace()));
         vm.afilDir = '';
-
     }
 
     vm.updateList();
@@ -1125,14 +1174,13 @@ angular.module('vimedo').controller('pacientesCtrl', ['$rootScope', 'pacientesSe
 
 function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     var vm = this;
-
+    
     vm.afiliados = [];
     vm.solicitudes = [];
     vm.afiliadosOrg = [];
-
-    vm.modalAfil = {};
+    
     vm.afilSel = {};
-
+    
     vm.tableConfig = {
         maxPages: "10",
         itemsPerPage: "10"
@@ -1140,7 +1188,7 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     vm.newActive = false;
     vm.editActive = false;
     vm.viewActive = false;
-
+    
     vm.cancelNew = function(){
         vm.newActive = false;        
     }
@@ -1150,57 +1198,45 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
     vm.cancelView = function(){
         vm.viewActive = false;        
     }
-
+    
     NgMap.getMap().then(function(map) {
         vm.map = map;
     });
-
+    
     vm.filterList = function() {
         var lower = vm.query.toLowerCase();
         vm.afiliados = vm.afiliadosOrg
         .filter(function(i) {
             if (i.personaFisica &&
                 (i.personaFisica.nroDocumento.toLowerCase().indexOf(lower) !== -1 ||
-                    i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
-                    i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
-                return i;
+                i.personaFisica.nombre.toLowerCase().indexOf(lower) !== -1 ||
+                i.personaFisica.apellido.toLowerCase().indexOf(lower) !== -1)) {
+                    return i;
+                }
+            });
         }
-    });
-    }
-
-    vm.updateList = function() {
-        pacientesService.list().then(function(data) {
-            vm.afiliados = data;
-            vm.afiliadosOrg = data;
-        });
-    }
-    vm.removeDom = function(index) {
-        if (vm.modalAfil.afiliado)
-            vm.modalAfil.afiliado.domicilios.splice(index, 1);
-        else
+        
+        vm.updateList = function() {
+            pacientesService.list().then(function(data) {
+                vm.afiliados = data;
+                vm.afiliadosOrg = data;
+            });
+        }
+        vm.removeDom = function(index) {
             vm.afilSel.personaFisica.domicilios.splice(index, 1);
-    };
-
-    vm.addTel = function() {
-        if (vm.modalAfil.afiliado) {
-            if(vm.modalAfil.afiliado.telefono && vm.modalAfil.afiliado.telefono !== ''){    
-                vm.modalAfil.afiliado.telefonosA.push(vm.modalAfil.afiliado.telefono);
-                vm.modalAfil.afiliado.telefono = '';
-            }
-        } else{
-            if(vm.afilSel.personaFisica.telefono && vm.afilSel.personaFisica.telefono !== ''){
+        };
+        
+        vm.addTel = function() {
+            if(vm.afilSel.personaFisica.telefono && vm.afilSel.personaFisica.telefono !== ''){    
                 vm.afilSel.personaFisica.telefonosA.push(vm.afilSel.personaFisica.telefono);
-                vm.afilSel.personaFisica.telefono = '';}
+                vm.afilSel.personaFisica.telefono = '';
             }
         };
-
+        
         vm.removeTel = function(index) {
-            if (vm.modalAfil.afiliado)
-                vm.modalAfil.afiliado.telefonosA.splice(index, 1);
-            else
-                vm.afilSel.personaFisica.telefonosA.splice(index, 1);
+            vm.afilSel.personaFisica.telefonosA.splice(index, 1);
         };
-
+        
         vm.viewAfil = function(afil) {
             vm.afilSel = afil;
             vm.viewActive = true;
@@ -1209,20 +1245,20 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
             });
             // $('#viewModal').modal();
         };
-
+        
         vm.viewHist = function(hist){
             vm.histSel = hist;
             $('#histModal').modal();
         }
-
+        
         vm.edit = function(item) {
             vm.afilSel = angular.copy(item);
             if (vm.afilSel.personaFisica.telefonos)
-                vm.afilSel.personaFisica.telefonosA = vm.afilSel.personaFisica.telefonos.split(',');
+            vm.afilSel.personaFisica.telefonosA = vm.afilSel.personaFisica.telefonos.split(',');
             else
-                vm.afilSel.personaFisica.telefonosA = [];
+            vm.afilSel.personaFisica.telefonosA = [];
             if (vm.afilSel.personaFisica.fechaNacimiento)
-                vm.afilSel.personaFisica.nacimiento = new Date(vm.afilSel.personaFisica.fechaNacimiento);
+            vm.afilSel.personaFisica.nacimiento = new Date(vm.afilSel.personaFisica.fechaNacimiento);
             vm.editActive = true;
         };
         vm.saveEdit = function() {
@@ -1247,78 +1283,39 @@ function pacientesCtrl(r, pacientesService, state, NgMap, growl) {
                 growl.error("Ingrese al menos un telefono.");
             }
             return false;
-
+            
         }
-
+        
         vm.saveAfil = function() {
             if (vm.validateSave()) {
-                vm.modalAfil.afiliado.telefonos = vm.modalAfil.afiliado.telefonosA.toString();
-                pacientesService.create(vm.modalAfil).then(function(data) {
-                    vm.modalAfil = {};
+                vm.afilSel.personaFisica.telefonos = vm.afilSel.personaFisica.telefonosA.toString();
+                pacientesService.create(vm.afilSel).then(function(data) {
+                    vm.afilSel = {};
                     vm.newActive = false;
                     vm.updateList();
                 })
             }
         };
-
+        
         vm.newAfil = function() {
-        // MapManager.autocomplete('newDireccion');
-        vm.modalAfil = {
-            afiliado: {
-                domicilios: [],
-                telefonosA: []
-            }
+            // MapManager.autocomplete('newDireccion');
+            vm.afilSel = {
+                personaFisica: {
+                    domicilios: [],
+                    telefonosA: []
+                }
+            };
+            vm.newActive = true;
         };
-        $('#newModal').modal();
-    };
-
-    vm.placeChanged = function() {
-        var place = this.getPlace();
-        var componentForm = {
-            street_number: {
-                type: 'short_name',
-                name: 'numero'
-            },
-            route: {
-                type: 'long_name',
-                name: 'calle'
-            },
-            locality: {
-                type: 'short_name',
-                name: 'localidad'
-            },
-            administrative_area_level_1: {
-                type: 'long_name',
-                name: 'provincia'
-            },
-            country: {
-                type: 'long_name',
-                name: 'pais'
-            },
-            postal_code: {
-                type: 'short_name',
-                name: 'cp'
-            }
-        };
-        // console.log(vm.place);
-        var direccion = {};
-        for (var i = 0; i < place.address_components.length; i++) {
-            var addressType = place.address_components[i].types[0];
-            if (componentForm[addressType]) {
-                var val = place.address_components[i][componentForm[addressType].type];
-                // document.getElementById(addressType).value = val;
-                direccion[componentForm[addressType].name] = val;
-            }
+        
+        vm.placeChanged = function() {
+            if(!vm.afilSel.personaFisica.domicilios)
+            vm.afilSel.personaFisica.domicilios = [];
+            vm.afilSel.personaFisica.domicilios.push(getDireccion(this.getPlace()));
+            vm.afilDir = '';
         }
-        direccion.latitud = place.geometry.location.lat();
-        direccion.longitud = place.geometry.location.lng();
-        direccion.coordenadas = place.geometry.location.lat() + ',' + place.geometry.location.lng();
-        vm.modalAfil.afiliado.domicilios.push(direccion);
-        vm.afilDir = '';
-
+        vm.updateList();
     }
-    vm.updateList();
-}
 angular.module('vimedo').factory('solicitudesService', ['$rootScope', '$http', solicitudesService]);
 
 function solicitudesService(r, h) {
@@ -1518,20 +1515,21 @@ function mapaCtrl(r, s, mapaService, solicitudesService, profesionalesService, s
         }
     };
     vm.calcularRutaProfesional = function(pos) {
-        var request = {
-            origin: pos,
-            destination: vm.solicitudesMarks[0].position,
-            travelMode: 'DRIVING'
-        };
-        directionsService.route(request, function(result, status) {
+        directionsService.route(_getRequestRuta(vm.solSelected,vm.proSelected), function(result, status) {
             if (status == 'OK') {
-                vm.distancia = result.routes[0].legs[0].distance.text
+                
+                var ruta = result.routes[0].legs;
+                var distanciaSegundos = 0;
+                for (var i = 0; i < ruta.length; i++) {
+                    distanciaSegundos += ruta[i].duration.value;
+                    var horaLlegada = new Date((new Date()).getTime()+(distanciaSegundos*1000));   
+                    console.log(horaLlegada)
+                }
                 directionsDisplay.setDirections(result);
                 s.$apply();
             }
         });
     };
-
 
     vm.initMap = function() {
         vm.polylines = [];

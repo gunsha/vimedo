@@ -16,7 +16,7 @@ var options = {
 
 var mongoose = require('mongoose');
 // var connection = mongoose.connect('mongodb://localhost/vimedo');
-var connection = mongoose.connect('mongodb://admin:admin@vimedo-shard-00-00-9ou8j.mongodb.net:27017,vimedo-shard-00-01-9ou8j.mongodb.net:27017,vimedo-shard-00-02-9ou8j.mongodb.net:27017/vimedo?replicaSet=vimedo-shard-0&ssl=true&authSource=admin',options);
+var connection = mongoose.connect('mongodb://admin:adminv1m3d0@ds227199.mlab.com:27199/vimedo',options);
 // var connection = mongoose.connect('mongodb://localhost:8082/vimedo');
 
 var jwt = require('express-jwt');
@@ -59,7 +59,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(jwt({ secret: tokenSecret}).unless({path: ['/users/login']}));
+app.use(jwt({ secret: tokenSecret}).unless({path: ['/users/login','/users/register','/antecedentesMedicos/cieinsert']}));
 
 app.use('/admin', admin);
 app.use('/afiliados', afiliados);

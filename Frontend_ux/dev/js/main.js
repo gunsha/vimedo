@@ -1,3 +1,101 @@
+var componentForm = {
+    street_number: {
+        type: 'short_name',
+        name: 'numero'
+    },
+    route: {
+        type: 'long_name',
+        name: 'calle'
+    },
+    locality: {
+        type: 'short_name',
+        name: 'localidad'
+    },
+    administrative_area_level_1: {
+        type: 'long_name',
+        name: 'provincia'
+    },
+    country: {
+        type: 'long_name',
+        name: 'pais'
+    },
+    postal_code: {
+        type: 'short_name',
+        name: 'cp'
+    },
+    sublocality_level_1:{
+        type: 'short_name',
+        name: 'localidad'
+    }
+};
+
+var visitaPromedio = 30;
+
+function _getDemoraTime(segundos,visita,solicitudes){
+    if(!visita)
+        visita = visitaPromedio;
+    if(!solicitudes)
+        solicitudes = 0;
+    if(solicitudes>1){
+        segundos += (visita*solicitudes)*60
+    }
+
+    var minutosTotales = segundos/60;
+    var horas = Math.floor(minutosTotales/60);
+    var minutos = Math.floor(minutosTotales%60);
+    return [segundos,(horas>0 ? horas + 'h ':' ')+(minutos>0?minutos+'m ':'')]
+}
+
+function _getRequestRuta(solicitud,profesional){
+    var latlng = new google.maps.LatLng(solicitud.domicilio.latitud, solicitud.domicilio.longitud);
+        var ultimoDomicilio;
+        var wps = [];
+
+        wps.push({
+            location: new google.maps.LatLng(profesional.personaFisica.domicilios[0].latitud, profesional.personaFisica.domicilios[0].longitud),
+            stopover: false
+        })
+
+        if(profesional.solicitudesMedicas.length != 0){
+            var solicitudes = profesional.solicitudesMedicas;
+            for (var i = 0; i < solicitudes.length; i++) {
+                wps.push({
+                    location: new google.maps.LatLng(solicitudes[i].domicilio.latitud, solicitudes[i].domicilio.longitud),
+                    stopover: true
+                })
+            }
+        }
+
+        wps.push({
+            location: latlng,
+            stopover: true
+        })
+
+        return {
+            origin: wps[0].location,
+            destination: wps[wps.length-1].location,
+            waypoints: wps,
+            optimizeWaypoints: false,
+            travelMode: google.maps.TravelMode.DRIVING
+          };
+}
+
+function getDireccion(place){
+    var direccion = {};
+    for (var i = 0; i < place.address_components.length; i++) {
+        var addressType = place.address_components[i].types[0];
+        if (componentForm[addressType]) {
+            var val = place.address_components[i][componentForm[addressType].type];
+            // document.getElementById(addressType).value = val;
+            direccion[componentForm[addressType].name] = val;
+        }
+    }
+    direccion.latitud = place.geometry.location.lat();
+    direccion.longitud = place.geometry.location.lng();
+    direccion.coordenadas = place.geometry.location.lat() + ',' + place.geometry.location.lng();
+    return direccion;
+}
+
 var monthsShortDot$1 = 'ene._feb._mar._abr._may._jun._jul._ago._sep._oct._nov._dic.'.split('_');
 var monthsShort$2 = 'ene_feb_mar_abr_may_jun_jul_ago_sep_oct_nov_dic'.split('_');
 

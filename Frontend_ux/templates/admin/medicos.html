@@ -263,7 +263,7 @@
             <div class="form-group">
               <label class="col-md-6 control-label" for="newDireccion">Especialidades</label>
               <div class="col-md-6">
-                <p class="form-control-static" ng-repeat="esp in ctrl.modalPro.especialidades">{{esp.nombre}}</p>
+                <p class="form-control-static" ng-repeat="esp in ctrl.modalPro.especialidades track by $index">{{esp.nombre}}</p>
               </div>
             </div>
           </fieldset>

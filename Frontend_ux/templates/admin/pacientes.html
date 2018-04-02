@@ -13,7 +13,7 @@
             <option value="50">50</option>
           </select>
         </span>
-        <a href="#" class="btn btn-md btn-primary" ng-click="ctrl.newActive = true;">Nuevo afiliado</a>
+        <a href="#" class="btn btn-md btn-primary" ng-click="ctrl.newAfil();">Nuevo afiliado</a>
       </div>
     </div>
   </div>
@@ -62,36 +62,36 @@
       <fieldset>
         <div class="form-group">
           <label class="control-label" for="newName">Nombre</label>
-          <input id="name" ng-model="ctrl.modalAfil.afiliado.nombre" name="newName" type="text" placeholder="" class="form-control input-md" required="">
+          <input id="name" ng-model="ctrl.afilSel.personaFisica.nombre" name="newName" type="text" placeholder="" class="form-control input-md" required="">
         </div>
         <div class="form-group">
           <label class="control-label" for="newApellido">Apellido</label>
-          <input id="apellido" ng-model="ctrl.modalAfil.afiliado.apellido" name="newApellido" type="text" placeholder="" class="form-control input-md" required="">
+          <input id="apellido" ng-model="ctrl.afilSel.personaFisica.apellido" name="newApellido" type="text" placeholder="" class="form-control input-md" required="">
         </div>
         <div class="form-group">
           <label class="control-label" for="newDoc">DNI / LC / LE N°</label>
-          <input id="doc" ng-model="ctrl.modalAfil.afiliado.nro_documento" name="newDoc" type="text" placeholder="" class="form-control input-md" required="">
+          <input id="doc" ng-model="ctrl.afilSel.personaFisica.nroDocumento" name="newDoc" type="text" placeholder="" class="form-control input-md" required="">
         </div>
         <div class="form-group">
           <label class="control-label" for="newDoc">Fecha de nacimiento</label>
           <div class="dropdown">
             <a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" href="#">
               <div class="input-group">
-                <input type="text" class="form-control" readonly="" value="{{ctrl.modalAfil.afiliado.nacimiento | date:'dd/MM/yyyy'}}"><span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                <input type="text" class="form-control" readonly="" value="{{ctrl.afilSel.personaFisica.nacimiento | date:'dd/MM/yyyy'}}"><span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
               </div>
             </a>
             <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-              <datetimepicker data-ng-model="ctrl.modalAfil.afiliado.nacimiento" data-datetimepicker-config="{ dropdownSelector: '#dropdown2', minView:'day' }"/>
+              <datetimepicker data-ng-model="ctrl.afilSel.personaFisica.nacimiento" data-datetimepicker-config="{ dropdownSelector: '#dropdown2', minView:'day' }"/>
             </ul>
           </div>
         </div>
         <div class="form-group">
           <label class="control-label" for="newCredencial">Credencial</label>
-          <input id="Credencial" ng-model="ctrl.modalAfil.credencial" name="newCredencial" type="text" placeholder="" class="form-control input-md" required="">
+          <input id="Credencial" ng-model="ctrl.afilSel.credencial" name="newCredencial" type="text" placeholder="" class="form-control input-md" required="">
         </div>
         <div class="form-group">
           <label class="control-label" for="newEmail">Email</label>
-          <input id="email" ng-model="ctrl.modalAfil.email" name="newEmail" type="email" placeholder="" class="form-control input-md" required="">
+          <input id="email" ng-model="ctrl.afilSel.email" name="newEmail" type="email" placeholder="" class="form-control input-md" required="">
         </div>
         <div class="form-group">
           <div class="">
@@ -99,14 +99,14 @@
           </div>
           <div class="row">
             <div class="col-md-10">
-              <input id="telefono" ng-model="ctrl.modalAfil.afiliado.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
+              <input id="telefono" ng-model="ctrl.afilSel.personaFisica.telefono" name="newTelefono" type="text" placeholder="" class="form-control input-md" ng-enter="ctrl.addTel();">
             </div>
             <div class="col-md-2">
               <a href="#" class="btn btn-xs btn-primary" ng-click="ctrl.addTel();" style="margin-top: 5px;"><span class="glyphicon glyphicon-plus"></span></a>
             </div>
           </div>
           <div class="col-md-12">
-            <p class="form-control-static" ng-repeat="tel in ctrl.modalAfil.afiliado.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
+            <p class="form-control-static" ng-repeat="tel in ctrl.afilSel.personaFisica.telefonosA"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeTel($index)">x</button> {{tel}}</p>
           </div>
         </div>
         <div class="form-group">
@@ -116,7 +116,7 @@
           <div>
             <input id="newDireccion" places-auto-complete size=80 ng-model="ctrl.afilDir" component-restrictions="{country:'ar'}"  on-place-changed="ctrl.placeChanged()" ng-enter="" class="form-control input-md" >
           </div>
-          <p class="form-control-static" ng-repeat="dom in ctrl.modalAfil.afiliado.domicilios"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeDom($index)">x</button> {{dom.calle + ' ' + dom.numero + ', ' + dom.localidad + ', ' + dom.provincia}} <input ng-model="dom.extra" placeholder="Datos extra" class="form-control input-md"> </p>
+          <p class="form-control-static" ng-repeat="dom in ctrl.afilSel.personaFisica.domicilios"><button class="btn btn-danger btn-xs" ng-click="ctrl.removeDom($index)">x</button> {{dom.calle + ' ' + dom.numero + ', ' + dom.localidad + ', ' + dom.provincia}} <input ng-model="dom.extra" placeholder="Datos extra" class="form-control input-md"> </p>
         </div>
         <!-- Button (Double) -->
         <div class="form-group">
@@ -330,7 +330,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">{{ctrl.histSel.afiliado.personaFisica.nombre +' '+ ctrl.histSel.afiliado.personaFisica.apellido}}</h4>
+        <h4 class="modal-title">{{ctrl.histSel.personaFisica.personaFisica.nombre +' '+ ctrl.histSel.personaFisica.personaFisica.apellido}}</h4>
       </div>
       <div class="modal-body">
         <form class="form-horizontal" ng-submit="ctrl.savePro();">
@@ -379,19 +379,19 @@
             <div class="form-group">
               <label class="col-md-4 control-label">Credencial</label>
               <div class="col-md-5">
-                <p class="form-control-static">{{ctrl.histSel.afiliado.credencial}}</p>
+                <p class="form-control-static">{{ctrl.histSel.personaFisica.credencial}}</p>
               </div>
             </div>
             <div class="form-group">
               <label class="col-md-4 control-label">DNI / LC / LE N°</label>
               <div class="col-md-5">
-                <p class="form-control-static">{{ctrl.histSel.afiliado.personaFisica.nroDocumento}}</p>
+                <p class="form-control-static">{{ctrl.histSel.personaFisica.personaFisica.nroDocumento}}</p>
               </div>
             </div>
             <div class="form-group">
               <label class="col-md-4 control-label">Fecha de nacimiento</label>
               <div class="col-md-5">
-                <p class="form-control-static">{{ctrl.histSel.afiliado.personaFisica.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
+                <p class="form-control-static">{{ctrl.histSel.personaFisica.personaFisica.fechaNacimiento | date:'dd/MM/yyyy'}}</p>
               </div>
             </div>
             <div class="form-group">
@@ -405,7 +405,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label">Telefono/s</label>
               <div class="col-md-5">
-                <p class="form-control-static" ng-repeat="tel in ctrl.histSel.afiliado.personaFisica.telefonos">{{tel}}</p>
+                <p class="form-control-static" ng-repeat="tel in ctrl.histSel.personaFisica.personaFisica.telefonos">{{tel}}</p>
               </div>
             </div>
           </fieldset>

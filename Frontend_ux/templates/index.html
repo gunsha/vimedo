@@ -119,7 +119,10 @@
                         <tr ng-repeat="s in ctrl.profesionales track by $index" ng-click="ctrl.selectedIndexP = $index;">
                           <td>
                             <input type="radio" name="profesionales" ng-value="$index" ng-model="ctrl.selectedIndexP" />
-                            {{s.personaFisica.nombre}} {{s.personaFisica.apellido}} - Matricula: {{s.matricula}}
+                            {{s.personaFisica.nombre}} {{s.personaFisica.apellido}}
+                          </td>
+                          <td>
+                            demora: {{s.llegada}}
                           </td>
                           <td>{{s.solicitudesMedicas.length}} solicitud{{s.solicitudesMedicas.length!=1 ?'es':''}}</td>
                           <td class="green">Disponible</td>

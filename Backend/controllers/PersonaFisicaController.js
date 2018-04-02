@@ -90,7 +90,7 @@ module.exports = {
             apellido: req.body.apellido,
             nacimiento: req.body.nacimiento,
             tipo_documento: req.body.tipo_documento,
-            nro_documento: req.body.nro_documento,
+            nroDocumento: req.body.nroDocumento,
             id_imagen: req.body.id_imagen,
             id_grupo_familiar: req.body.id_grupo_familiar
         });
@@ -130,7 +130,7 @@ module.exports = {
             PersonaFisica.apellido = req.body.apellido ? req.body.apellido : PersonaFisica.apellido;
             PersonaFisica.nacimiento = req.body.nacimiento ? req.body.nacimiento : PersonaFisica.nacimiento;
             PersonaFisica.tipo_documento = req.body.tipo_documento ? req.body.tipo_documento : PersonaFisica.tipo_documento;
-            PersonaFisica.nro_documento = req.body.nro_documento ? req.body.nro_documento : PersonaFisica.nro_documento;
+            PersonaFisica.nroDocumento = req.body.nroDocumento ? req.body.nroDocumento : PersonaFisica.nroDocumento;
             PersonaFisica.id_imagen = req.body.id_imagen ? req.body.id_imagen : PersonaFisica.id_imagen;
             PersonaFisica.id_grupo_familiar = req.body.id_grupo_familiar ? req.body.id_grupo_familiar : PersonaFisica.id_grupo_familiar;
 

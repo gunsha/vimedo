@@ -1,5 +1,5 @@
 var Cie10Model = require('../models/CIE10Model.js');
-// var Cie10List = require('../cie10.json');
+var Cie10List = require('../cie10.json');
 
 module.exports = {
 
@@ -37,29 +37,29 @@ module.exports = {
                 return res.json(Cie10);
             });
         }
-        // ,
-        // create: function (req, res) {
-        //     for(var i = 0; i<Cie10List.length;i++){
-        //         var cie10 = new Cie10Model({
-        //         id10: Cie10List[i].id10,
-        //         dec10: Cie10List[i].dec10,
-        //         grp10: Cie10List[i].grp10
-        //     });
+        ,
+        create: function (req, res) {
+            for(var i = 0; i<Cie10List.length;i++){
+                var cie10 = new Cie10Model({
+                id10: Cie10List[i].id10,
+                dec10: Cie10List[i].dec10,
+                grp10: Cie10List[i].grp10
+            });
 
-    //     cie10.save(function (err, cie10) {
+        cie10.save(function (err, cie10) {
 
-    //         if (err) {
-    //             console.log('error line '+i);
-    //             return res.status(500).json({
-    //                 message: 'Error when creating cie10',
-    //                 error: err
-    //             });
-    //         }
-    //         console.log('saved line '+i);
-    //     });
-    //     }
-    //     return res.status(200);
+            if (err) {
+                console.log('error line '+i);
+                return res.status(500).json({
+                    message: 'Error when creating cie10',
+                    error: err
+                });
+            }
+            console.log('saved line '+i);
+        });
+        }
+        return res.status(200);
 
-    // }
+    }
 
 };

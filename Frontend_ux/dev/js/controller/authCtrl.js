@@ -97,47 +97,8 @@ function authCtrl(s, r, authService, state, jwtHelper, t, NgMap, growl) {
     };
 
     vm.placeChanged = function() {
-        var place = this.getPlace();
-        var componentForm = {
-            street_number: {
-                type: 'short_name',
-                name: 'numero'
-            },
-            route: {
-                type: 'long_name',
-                name: 'calle'
-            },
-            locality: {
-                type: 'short_name',
-                name: 'localidad'
-            },
-            administrative_area_level_1: {
-                type: 'long_name',
-                name: 'provincia'
-            },
-            country: {
-                type: 'long_name',
-                name: 'pais'
-            },
-            postal_code: {
-                type: 'short_name',
-                name: 'cp'
-            }
-        };
-        var direccion = {};
-        for (var i = 0; i < place.address_components.length; i++) {
-            var addressType = place.address_components[i].types[0];
-            if (componentForm[addressType]) {
-                var val = place.address_components[i][componentForm[addressType].type];
-                direccion[componentForm[addressType].name] = val;
-            }
-        }
-        direccion.latitud = place.geometry.location.lat();
-        direccion.longitud = place.geometry.location.lng();
-        direccion.coordenadas = place.geometry.location.lat() + ',' + place.geometry.location.lng();
-        vm.newUser.personaFisica.domicilios.push(direccion);
+        vm.newUser.personaFisica.domicilios.push(getDireccion(this.getPlace()));
         vm.afilDir = '';
-
     }
 
     vm.registrarse = function() {

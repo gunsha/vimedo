@@ -120,49 +120,8 @@ function profesionalesCtrl(s, r, profesionalesService, state, NgMap, growl) {
 
     }
     vm.placeChanged = function() {
-        var place = this.getPlace();
-        var componentForm = {
-            street_number: {
-                type: 'short_name',
-                name: 'numero'
-            },
-            route: {
-                type: 'long_name',
-                name: 'calle'
-            },
-            locality: {
-                type: 'short_name',
-                name: 'localidad'
-            },
-            administrative_area_level_1: {
-                type: 'long_name',
-                name: 'provincia'
-            },
-            country: {
-                type: 'long_name',
-                name: 'pais'
-            },
-            postal_code: {
-                type: 'short_name',
-                name: 'cp'
-            }
-        };
-        // console.log(vm.place);
-        var direccion = {};
-        for (var i = 0; i < place.address_components.length; i++) {
-            var addressType = place.address_components[i].types[0];
-            if (componentForm[addressType]) {
-                var val = place.address_components[i][componentForm[addressType].type];
-                // document.getElementById(addressType).value = val;
-                direccion[componentForm[addressType].name] = val;
-            }
-        }
-        direccion.latitud = place.geometry.location.lat();
-        direccion.longitud = place.geometry.location.lng();
-        direccion.coordenadas = place.geometry.location.lat() + ',' + place.geometry.location.lng();
-        vm.modalPro.personaFisica.domicilios.push(direccion);
+        vm.modalPro.personaFisica.domicilios.push(getDireccion(this.getPlace()));
         vm.afilDir = '';
-
     }
 
     vm.updateList();

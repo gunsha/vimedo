@@ -15,6 +15,10 @@ router.get('/cieautocomplete', function (req, res) {
     Cie10Controller.autocomplete(req, res);
 });
 
+// router.post('/cieinsert', function (req, res) {
+//     Cie10Controller.create(req, res);
+// });
+
 router.get('/afiliadoautocomplete', function (req, res) {
     PersonaFisicaController.autocompleteAfiliado(req, res);
 });

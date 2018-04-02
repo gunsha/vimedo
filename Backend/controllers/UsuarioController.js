@@ -86,7 +86,7 @@ module.exports = {
                     apellido: req.body.apellido,
                     nacimiento: new Moment(req.body.nacimiento),
                     tipoDocumento: req.body.tipo_documento,
-                    nroDocumento: req.body.nro_documento
+                    nroDocumento: req.body.nroDocumento
                 });
 
                 PersonaFisica.save(function(err, personaFisica) {
@@ -189,7 +189,7 @@ module.exports = {
                                                     apellido: afiliadoRest.apellido,
                                                     nacimiento: new Moment(afiliadoRest.nacimiento),
                                                     tipo_documento: afiliadoRest.tipo_documento,
-                                                    nro_documento: afiliadoRest.nro_documento
+                                                    nroDocumento: afiliadoRest.nroDocumento
                                                 });
 
                                                 PersonaFisica.save(function(err, personaFisica) {
@@ -220,7 +220,7 @@ module.exports = {
                                                                     persona.apellido = afiliadoRest.grupoFamiliar[i].apellido;
                                                                     persona.nacimiento = new Moment(afiliadoRest.grupoFamiliar[i].nacimiento);
                                                                     persona.tipo_documento = afiliadoRest.grupoFamiliar[i].tipo_documento;
-                                                                    persona.nro_documento = afiliadoRest.grupoFamiliar[i].nro_documento;
+                                                                    persona.nroDocumento = afiliadoRest.grupoFamiliar[i].nroDocumento;
                                                                     listadoGrupo.push(persona);
                                                                 }
 
@@ -297,25 +297,14 @@ module.exports = {
                     message: 'La credencial ya se encuentra registrada.'
                 });
             } else {
-                var afiliadoRest = req.body.afiliado;
+                var afiliadoRest = req.body.personaFisica;
 
                 var Usuario = new UsuarioModel({
                     email: req.body.email.toLowerCase(),
-                    password: req.body.password ? req.body.password : afiliadoRest.nro_documento,
+                    password: req.body.password ? req.body.password : afiliadoRest.nroDocumento,
                     fechaAlta: Date.now()
                 });
-                var url = "http://localhost:8008/socios/" + req.body.credencial;
-
-                // var request = http.get(url, function(response) {
-                // CONTINUOUSLY update stream with data
-                // var body = '';
-                // var statusCode = response.statusCode;
-                // response.on('data', function(d) {
-                //     body += d;
-                // });
-                // response.on('end', function() {
-                // if (statusCode == 200) {
-                // var afiliadoRest = JSON.parse(body);
+                
                 if (afiliadoRest) {
                     Usuario.save(function(err, usuario) {
                         if (err) {
@@ -342,7 +331,7 @@ module.exports = {
                                         apellido: afiliadoRest.apellido,
                                         fechaNacimiento: new Date(afiliadoRest.nacimiento),
                                         tipoDocumento: afiliadoRest.tipo_documento,
-                                        nroDocumento: afiliadoRest.nro_documento,
+                                        nroDocumento: afiliadoRest.nroDocumento,
                                         telefonos: afiliadoRest.telefonos
                                     });
                                     var GrupoFamiliar = new GrupoFamiliarModel({
@@ -353,10 +342,10 @@ module.exports = {
                                         for (var i = 0; i < resp.length; i++) {
                                             PersonaFisica.domicilios.push(resp[i]._id);
                                         }
-                                        ImagenModel.find({}, function(err, imagenes) { //mock para asociar imagen
-                                            if (imagenes) {
-                                                PersonaFisica.imagen = imagenes[0]._id;
-                                            }
+                                        //ImagenModel.find({}, function(err, imagenes) { //mock para asociar imagen
+                                        //    if (imagenes) {
+                                        //        PersonaFisica.imagen = imagenes[0]._id;
+                                        //    }
                                             PersonaFisica.save(function(err, personaFisica) {
                                                 afiliado.personaFisica = personaFisica._id;
                                                 afiliado.save(function(err, afiliado) {
@@ -370,7 +359,7 @@ module.exports = {
                                                 });
 
                                             });
-                                        });
+                                        //});
                                     });
 
                                 } else {
@@ -395,26 +384,6 @@ module.exports = {
                         error: errorMsj
                     });
                 }
-                // } else {
-                //     return res.status(statusCode).json({
-                //         message: 'Error al validar credencial.',
-                //         error: body
-                //     });
-                // }
-                // });
-                // response.on('error', function() {
-                //     return res.status(404).json({
-                //         message: 'Error al validar credencial.',
-                //         error: err
-                //     });
-                // });
-                // });
-                // request.on('error', function(err) {
-                //     return res.status(404).json({
-                //         message: 'Error al validar credencial.',
-                //         error: err
-                //     });
-                // });
             }
         });
     },
@@ -464,28 +433,17 @@ module.exports = {
                 });
             } else {
                 var usuario = new UsuarioModel({
-                    email: req.body.email.toLowerCase(),
-                    password: req.body.password ? req.body.password : req.body.personaFisica.nro_documento,
+                    email: req.body.usuario.email.toLowerCase(),
+                    password: req.body.password ? req.body.password : req.body.personaFisica.nroDocumento,
                     fechaAlta: Date.now()
                 });
 
                 var personaFisicaRest = req.body.personaFisica;
 
-                // var url = "http://localhost:8008/socios/" + req.body.matricula;
-                // var request = http.get(url, function(response) {
-                //     // Continuously update stream with data
-                //     var body = '';
-                //     var statusCode = response.statusCode;
-                //     response.on('data', function(d) {
-                //         body += d;
-                //     });
-                //     response.on('end', function() {
-                //         if (statusCode == 200) {
-                //             var profesionalRest = JSON.parse(body);
-                //             if (profesionalRest) {
                 usuario.save(function(err, usuario) {
                     if (err) {
-                        var msg = err.errors.email.message ? err.errors.email.message : 'No se puede crear el usuario.';
+                        console.log(err)
+                        var msg = err.errors.email && err.errors.email.message ? err.errors.email.message : 'No se puede crear el usuario.';
                         return res.status(406).json({
                             message: msg
                         });
@@ -495,7 +453,7 @@ module.exports = {
                             apellido: personaFisicaRest.apellido,
                             fechaNacimiento: new Date(personaFisicaRest.nacimiento),
                             tipoDocumento: personaFisicaRest.tipo_documento,
-                            nroDocumento: personaFisicaRest.nro_documento,
+                            nroDocumento: personaFisicaRest.nroDocumento,
                             telefonos: personaFisicaRest.telefonos
                         });
                         DomicilioModel.create(personaFisicaRest.domicilios, function(err, resp) {

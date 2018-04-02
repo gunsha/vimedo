@@ -205,7 +205,15 @@ module.exports = {
     },
 
     setProfesionalSolicitud: function (req, res){
-        SolicitudMedicaModel.findOneAndUpdate({_id:req.body.solicitudMedica._id},{$set:{profesional:req.body.profesional._id, estado:1, fechaModificacion:Date.now()}}, {new: true}).exec(function (err, solicitud){
+        SolicitudMedicaModel.findOneAndUpdate({_id:req.body.solicitudMedica._id},
+            {$set:{
+                profesional:req.body.profesional._id, 
+                estado:1, 
+                fechaModificacion:Date.now(),
+                fechaAsignacion: Date.now(),
+                fechaEstimadaLlegada:req.body.tiempoLlegada
+            }
+            }, {new: true}).exec(function (err, solicitud){
             if(err){
                 return res.status(500).json({
                     message: 'Error al actualizar solicitud.',
