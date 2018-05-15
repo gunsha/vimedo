@@ -12,13 +12,13 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
     vm.stats = {pending:0,active:0,available:0}
     vm.selectedIndex = "0";
     vm.selectedIndexP = "0";
-    
+    vm.selected;
     var directionsService = new google.maps.DirectionsService();
     vm.especialidades = [];
     
     profesionalesService.especialidades().then(function(data){
         vm.especialidades = data;
-    })
+    });
     
     vm.filterListS = function() {
         var lower = vm.queryS.toLowerCase();
@@ -31,7 +31,7 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
                     return i;
                 }
             });
-        }
+        };
         vm.filterListP = function() {
             var lower = vm.queryP.toLowerCase();
             vm.profesionales = vm.profesionalesOrig
@@ -44,7 +44,7 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
                         return i;
                     }
                 });
-            }
+            };
             vm.filterListPD = function() {
                 var lower = vm.queryPD.toLowerCase();
                 vm.profesionalesD = vm.profesionalesOrig
@@ -91,6 +91,7 @@ function indexCtrl(s, r, indexService, solicitudesService, profesionalesService,
                 vm.initMap();
                 
                 vm.vistaAsignarProfesional = function() {
+                    vm.selected = vm.solicitudes[vm.selectedIndex];
                     vm.solicitudId = vm.solicitudes[vm.selectedIndex]._id;
                     vm.queryP = '';
                     vm.filterListP();
